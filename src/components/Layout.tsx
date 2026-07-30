@@ -16,10 +16,9 @@ export default function Layout() {
   return (
     <div className="mx-auto flex min-h-screen max-w-lg flex-col">
       <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/90 px-4 py-4 backdrop-blur">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-lg font-semibold text-stone-900">Calorie Tracker</h1>
-            <p className="text-sm text-stone-500">Log meals · track weight</p>
+            <h1 className="text-lg font-semibold text-stone-900">keep it up, Ignasi</h1>
           </div>
           <button
             onClick={loadSampleData}
