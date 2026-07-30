@@ -8,7 +8,7 @@ import './index.css'
 seedIfEmpty().then(() => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <BrowserRouter>
+      <BrowserRouter basename="/calorie-tracker">
         <App />
       </BrowserRouter>
     </StrictMode>,
