@@ -5,3 +5,16 @@
 body {
   @apply bg-stone-100 text-stone-900 antialiased;
 }
+
+input[type='date'],
+select {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+}
+
+input[type='date']::-webkit-date-and-time-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

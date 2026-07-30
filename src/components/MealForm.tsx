@@ -83,23 +83,23 @@ export default function MealForm({ initial, defaultDate, onSave, onCancel }: Mea
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <label className="block text-sm">
-          <span className="mb-1 block text-stone-600">Date</span>
+      <div className="flex gap-3">
+        <label className="flex w-0 min-w-0 flex-1 flex-col overflow-hidden text-sm">
+          <span className="mb-1 text-stone-600">Date</span>
           <input
             type="date"
             required
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+            className="box-border w-full min-w-0 max-w-full rounded-lg border border-stone-300 px-2 py-2 text-sm"
           />
         </label>
-        <label className="block text-sm">
-          <span className="mb-1 block text-stone-600">Meal</span>
+        <label className="flex w-0 min-w-0 flex-1 flex-col overflow-hidden text-sm">
+          <span className="mb-1 text-stone-600">Meal</span>
           <select
             value={mealType}
             onChange={(e) => setMealType(e.target.value as MealType)}
-            className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+            className="box-border w-full min-w-0 max-w-full rounded-lg border border-stone-300 px-2 py-2 text-sm"
           >
             {Object.entries(MEAL_TYPE_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
