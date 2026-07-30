@@ -19,6 +19,7 @@ export default function HistoryPage() {
   const [range, setRange] = useState<Range>('week')
   const [showWeight, setShowWeight] = useState(true)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [showForm, setShowForm] = useState(false)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
   const meals = useAllMeals()
   const weights = useAllWeights()
@@ -30,7 +31,14 @@ export default function HistoryPage() {
 
   useEffect(() => {
     setSelectedDate(null)
+    setShowForm(false)
+    setEditingMeal(null)
   }, [range])
+
+  useEffect(() => {
+    setShowForm(false)
+    setEditingMeal(null)
+  }, [selectedDate])
 
   const summaries = useMemo(
     () => buildDailySummaries(meals ?? [], dateKeys),
@@ -68,7 +76,18 @@ export default function HistoryPage() {
       await addMeal(payload)
     }
 
+    setShowForm(false)
     setEditingMeal(null)
+  }
+
+  function startAdd() {
+    setEditingMeal(null)
+    setShowForm(true)
+  }
+
+  function startEdit(meal: MealEntry) {
+    setEditingMeal(meal)
+    setShowForm(true)
   }
 
   async function handleDelete(id: number) {
@@ -124,14 +143,6 @@ export default function HistoryPage() {
         {selectedDate ? 'Selected day — tap another bar to switch' : 'Tap a bar to view meals for that day'}
       </p>
 
-      {editingMeal && (
-        <MealForm
-          initial={editingMeal}
-          onSave={handleSave}
-          onCancel={() => setEditingMeal(null)}
-        />
-      )}
-
       {selectedDate && (
         <section className="space-y-3">
           <div className="flex items-baseline justify-between px-1">
@@ -141,18 +152,37 @@ export default function HistoryPage() {
             <span className="text-sm font-medium text-teal-700">{selectedDayTotal} kcal</span>
           </div>
 
+          {showForm ? (
+            <MealForm
+              initial={editingMeal ?? undefined}
+              defaultDate={selectedDate}
+              onSave={handleSave}
+              onCancel={() => {
+                setShowForm(false)
+                setEditingMeal(null)
+              }}
+            />
+          ) : (
+            <button
+              onClick={startAdd}
+              className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50"
+            >
+              + Add meal
+            </button>
+          )}
+
           {meals === undefined ? (
             <p className="text-sm text-stone-500">Loading…</p>
           ) : selectedDayMeals.length === 0 ? (
             <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200">
-              No meals logged on this day.
+              No meals logged on this day. Tap "Add meal" to log one.
             </p>
           ) : (
             selectedDayMeals.map((meal) => (
               <MealCard
                 key={meal.id}
                 meal={meal}
-                onEdit={() => setEditingMeal(meal)}
+                onEdit={() => startEdit(meal)}
                 onDelete={() => meal.id != null && handleDelete(meal.id)}
               />
             ))
