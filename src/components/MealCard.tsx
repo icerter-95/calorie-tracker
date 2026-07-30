@@ -5,9 +5,10 @@ interface MealCardProps {
   meal: MealEntry
   onEdit: () => void
   onDelete: () => void
+  hideDelete?: boolean
 }
 
-export default function MealCard({ meal, onEdit, onDelete }: MealCardProps) {
+export default function MealCard({ meal, onEdit, onDelete, hideDelete }: MealCardProps) {
   return (
     <article className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200">
       <div className="mb-2 flex items-start justify-between gap-2">
@@ -24,12 +25,14 @@ export default function MealCard({ meal, onEdit, onDelete }: MealCardProps) {
           >
             Edit
           </button>
-          <button
-            onClick={onDelete}
-            className="rounded-lg px-2 py-1 text-sm text-red-600 hover:bg-red-50"
-          >
-            Delete
-          </button>
+          {!hideDelete && (
+            <button
+              onClick={onDelete}
+              className="rounded-lg px-2 py-1 text-sm text-red-600 hover:bg-red-50"
+            >
+              Delete
+            </button>
+          )}
         </div>
       </div>
 

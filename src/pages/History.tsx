@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import CalorieChart from '../components/CalorieChart'
-import MealCard from '../components/MealCard'
+import SwipeableMealCard from '../components/SwipeableMealCard'
 import MealForm from '../components/MealForm'
 import { addMeal, deleteMeal, updateMeal } from '../db'
 import { useAllMeals, useAllWeights } from '../hooks/useData'
@@ -91,9 +91,7 @@ export default function HistoryPage() {
   }
 
   async function handleDelete(id: number) {
-    if (window.confirm('Delete this meal?')) {
-      await deleteMeal(id)
-    }
+    await deleteMeal(id)
   }
 
   return (
@@ -179,7 +177,7 @@ export default function HistoryPage() {
             </p>
           ) : (
             selectedDayMeals.map((meal) => (
-              <MealCard
+              <SwipeableMealCard
                 key={meal.id}
                 meal={meal}
                 onEdit={() => startEdit(meal)}

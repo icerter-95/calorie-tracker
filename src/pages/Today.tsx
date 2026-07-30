@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { addMeal, deleteMeal, updateMeal } from '../db'
 import { useMealsForDate } from '../hooks/useData'
 import { formatDisplayDate, todayKey } from '../lib/dates'
-import MealCard from '../components/MealCard'
+import SwipeableMealCard from '../components/SwipeableMealCard'
 import MealForm from '../components/MealForm'
 import type { MealEntry } from '../types'
 
@@ -39,9 +39,7 @@ export default function TodayPage() {
   }
 
   async function handleDelete(id: number) {
-    if (window.confirm('Delete this meal?')) {
-      await deleteMeal(id)
-    }
+    await deleteMeal(id)
   }
 
   return (
@@ -86,7 +84,7 @@ export default function TodayPage() {
           </p>
         ) : (
           meals.map((meal) => (
-            <MealCard
+            <SwipeableMealCard
               key={meal.id}
               meal={meal}
               onEdit={() => startEdit(meal)}
