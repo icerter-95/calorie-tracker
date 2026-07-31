@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  @apply bg-stone-100 text-stone-900 antialiased;
+  @apply bg-stone-100 text-stone-900 antialiased dark:bg-stone-950 dark:text-stone-50;
 }
 
 input[type='date'],
