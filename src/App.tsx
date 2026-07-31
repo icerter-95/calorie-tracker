@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import HistoryPage from './pages/History'
 import TodayPage from './pages/Today'
+import UserPage from './pages/User'
 import WeightPage from './pages/Weight'
 
 export default function App() {
@@ -11,6 +12,7 @@ export default function App() {
         <Route index element={<TodayPage />} />
         <Route path="history" element={<HistoryPage />} />
         <Route path="weight" element={<WeightPage />} />
+        <Route path="user" element={<UserPage />} />
       </Route>
     </Routes>
   )

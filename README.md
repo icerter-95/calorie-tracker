@@ -21,6 +21,7 @@ Open the URL shown in the terminal (usually `http://localhost:5173`).
 - **Today** — Add, edit, and delete meals with multiple food items (manual kcal entry)
 - **History** — Weekly and monthly calorie charts with optional weight overlay
 - **Weight** — Log, edit, and delete weight entries (kg) with a trend chart
+- **User** — Profile placeholder, theme (light/dark/system), calorie goal, health connections, local data tools
 
 ## Stack
 

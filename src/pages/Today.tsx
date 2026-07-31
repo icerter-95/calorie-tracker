@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { addMeal, deleteMeal, updateMeal } from '../db'
 import { useMealsForDate } from '../hooks/useData'
+import { useSettings } from '../hooks/useSettings'
 import { formatDisplayDate, todayKey } from '../lib/dates'
 import SwipeableMealCard from '../components/SwipeableMealCard'
 import MealForm from '../components/MealForm'
@@ -9,10 +10,13 @@ import type { MealEntry } from '../types'
 export default function TodayPage() {
   const dateKey = todayKey()
   const meals = useMealsForDate(dateKey)
+  const { settings } = useSettings()
   const [showForm, setShowForm] = useState(false)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
 
   const totalCalories = (meals ?? []).reduce((sum, m) => sum + m.totalCalories, 0)
+  const goal = settings.dailyCalorieGoal
+  const remaining = goal - totalCalories
 
   async function handleSave(data: {
     date: string
@@ -47,7 +51,11 @@ export default function TodayPage() {
       <section className="rounded-2xl bg-teal-700 p-5 text-white shadow-sm">
         <p className="text-sm text-teal-100">{formatDisplayDate(dateKey)}</p>
         <p className="mt-1 text-3xl font-bold">{totalCalories} kcal</p>
-        <p className="text-sm text-teal-100">Today's intake</p>
+        <p className="text-sm text-teal-100">
+          {remaining >= 0
+            ? `${remaining} kcal left of ${goal}`
+            : `${Math.abs(remaining)} kcal over ${goal}`}
+        </p>
       </section>
 
       {!showForm && (
@@ -56,7 +64,7 @@ export default function TodayPage() {
             setEditingMeal(null)
             setShowForm(true)
           }}
-          className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50"
+          className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
         >
           + Add meal
         </button>
@@ -75,11 +83,13 @@ export default function TodayPage() {
       )}
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Meals</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          Meals
+        </h2>
         {meals === undefined ? (
-          <p className="text-sm text-stone-500">Loading…</p>
+          <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
         ) : meals.length === 0 ? (
-          <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200">
+          <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
             No meals logged yet. Tap "Add meal" to start.
           </p>
         ) : (
