@@ -2,20 +2,43 @@ import { DEFAULT_SETTINGS, type AppSettings } from '../types/settings'
 
 const STORAGE_KEY = 'calorie-tracker-settings'
 
+/** Older settings used a single `dailyCalorieGoal` field. */
+type StoredSettings = Partial<AppSettings> & {
+  dailyCalorieGoal?: number
+}
+
+function migrateSettings(parsed: StoredSettings): AppSettings {
+  const legacyGoal = parsed.dailyCalorieGoal
+  const calorieGoalLower =
+    parsed.calorieGoalLower ??
+    (typeof legacyGoal === 'number' ? legacyGoal : DEFAULT_SETTINGS.calorieGoalLower)
+
+  const calorieGoalUpper =
+    parsed.calorieGoalUpper ??
+    Math.max(calorieGoalLower + 400, Math.round(calorieGoalLower * 1.15))
+
+  return {
+    ...DEFAULT_SETTINGS,
+    ...parsed,
+    calorieGoalLower,
+    calorieGoalUpper,
+    proteinGoal: parsed.proteinGoal ?? DEFAULT_SETTINGS.proteinGoal,
+    carbsGoal: parsed.carbsGoal ?? DEFAULT_SETTINGS.carbsGoal,
+    fatGoal: parsed.fatGoal ?? DEFAULT_SETTINGS.fatGoal,
+    healthConnections: {
+      ...DEFAULT_SETTINGS.healthConnections,
+      ...parsed.healthConnections,
+    },
+  }
+}
+
 export function loadSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return structuredClone(DEFAULT_SETTINGS)
 
-    const parsed = JSON.parse(raw) as Partial<AppSettings>
-    return {
-      ...DEFAULT_SETTINGS,
-      ...parsed,
-      healthConnections: {
-        ...DEFAULT_SETTINGS.healthConnections,
-        ...parsed.healthConnections,
-      },
-    }
+    const parsed = JSON.parse(raw) as StoredSettings
+    return migrateSettings(parsed)
   } catch {
     return structuredClone(DEFAULT_SETTINGS)
   }

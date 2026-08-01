@@ -72,10 +72,10 @@ Gemini key stays in Supabase secrets (never in GitHub/Vite env).
 ## What works
 
 - **Login** — email + password; display name at signup (editable in User)
-- **Today** — meals with photo, plate description and/or items + macros; AI plate estimate; goal remaining
+- **Diary** — weekly calendar (Mon–Sun), day meals with photo / macros; dual calorie goals + macro targets; AI plate estimate
 - **History** — weekly/monthly calorie charts + weight overlay
 - **Weight** — log/edit/delete weight entries
-- **User** — profile/name, theme, calorie goal, health stubs, sample/clear cloud data, sign out
+- **User** — profile/name, theme, calorie & macro goals, health stubs, sample/clear cloud data, sign out
 
 ## Stack
 

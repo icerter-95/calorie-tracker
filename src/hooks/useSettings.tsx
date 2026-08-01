@@ -17,10 +17,18 @@ import type {
   ThemePreference,
 } from '../types/settings'
 
+interface GoalUpdates {
+  calorieGoalLower?: number
+  calorieGoalUpper?: number
+  proteinGoal?: number
+  carbsGoal?: number
+  fatGoal?: number
+}
+
 interface SettingsContextValue {
   settings: AppSettings
   setTheme: (theme: ThemePreference) => void
-  setDailyCalorieGoal: (goal: number) => void
+  updateGoals: (goals: GoalUpdates) => void
   toggleHealthConnection: (id: HealthConnectionId) => void
 }
 
@@ -55,8 +63,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings((prev) => ({ ...prev, theme }))
   }
 
-  function setDailyCalorieGoal(dailyCalorieGoal: number) {
-    setSettings((prev) => ({ ...prev, dailyCalorieGoal }))
+  function updateGoals(goals: GoalUpdates) {
+    setSettings((prev) => ({ ...prev, ...goals }))
   }
 
   function toggleHealthConnection(id: HealthConnectionId) {
@@ -79,7 +87,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   return (
     <SettingsContext.Provider
-      value={{ settings, setTheme, setDailyCalorieGoal, toggleHealthConnection }}
+      value={{ settings, setTheme, updateGoals, toggleHealthConnection }}
     >
       {children}
     </SettingsContext.Provider>

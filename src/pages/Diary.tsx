@@ -1,19 +1,26 @@
 import { useMemo, useState } from 'react'
 import { addMeal, deleteMeal, updateMeal } from '../db'
-import { useMealsForDate } from '../hooks/useData'
-import { useSettings } from '../hooks/useSettings'
-import { formatDisplayDate, todayKey } from '../lib/dates'
-import { roundMacro } from '../lib/macros'
-import { defaultMealTypeForNow } from '../lib/mealTypeDefaults'
+import DaySummaryCard from '../components/DaySummaryCard'
 import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
+import WeekCalendar from '../components/WeekCalendar'
+import { useAllMeals, useMealsForDate } from '../hooks/useData'
+import { useSettings } from '../hooks/useSettings'
+import { todayKey } from '../lib/dates'
+import { defaultMealTypeForNow } from '../lib/mealTypeDefaults'
 import type { MealEntry, MealInput, MealType } from '../types'
 import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
 
-export default function TodayPage() {
-  const dateKey = todayKey()
-  const { meals, error, reload } = useMealsForDate(dateKey)
+export default function DiaryPage() {
+  const [selectedDate, setSelectedDate] = useState(todayKey)
+  const { meals, error, reload } = useMealsForDate(selectedDate)
+  const { meals: allMeals, reload: reloadAllMeals } = useAllMeals()
   const { settings } = useSettings()
+
+  function reloadDayAndWeek() {
+    reload()
+    reloadAllMeals()
+  }
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
   const [addTarget, setAddTarget] = useState<MealType | null>(null)
   const [defaultMealType, setDefaultMealType] = useState<MealType>(defaultMealTypeForNow)
@@ -23,8 +30,16 @@ export default function TodayPage() {
   const totalProtein = (meals ?? []).reduce((sum, m) => sum + m.proteinG, 0)
   const totalCarbs = (meals ?? []).reduce((sum, m) => sum + m.carbsG, 0)
   const totalFat = (meals ?? []).reduce((sum, m) => sum + m.fatG, 0)
-  const goal = settings.dailyCalorieGoal
-  const remaining = goal - totalCalories
+
+  const { caloriesByDate, hasEntriesByDate } = useMemo(() => {
+    const calories: Record<string, number> = {}
+    const hasEntries: Record<string, boolean> = {}
+    for (const meal of allMeals ?? []) {
+      calories[meal.date] = (calories[meal.date] ?? 0) + meal.totalCalories
+      hasEntries[meal.date] = true
+    }
+    return { caloriesByDate: calories, hasEntriesByDate: hasEntries }
+  }, [allMeals])
 
   const bySlot = useMemo(() => {
     const map = Object.fromEntries(MEAL_TYPE_ORDER.map((t) => [t, [] as MealEntry[]])) as Record<
@@ -36,6 +51,13 @@ export default function TodayPage() {
     }
     return map
   }, [meals])
+
+  function selectDate(dateKey: string) {
+    setSelectedDate(dateKey)
+    setEditingMeal(null)
+    setAddTarget(null)
+    setActionError(null)
+  }
 
   function closeForm() {
     setEditingMeal(null)
@@ -51,7 +73,7 @@ export default function TodayPage() {
         await addMeal(data)
       }
       closeForm()
-      reload()
+      reloadDayAndWeek()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not save meal')
     }
@@ -74,7 +96,7 @@ export default function TodayPage() {
     try {
       if (editingMeal?.id === id) closeForm()
       await deleteMeal(id)
-      reload()
+      reloadDayAndWeek()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not delete meal')
     }
@@ -83,7 +105,7 @@ export default function TodayPage() {
   const form = (
     <MealForm
       initial={editingMeal ?? undefined}
-      defaultDate={dateKey}
+      defaultDate={selectedDate}
       defaultMealType={editingMeal ? undefined : defaultMealType}
       onSave={handleSave}
       onCancel={closeForm}
@@ -93,18 +115,26 @@ export default function TodayPage() {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-2xl bg-teal-700 p-5 text-white shadow-sm">
-        <p className="text-sm text-teal-100">{formatDisplayDate(dateKey)}</p>
-        <p className="mt-1 text-3xl font-bold">{totalCalories} kcal</p>
-        <p className="text-sm text-teal-100">
-          {remaining >= 0
-            ? `${remaining} kcal left of ${goal}`
-            : `${Math.abs(remaining)} kcal over ${goal}`}
-        </p>
-        <p className="mt-1 text-xs text-teal-100/90">
-          P {roundMacro(totalProtein)}g · C {roundMacro(totalCarbs)}g · F {roundMacro(totalFat)}g
-        </p>
-      </section>
+      <WeekCalendar
+        selectedDate={selectedDate}
+        onSelectDate={selectDate}
+        caloriesByDate={caloriesByDate}
+        hasEntriesByDate={hasEntriesByDate}
+        calorieGoalLower={settings.calorieGoalLower}
+        calorieGoalUpper={settings.calorieGoalUpper}
+      />
+
+      <DaySummaryCard
+        totalCalories={totalCalories}
+        totalProtein={totalProtein}
+        totalCarbs={totalCarbs}
+        totalFat={totalFat}
+        calorieGoalLower={settings.calorieGoalLower}
+        calorieGoalUpper={settings.calorieGoalUpper}
+        proteinGoal={settings.proteinGoal}
+        carbsGoal={settings.carbsGoal}
+        fatGoal={settings.fatGoal}
+      />
 
       {(error || actionError) && (
         <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">

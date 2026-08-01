@@ -50,8 +50,12 @@ export default function UserPage() {
     startAddAccount,
     removeSavedAccountFromDevice,
   } = useAuth()
-  const { settings, setTheme, setDailyCalorieGoal, toggleHealthConnection } = useSettings()
-  const [goalDraft, setGoalDraft] = useState(String(settings.dailyCalorieGoal))
+  const { settings, setTheme, updateGoals, toggleHealthConnection } = useSettings()
+  const [calorieLowerDraft, setCalorieLowerDraft] = useState(String(settings.calorieGoalLower))
+  const [calorieUpperDraft, setCalorieUpperDraft] = useState(String(settings.calorieGoalUpper))
+  const [proteinDraft, setProteinDraft] = useState(String(settings.proteinGoal))
+  const [carbsDraft, setCarbsDraft] = useState(String(settings.carbsGoal))
+  const [fatDraft, setFatDraft] = useState(String(settings.fatGoal))
   const [goalSaved, setGoalSaved] = useState(false)
   const [nameDraft, setNameDraft] = useState(getDisplayName(user))
   const [nameSaved, setNameSaved] = useState(false)
@@ -89,16 +93,51 @@ export default function UserPage() {
   const displayName = getDisplayName(user)
   const initials = getInitials(displayName)
 
-  function handleGoalBlur() {
-    const parsed = Math.round(Number(goalDraft))
-    if (!parsed || parsed < 800 || parsed > 6000) {
-      setGoalDraft(String(settings.dailyCalorieGoal))
-      return
-    }
-    setDailyCalorieGoal(parsed)
-    setGoalDraft(String(parsed))
+  function markGoalSaved() {
     setGoalSaved(true)
     window.setTimeout(() => setGoalSaved(false), 1500)
+  }
+
+  function handleCalorieLowerBlur() {
+    const parsed = Math.round(Number(calorieLowerDraft))
+    if (!parsed || parsed < 800 || parsed > 6000) {
+      setCalorieLowerDraft(String(settings.calorieGoalLower))
+      return
+    }
+    const upper = Math.max(settings.calorieGoalUpper, parsed)
+    updateGoals({ calorieGoalLower: parsed, calorieGoalUpper: upper })
+    setCalorieLowerDraft(String(parsed))
+    if (upper !== settings.calorieGoalUpper) setCalorieUpperDraft(String(upper))
+    markGoalSaved()
+  }
+
+  function handleCalorieUpperBlur() {
+    const parsed = Math.round(Number(calorieUpperDraft))
+    if (!parsed || parsed < 800 || parsed > 6000) {
+      setCalorieUpperDraft(String(settings.calorieGoalUpper))
+      return
+    }
+    const lower = Math.min(settings.calorieGoalLower, parsed)
+    updateGoals({ calorieGoalUpper: parsed, calorieGoalLower: lower })
+    setCalorieUpperDraft(String(parsed))
+    if (lower !== settings.calorieGoalLower) setCalorieLowerDraft(String(lower))
+    markGoalSaved()
+  }
+
+  function handleMacroBlur(
+    draft: string,
+    current: number,
+    setDraft: (v: string) => void,
+    key: 'proteinGoal' | 'carbsGoal' | 'fatGoal',
+  ) {
+    const parsed = Math.round(Number(draft))
+    if (!parsed || parsed < 1 || parsed > 1000) {
+      setDraft(String(current))
+      return
+    }
+    updateGoals({ [key]: parsed })
+    setDraft(String(parsed))
+    markGoalSaved()
   }
 
   async function handleNameSave() {
@@ -390,13 +429,17 @@ export default function UserPage() {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
           Goals
         </h2>
-        <div className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+        <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium text-stone-800 dark:text-stone-100">Calories</p>
+            {goalSaved && (
+              <span className="text-xs font-medium text-teal-700 dark:text-teal-400">Saved</span>
+            )}
+          </div>
+
           <label className="block text-sm">
-            <span className="mb-1 flex items-center justify-between text-stone-600 dark:text-stone-300">
-              Daily calorie target
-              {goalSaved && (
-                <span className="text-xs font-medium text-teal-700 dark:text-teal-400">Saved</span>
-              )}
+            <span className="mb-1 block text-stone-600 dark:text-stone-300">
+              Lower goal (weight loss)
             </span>
             <div className="flex items-center gap-2">
               <input
@@ -404,9 +447,9 @@ export default function UserPage() {
                 min={800}
                 max={6000}
                 step={50}
-                value={goalDraft}
-                onChange={(e) => setGoalDraft(e.target.value)}
-                onBlur={handleGoalBlur}
+                value={calorieLowerDraft}
+                onChange={(e) => setCalorieLowerDraft(e.target.value)}
+                onBlur={handleCalorieLowerBlur}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
                 }}
@@ -415,9 +458,106 @@ export default function UserPage() {
               <span className="shrink-0 text-sm text-stone-500 dark:text-stone-400">kcal</span>
             </div>
           </label>
-          <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
-            Used as your daily target on Today. Units stay metric (kg, kcal).
+
+          <label className="block text-sm">
+            <span className="mb-1 block text-stone-600 dark:text-stone-300">
+              Higher limit (maintenance)
+            </span>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={800}
+                max={6000}
+                step={50}
+                value={calorieUpperDraft}
+                onChange={(e) => setCalorieUpperDraft(e.target.value)}
+                onBlur={handleCalorieUpperBlur}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                }}
+                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+              />
+              <span className="shrink-0 text-sm text-stone-500 dark:text-stone-400">kcal</span>
+            </div>
+          </label>
+
+          <p className="text-xs text-stone-500 dark:text-stone-400">
+            Diary dots: green under lower, yellow between, red over higher.
           </p>
+
+          <div className="border-t border-stone-200 pt-4 dark:border-stone-700">
+            <p className="mb-3 text-sm font-medium text-stone-800 dark:text-stone-100">Macros</p>
+            <div className="grid grid-cols-3 gap-3">
+              <label className="block text-sm">
+                <span className="mb-1 block text-stone-600 dark:text-stone-300">Protein</span>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    step={5}
+                    value={proteinDraft}
+                    onChange={(e) => setProteinDraft(e.target.value)}
+                    onBlur={() =>
+                      handleMacroBlur(
+                        proteinDraft,
+                        settings.proteinGoal,
+                        setProteinDraft,
+                        'proteinGoal',
+                      )
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                    }}
+                    className="w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                  />
+                  <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">g</span>
+                </div>
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block text-stone-600 dark:text-stone-300">Carbs</span>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    step={5}
+                    value={carbsDraft}
+                    onChange={(e) => setCarbsDraft(e.target.value)}
+                    onBlur={() =>
+                      handleMacroBlur(carbsDraft, settings.carbsGoal, setCarbsDraft, 'carbsGoal')
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                    }}
+                    className="w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                  />
+                  <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">g</span>
+                </div>
+              </label>
+              <label className="block text-sm">
+                <span className="mb-1 block text-stone-600 dark:text-stone-300">Fat</span>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    step={5}
+                    value={fatDraft}
+                    onChange={(e) => setFatDraft(e.target.value)}
+                    onBlur={() =>
+                      handleMacroBlur(fatDraft, settings.fatGoal, setFatDraft, 'fatGoal')
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+                    }}
+                    className="w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                  />
+                  <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">g</span>
+                </div>
+              </label>
+            </div>
+          </div>
         </div>
       </section>
 
