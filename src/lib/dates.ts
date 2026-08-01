@@ -31,11 +31,11 @@ export function formatShortDate(dateKey: string): string {
   return format(parseISO(dateKey), 'd MMM')
 }
 
-/** Page heading: "Today" when current day, otherwise weekday name. */
+/** Page heading: "Today" when current day, otherwise e.g. "July 28". */
 export function formatDayHeading(dateKey: string): string {
   const date = parseISO(dateKey)
   if (isToday(date)) return 'Today'
-  return format(date, 'EEEE')
+  return format(date, 'MMMM d')
 }
 
 export function getWeekRange(reference: Date | string = new Date()) {
