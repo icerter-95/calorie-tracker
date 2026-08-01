@@ -168,16 +168,18 @@ export default function TodayPage() {
                   )
                 ) : (
                   <>
-                    {slotMeals.map((meal) => (
-                      <div key={meal.id} className="space-y-2">
+                    {slotMeals.map((meal) =>
+                      editingMeal?.id === meal.id ? (
+                        <div key={meal.id}>{form}</div>
+                      ) : (
                         <MealCard
+                          key={meal.id}
                           meal={meal}
                           hideMealType
                           onEdit={() => startEdit(meal)}
                         />
-                        {editingMeal?.id === meal.id && form}
-                      </div>
-                    ))}
+                      ),
+                    )}
                     {addingHere ? (
                       form
                     ) : (
