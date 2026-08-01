@@ -31,7 +31,7 @@ export default function Layout() {
         <div className="mx-auto flex max-w-lg">
           <NavLink to="/" end className={linkClass}>
             <span aria-hidden>📋</span>
-            Today
+            Diary
           </NavLink>
           <NavLink to="/history" className={linkClass}>
             <span aria-hidden>📊</span>

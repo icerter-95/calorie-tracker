@@ -15,7 +15,7 @@ A personal PWA to log meals (initially manual, later via photo), see daily calor
 - **Meal shape:** Meal container with optional plate `description` / `photo_url`, JSON `items`, and macro totals (calories, protein, carbs, fat)
 - **Photos:** Compressed client-side (~1280px JPEG), stored in private Supabase Storage bucket `meal-photos` (path `{user_id}/{uuid}.jpg`)
 - **AI estimate:** Gemini Flash via Supabase Edge Function `estimate-meal` (whole-plate totals; user always edits before save)
-- **Settings:** Theme + daily calorie goal in localStorage; health connection stubs on User tab
+- **Settings:** Theme + dual calorie goals (lower/upper) + macro goals in localStorage; health connection stubs on User tab
 - **Data entry:** Manual confirm with ability to edit before saving
 - **Weight:** Manual entry
 - **Locale:** English UI; metric units (kg, kcal, grams)

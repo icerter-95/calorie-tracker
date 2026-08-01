@@ -4,7 +4,7 @@ import Layout from './components/Layout'
 import HistoryPage from './pages/History'
 import InsightsPage from './pages/Insights'
 import LoginPage from './pages/Login'
-import TodayPage from './pages/Today'
+import DiaryPage from './pages/Diary'
 import UserPage from './pages/User'
 import WeightPage from './pages/Weight'
 
@@ -26,7 +26,7 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<TodayPage />} />
+        <Route index element={<DiaryPage />} />
         <Route path="history" element={<HistoryPage />} />
         <Route path="insights" element={<InsightsPage />} />
         <Route path="weight" element={<WeightPage />} />
