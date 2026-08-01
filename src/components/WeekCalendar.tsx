@@ -98,7 +98,7 @@ export default function WeekCalendar({
               <span
                 className={`flex h-7 w-7 items-center justify-center text-xs font-medium ${
                   selected
-                    ? 'rounded-full bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900'
+                    ? 'rounded-full bg-teal-700 text-white'
                     : 'text-stone-500 dark:text-stone-400'
                 }`}
               >
@@ -106,11 +106,9 @@ export default function WeekCalendar({
               </span>
               <span
                 className={`text-sm font-semibold tabular-nums ${
-                  selected
-                    ? 'text-amber-600 dark:text-amber-400'
-                    : isToday
-                      ? 'text-teal-700 dark:text-teal-400'
-                      : 'text-stone-800 dark:text-stone-100'
+                  selected || isToday
+                    ? 'text-teal-700 dark:text-teal-400'
+                    : 'text-stone-800 dark:text-stone-100'
                 }`}
               >
                 {format(date, 'd')}
