@@ -1,8 +1,10 @@
-import { useState } from 'react'
-import { db } from '../db'
+import { useEffect, useState } from 'react'
+import { useAuth } from '../auth/AuthProvider'
+import { clearAllUserData } from '../db'
 import { seedSampleData } from '../db/seed'
 import { useSettings } from '../hooks/useSettings'
-import { PLACEHOLDER_USER, type ThemePreference } from '../types/settings'
+import { getDisplayName, getInitials } from '../lib/userProfile'
+import type { ThemePreference } from '../types/settings'
 
 const THEME_OPTIONS: { value: ThemePreference; label: string; hint: string }[] = [
   { value: 'light', label: 'Light', hint: 'Always light' },
@@ -34,9 +36,22 @@ function formatSyncTime(ts?: number) {
 }
 
 export default function UserPage() {
+  const { user, updateDisplayName, signOut } = useAuth()
   const { settings, setTheme, setDailyCalorieGoal, toggleHealthConnection } = useSettings()
   const [goalDraft, setGoalDraft] = useState(String(settings.dailyCalorieGoal))
   const [goalSaved, setGoalSaved] = useState(false)
+  const [nameDraft, setNameDraft] = useState(getDisplayName(user))
+  const [nameSaved, setNameSaved] = useState(false)
+  const [nameError, setNameError] = useState<string | null>(null)
+  const [dataBusy, setDataBusy] = useState(false)
+  const [dataError, setDataError] = useState<string | null>(null)
+
+  useEffect(() => {
+    setNameDraft(getDisplayName(user))
+  }, [user])
+
+  const displayName = getDisplayName(user)
+  const initials = getInitials(displayName)
 
   function handleGoalBlur() {
     const parsed = Math.round(Number(goalDraft))
@@ -50,23 +65,48 @@ export default function UserPage() {
     window.setTimeout(() => setGoalSaved(false), 1500)
   }
 
-  async function loadSampleData() {
-    if (!window.confirm('Replace all data with sample meals and weight entries?')) return
-    await seedSampleData()
-    window.location.reload()
+  async function handleNameSave() {
+    setNameError(null)
+    try {
+      await updateDisplayName(nameDraft)
+      setNameSaved(true)
+      window.setTimeout(() => setNameSaved(false), 1500)
+    } catch (err) {
+      setNameError(err instanceof Error ? err.message : 'Could not update name')
+      setNameDraft(getDisplayName(user))
+    }
   }
 
-  async function clearLocalData() {
+  async function loadSampleData() {
+    if (!window.confirm('Replace all your cloud meals and weight entries with sample data?')) return
+    setDataBusy(true)
+    setDataError(null)
+    try {
+      await seedSampleData()
+      window.location.reload()
+    } catch (err) {
+      setDataError(err instanceof Error ? err.message : 'Could not load sample data')
+      setDataBusy(false)
+    }
+  }
+
+  async function clearCloudData() {
     if (
       !window.confirm(
-        'Delete all meals and weight entries stored in this browser? This cannot be undone.',
+        'Delete all meals and weight entries for your account in the cloud? This cannot be undone.',
       )
     ) {
       return
     }
-    await db.meals.clear()
-    await db.weights.clear()
-    window.location.reload()
+    setDataBusy(true)
+    setDataError(null)
+    try {
+      await clearAllUserData()
+      window.location.reload()
+    } catch (err) {
+      setDataError(err instanceof Error ? err.message : 'Could not clear data')
+      setDataBusy(false)
+    }
   }
 
   return (
@@ -77,20 +117,46 @@ export default function UserPage() {
             className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-teal-700 text-lg font-semibold text-white"
             aria-hidden
           >
-            {PLACEHOLDER_USER.initials}
+            {initials}
           </div>
           <div className="min-w-0">
             <h2 className="truncate text-lg font-semibold text-stone-900 dark:text-stone-50">
-              {PLACEHOLDER_USER.displayName}
+              {displayName}
             </h2>
-            <p className="truncate text-sm text-stone-500 dark:text-stone-400">
-              {PLACEHOLDER_USER.email}
-            </p>
+            <p className="truncate text-sm text-stone-500 dark:text-stone-400">{user?.email}</p>
             <p className="mt-1 text-xs font-medium text-teal-700 dark:text-teal-400">
-              Signed in · local account
+              Signed in · cloud account
             </p>
           </div>
         </div>
+
+        <label className="mt-4 block text-sm">
+          <span className="mb-1 flex items-center justify-between text-stone-600 dark:text-stone-300">
+            Display name
+            {nameSaved && (
+              <span className="text-xs font-medium text-teal-700 dark:text-teal-400">Saved</span>
+            )}
+          </span>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') void handleNameSave()
+              }}
+              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+            />
+            <button
+              type="button"
+              onClick={() => void handleNameSave()}
+              className="shrink-0 rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+            >
+              Save
+            </button>
+          </div>
+          {nameError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{nameError}</p>}
+        </label>
       </section>
 
       <section className="space-y-3">
@@ -206,11 +272,17 @@ export default function UserPage() {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
           Data
         </h2>
+        {dataError && (
+          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+            {dataError}
+          </p>
+        )}
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
           <button
             type="button"
-            onClick={loadSampleData}
-            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-stone-800 hover:bg-stone-50 dark:text-stone-100 dark:hover:bg-stone-800"
+            disabled={dataBusy}
+            onClick={() => void loadSampleData()}
+            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-stone-800 hover:bg-stone-50 disabled:opacity-60 dark:text-stone-100 dark:hover:bg-stone-800"
           >
             Load sample data
             <span className="text-stone-400">→</span>
@@ -218,13 +290,17 @@ export default function UserPage() {
           <div className="border-t border-stone-100 dark:border-stone-800" />
           <button
             type="button"
-            onClick={clearLocalData}
-            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+            disabled={dataBusy}
+            onClick={() => void clearCloudData()}
+            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-950/40"
           >
-            Clear all local data
+            Clear all cloud data
             <span className="text-red-300 dark:text-red-700">→</span>
           </button>
         </div>
+        <p className="text-xs text-stone-500 dark:text-stone-400">
+          Sample data replaces meals and weights in your Supabase account (useful while testing).
+        </p>
       </section>
 
       <section className="space-y-3">
@@ -233,14 +309,13 @@ export default function UserPage() {
         </h2>
         <button
           type="button"
-          disabled
-          title="Auth coming soon"
-          className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-stone-400 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-500 dark:ring-stone-700"
+          onClick={() => void signOut()}
+          className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-stone-800 shadow-sm ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:text-stone-100 dark:ring-stone-700 dark:hover:bg-stone-800"
         >
           Sign out
         </button>
         <p className="text-center text-xs text-stone-400 dark:text-stone-500">
-          Calorie Tracker · v0.1.0 · data stays on this device
+          Calorie Tracker · v0.1.0 · synced with Supabase
         </p>
       </section>
     </div>

@@ -30,7 +30,20 @@ export function resolveTheme(preference: AppSettings['theme']): 'light' | 'dark'
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
+/** Apply resolved theme to <html>. Light must win over the phone OS dark mode. */
 export function applyThemeClass(resolved: 'light' | 'dark') {
-  document.documentElement.classList.toggle('dark', resolved === 'dark')
-  document.documentElement.style.colorScheme = resolved
+  const root = document.documentElement
+
+  root.dataset.theme = resolved
+  root.classList.toggle('dark', resolved === 'dark')
+  root.style.colorScheme = resolved
+
+  let meta = document.querySelector('meta[name="color-scheme"]')
+  if (!meta) {
+    meta = document.createElement('meta')
+    meta.setAttribute('name', 'color-scheme')
+    document.head.appendChild(meta)
+  }
+  // "only light" / "only dark" stops Safari from auto-forcing OS appearance.
+  meta.setAttribute('content', resolved === 'dark' ? 'only dark' : 'only light')
 }

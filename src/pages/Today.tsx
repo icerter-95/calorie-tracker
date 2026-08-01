@@ -3,38 +3,40 @@ import { addMeal, deleteMeal, updateMeal } from '../db'
 import { useMealsForDate } from '../hooks/useData'
 import { useSettings } from '../hooks/useSettings'
 import { formatDisplayDate, todayKey } from '../lib/dates'
+import { roundMacro } from '../lib/macros'
 import SwipeableMealCard from '../components/SwipeableMealCard'
 import MealForm from '../components/MealForm'
-import type { MealEntry } from '../types'
+import type { MealEntry, MealInput } from '../types'
 
 export default function TodayPage() {
   const dateKey = todayKey()
-  const meals = useMealsForDate(dateKey)
+  const { meals, error, reload } = useMealsForDate(dateKey)
   const { settings } = useSettings()
   const [showForm, setShowForm] = useState(false)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const totalCalories = (meals ?? []).reduce((sum, m) => sum + m.totalCalories, 0)
+  const totalProtein = (meals ?? []).reduce((sum, m) => sum + m.proteinG, 0)
+  const totalCarbs = (meals ?? []).reduce((sum, m) => sum + m.carbsG, 0)
+  const totalFat = (meals ?? []).reduce((sum, m) => sum + m.fatG, 0)
   const goal = settings.dailyCalorieGoal
   const remaining = goal - totalCalories
 
-  async function handleSave(data: {
-    date: string
-    mealType: MealEntry['mealType']
-    items: MealEntry['items']
-    note?: string
-  }) {
-    const totalCalories = data.items.reduce((sum, item) => sum + item.calories, 0)
-    const payload = { ...data, totalCalories, createdAt: Date.now() }
-
-    if (editingMeal?.id != null) {
-      await updateMeal(editingMeal.id, { ...payload, createdAt: editingMeal.createdAt })
-    } else {
-      await addMeal(payload)
+  async function handleSave(data: MealInput) {
+    setActionError(null)
+    try {
+      if (editingMeal) {
+        await updateMeal(editingMeal.id, data)
+      } else {
+        await addMeal(data)
+      }
+      setShowForm(false)
+      setEditingMeal(null)
+      reload()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not save meal')
     }
-
-    setShowForm(false)
-    setEditingMeal(null)
   }
 
   function startEdit(meal: MealEntry) {
@@ -42,8 +44,15 @@ export default function TodayPage() {
     setShowForm(true)
   }
 
-  async function handleDelete(id: number) {
-    await deleteMeal(id)
+  async function handleDelete(id: string) {
+    if (!window.confirm('Delete this meal?')) return
+    setActionError(null)
+    try {
+      await deleteMeal(id)
+      reload()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not delete meal')
+    }
   }
 
   return (
@@ -56,7 +65,16 @@ export default function TodayPage() {
             ? `${remaining} kcal left of ${goal}`
             : `${Math.abs(remaining)} kcal over ${goal}`}
         </p>
+        <p className="mt-1 text-xs text-teal-100/90">
+          P {roundMacro(totalProtein)}g · C {roundMacro(totalCarbs)}g · F {roundMacro(totalFat)}g
+        </p>
       </section>
+
+      {(error || actionError) && (
+        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+          {actionError ?? error}
+        </p>
+      )}
 
       {!showForm && (
         <button
@@ -98,7 +116,7 @@ export default function TodayPage() {
               key={meal.id}
               meal={meal}
               onEdit={() => startEdit(meal)}
-              onDelete={() => meal.id != null && handleDelete(meal.id)}
+              onDelete={() => handleDelete(meal.id)}
             />
           ))
         )}

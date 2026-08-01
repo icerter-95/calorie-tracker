@@ -1,19 +1,19 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
-import App from './App'
+import { AuthProvider } from './auth/AuthProvider'
 import { SettingsProvider } from './hooks/useSettings'
-import { seedIfEmpty } from './db/seed'
+import App from './App'
 import './index.css'
 
-seedIfEmpty().then(() => {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <AuthProvider>
       <BrowserRouter basename="/calorie-tracker">
         <SettingsProvider>
           <App />
         </SettingsProvider>
       </BrowserRouter>
-    </StrictMode>,
-  )
-})
+    </AuthProvider>
+  </StrictMode>,
+)

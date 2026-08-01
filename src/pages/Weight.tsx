@@ -14,12 +14,13 @@ import { formatShortDate, todayKey } from '../lib/dates'
 import type { WeightEntry } from '../types'
 
 export default function WeightPage() {
-  const weights = useAllWeights()
+  const { weights, error, reload } = useAllWeights()
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<WeightEntry | null>(null)
   const [date, setDate] = useState(todayKey())
   const [weightKg, setWeightKg] = useState('')
   const [note, setNote] = useState('')
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const chartData = useMemo(
     () =>
@@ -31,6 +32,15 @@ export default function WeightPage() {
   )
 
   const latest = weights?.length ? weights[weights.length - 1] : undefined
+
+  const yDomain = useMemo(() => {
+    if (!weights?.length) return [70, 90] as [number, number]
+    const values = weights.map((w) => w.weightKg)
+    const min = Math.min(...values)
+    const max = Math.max(...values)
+    const pad = Math.max(1, (max - min) * 0.15)
+    return [Math.floor(min - pad), Math.ceil(max + pad)] as [number, number]
+  }, [weights])
 
   function openNewForm() {
     setEditing(null)
@@ -57,22 +67,31 @@ export default function WeightPage() {
       date,
       weightKg: parsed,
       note: note.trim() || undefined,
-      createdAt: Date.now(),
     }
 
-    if (editing?.id != null) {
-      await updateWeight(editing.id, { ...payload, createdAt: editing.createdAt })
-    } else {
-      await addWeight(payload)
+    setActionError(null)
+    try {
+      if (editing) {
+        await updateWeight(editing.id, payload)
+      } else {
+        await addWeight(payload)
+      }
+      setShowForm(false)
+      setEditing(null)
+      reload()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not save weight')
     }
-
-    setShowForm(false)
-    setEditing(null)
   }
 
-  async function handleDelete(id: number) {
-    if (window.confirm('Delete this weight entry?')) {
+  async function handleDelete(id: string) {
+    if (!window.confirm('Delete this weight entry?')) return
+    setActionError(null)
+    try {
       await deleteWeight(id)
+      reload()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not delete weight')
     }
   }
 
@@ -86,44 +105,52 @@ export default function WeightPage() {
         {latest && <p className="text-sm text-amber-100">{formatShortDate(latest.date)}</p>}
       </section>
 
+      {(error || actionError) && (
+        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+          {actionError ?? error}
+        </p>
+      )}
+
       {!showForm ? (
         <button
           onClick={openNewForm}
-          className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-amber-800 shadow-sm ring-1 ring-stone-200 hover:bg-amber-50"
+          className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-amber-800 shadow-sm ring-1 ring-stone-200 hover:bg-amber-50 dark:bg-stone-900 dark:text-amber-400 dark:ring-stone-700 dark:hover:bg-stone-800"
         >
           + Log weight
         </button>
       ) : (
         <form
           onSubmit={handleSubmit}
-          className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200"
+          className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
         >
           <div className="flex items-center justify-between">
-            <h2 className="font-semibold">{editing ? 'Edit entry' : 'Log weight'}</h2>
+            <h2 className="font-semibold text-stone-900 dark:text-stone-50">
+              {editing ? 'Edit entry' : 'Log weight'}
+            </h2>
             <button
               type="button"
               onClick={() => {
                 setShowForm(false)
                 setEditing(null)
               }}
-              className="text-sm text-stone-500"
+              className="text-sm text-stone-500 dark:text-stone-400"
             >
               Cancel
             </button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <label className="block text-sm">
-              <span className="mb-1 block text-stone-600">Date</span>
+              <span className="mb-1 block text-stone-600 dark:text-stone-300">Date</span>
               <input
                 type="date"
                 required
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
               />
             </label>
             <label className="block text-sm">
-              <span className="mb-1 block text-stone-600">Weight (kg)</span>
+              <span className="mb-1 block text-stone-600 dark:text-stone-300">Weight (kg)</span>
               <input
                 type="number"
                 required
@@ -131,17 +158,17 @@ export default function WeightPage() {
                 step={0.1}
                 value={weightKg}
                 onChange={(e) => setWeightKg(e.target.value)}
-                className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
               />
             </label>
           </div>
           <label className="block text-sm">
-            <span className="mb-1 block text-stone-600">Note (optional)</span>
+            <span className="mb-1 block text-stone-600 dark:text-stone-300">Note (optional)</span>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full rounded-lg border border-stone-300 px-3 py-2 text-sm"
+              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
             />
           </label>
           <button
@@ -154,52 +181,50 @@ export default function WeightPage() {
       )}
 
       {chartData.length > 0 ? (
-        <div className="rounded-2xl bg-white p-3 ring-1 ring-stone-200">
+        <div className="rounded-2xl bg-white p-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={chartData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
               <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis
-                tick={{ fontSize: 11 }}
-                width={40}
-                tickMargin={6}
-                domain={[70, 90]}
-                ticks={[70, 75, 80, 85, 90]}
-              />
+              <YAxis tick={{ fontSize: 11 }} width={40} tickMargin={6} domain={yDomain} />
               <Tooltip formatter={(v: number) => [`${v} kg`, 'Weight']} />
               <Line type="monotone" dataKey="weightKg" stroke="#b45309" strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
       ) : (
-        <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200">
+        <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
           No weight entries yet.
         </p>
       )}
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">History</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+          History
+        </h2>
         {(weights ?? []).length === 0 ? null : (
           <ul className="space-y-2">
             {[...(weights ?? [])].reverse().map((entry) => (
               <li
                 key={entry.id}
-                className="flex items-center justify-between rounded-xl bg-white px-4 py-3 ring-1 ring-stone-200"
+                className="flex items-center justify-between rounded-xl bg-white px-4 py-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
               >
                 <div>
-                  <p className="font-medium text-stone-900">{entry.weightKg} kg</p>
-                  <p className="text-sm text-stone-500">{formatShortDate(entry.date)}</p>
+                  <p className="font-medium text-stone-900 dark:text-stone-50">{entry.weightKg} kg</p>
+                  <p className="text-sm text-stone-500 dark:text-stone-400">
+                    {formatShortDate(entry.date)}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => openEditForm(entry)}
-                    className="text-sm text-stone-600 hover:text-stone-900"
+                    className="text-sm text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-50"
                   >
                     Edit
                   </button>
                   <button
-                    onClick={() => entry.id != null && handleDelete(entry.id)}
-                    className="text-sm text-red-600 hover:text-red-700"
+                    onClick={() => handleDelete(entry.id)}
+                    className="text-sm text-red-600 hover:text-red-700 dark:text-red-400"
                   >
                     Delete
                   </button>

@@ -1,4 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '../auth/AuthProvider'
+import { getDisplayName } from '../lib/userProfile'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium transition-colors ${
@@ -8,12 +10,15 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
   }`
 
 export default function Layout() {
+  const { user } = useAuth()
+  const name = getDisplayName(user)
+
   return (
     <div className="mx-auto flex min-h-screen max-w-lg flex-col">
       <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/90 px-4 py-4 backdrop-blur dark:border-stone-800 dark:bg-stone-950/90">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold text-stone-900 dark:text-stone-50">
-            keep it up, Ignasi
+          <h1 className="truncate text-lg font-semibold text-stone-900 dark:text-stone-50">
+            keep it up, {name}
           </h1>
         </div>
       </header>

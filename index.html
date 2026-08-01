@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0f766e" />
+    <meta name="color-scheme" content="light dark" />
     <title>Calorie Tracker</title>
     <script>
       (function () {
@@ -14,8 +15,12 @@
             theme === 'dark' ||
             (theme !== 'light' &&
               window.matchMedia('(prefers-color-scheme: dark)').matches)
+          var resolved = dark ? 'dark' : 'light'
+          document.documentElement.dataset.theme = resolved
           document.documentElement.classList.toggle('dark', dark)
-          document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
+          document.documentElement.style.colorScheme = resolved
+          var meta = document.querySelector('meta[name="color-scheme"]')
+          if (meta) meta.setAttribute('content', dark ? 'only dark' : 'only light')
         } catch (e) {}
       })()
     </script>

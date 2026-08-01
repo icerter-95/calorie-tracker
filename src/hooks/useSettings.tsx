@@ -2,7 +2,6 @@ import {
   createContext,
   useContext,
   useEffect,
-  useEffectEvent,
   useState,
   type ReactNode,
 } from 'react'
@@ -27,16 +26,19 @@ interface SettingsContextValue {
 
 const SettingsContext = createContext<SettingsContextValue | null>(null)
 
-export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<AppSettings>(() => loadSettings())
+function readInitialSettings(): AppSettings {
+  const initial = loadSettings()
+  // Sync before first paint of React tree.
+  applyThemeClass(resolveTheme(initial.theme))
+  return initial
+}
 
-  const syncTheme = useEffectEvent(() => {
-    applyThemeClass(resolveTheme(settings.theme))
-  })
+export function SettingsProvider({ children }: { children: ReactNode }) {
+  const [settings, setSettings] = useState<AppSettings>(readInitialSettings)
 
   useEffect(() => {
     saveSettings(settings)
-    syncTheme()
+    applyThemeClass(resolveTheme(settings.theme))
   }, [settings])
 
   useEffect(() => {
@@ -49,6 +51,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings.theme])
 
   function setTheme(theme: ThemePreference) {
+    applyThemeClass(resolveTheme(theme))
     setSettings((prev) => ({ ...prev, theme }))
   }
 

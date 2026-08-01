@@ -8,30 +8,33 @@ Personal side project to track daily food intake and weight over time. Primary g
 
 A personal PWA to log meals (initially manual, later via photo), see daily calorie totals, and review weekly/monthly trends alongside weight progress.
 
-## Initial Decisions
+## Current Decisions
 
-- **User model:** Single user
-- **Sync:** Local-first in the browser; cloud sync deferred
+- **User model:** Multi-account ready; email/password + display name (auth metadata)
+- **Sync:** Cloud via Supabase (Postgres + Auth + RLS)
+- **Meal shape:** Meal container with optional plate `description` / `photo_url`, JSON `items`, and macro totals (calories, protein, carbs, fat)
+- **Settings:** Theme + daily calorie goal in localStorage; health connection stubs on User tab
 - **Data entry:** Manual confirm with ability to edit before saving
-- **Weight:** Manual entry to start
+- **Weight:** Manual entry
 - **AI / APIs:** TBD; prefer free-tier options when added
-- **Locale:** English UI; metric units (kg, kcal)
-- **Scope:** Start without a backend — something usable in the browser first
+- **Locale:** English UI; metric units (kg, kcal, grams)
+- **Hosting:** GitHub Pages (static) + Supabase backend
 
 ## Approach
 
-Iterate in small steps. Validate the core loop (log → review → see totals → see trends) before adding complexity such as vision APIs, server endpoints, or cloud storage.
+Iterate in small steps. Core loop: log → review → see totals → see trends. Cloud auth/sync is in place; photo AI and offline cache can follow.
 
 ## Likely Evolution (non-binding)
 
-1. **v0** — Manual meal logging, local persistence, daily/weekly/monthly views, weight chart, optional photo attach (no analysis)
-2. **v1** — Photo → estimated calories via a vision API, with review/edit step; minimal server or serverless for API keys
-3. **v2** — Cloud sync and photo backup across devices
-4. **Later** — Targets, reminders, health integrations, barcode scan, export — as needed
+1. **v0** — Manual meal logging, local persistence _(replaced)_
+2. **v1 (current)** — Cloud sync, email login, macros, plate or itemized meals (JSON items)
+3. **v1.1** — Photo attach / vision API for estimated nutrition
+4. **v2** — Offline cache (Dexie) + realtime; optional normalize `meal_items` table
+5. **Later** — Targets, reminders, health integrations, barcode scan, export
 
-## Stack (starting point, not fixed)
+## Stack
 
-Vite + React + TypeScript, local storage (e.g. IndexedDB), charts for trends, PWA when ready. Other choices remain open as the project grows.
+Vite + React + TypeScript, Supabase, Tailwind, Recharts, React Router. PWA when ready.
 
 ## Notes for Future Work
 
