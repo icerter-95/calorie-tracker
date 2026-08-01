@@ -14,6 +14,8 @@ interface MealFormProps {
   defaultMealType?: MealType
   onSave: (data: MealInput) => void | Promise<void>
   onCancel: () => void
+  /** When editing, optional delete handler (confirmation is handled in the form). */
+  onDelete?: () => void | Promise<void>
 }
 
 type CreateMethod = 'photo' | 'manual'
@@ -24,6 +26,7 @@ export default function MealForm({
   defaultMealType,
   onSave,
   onCancel,
+  onDelete,
 }: MealFormProps) {
   const isEdit = Boolean(initial)
   const libraryInputRef = useRef<HTMLInputElement>(null)
@@ -507,7 +510,22 @@ export default function MealForm({
 
       {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
 
-      <div className="flex justify-end border-t border-stone-100 pt-3 dark:border-stone-800">
+      <div className="flex items-center justify-between border-t border-stone-100 pt-3 dark:border-stone-800">
+        {onDelete ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              if (!window.confirm('Delete this entry?')) return
+              void onDelete()
+            }}
+            className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-950/40"
+          >
+            Delete
+          </button>
+        ) : (
+          <span />
+        )}
         <button
           type="submit"
           disabled={busy}

@@ -6,19 +6,11 @@ import MealPhoto from './MealPhoto'
 interface MealCardProps {
   meal: MealEntry
   onEdit: () => void
-  onDelete: () => void
-  hideDelete?: boolean
   /** When true, omit the meal-type label (parent already groups by slot). */
   hideMealType?: boolean
 }
 
-export default function MealCard({
-  meal,
-  onEdit,
-  onDelete,
-  hideDelete,
-  hideMealType,
-}: MealCardProps) {
+export default function MealCard({ meal, onEdit, hideMealType }: MealCardProps) {
   const hasMacros = meal.proteinG > 0 || meal.carbsG > 0 || meal.fatG > 0
 
   return (
@@ -52,22 +44,12 @@ export default function MealCard({
             </p>
           )}
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={onEdit}
-            className="rounded-lg px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
-          >
-            Edit
-          </button>
-          {!hideDelete && (
-            <button
-              onClick={onDelete}
-              className="rounded-lg px-2 py-1 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
-            >
-              Delete
-            </button>
-          )}
-        </div>
+        <button
+          onClick={onEdit}
+          className="rounded-lg px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
+        >
+          Edit
+        </button>
       </div>
 
       {meal.ingredients.length > 0 && (

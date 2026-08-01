@@ -5,7 +5,7 @@ import { useSettings } from '../hooks/useSettings'
 import { formatDisplayDate, todayKey } from '../lib/dates'
 import { roundMacro } from '../lib/macros'
 import { defaultMealTypeForNow } from '../lib/mealTypeDefaults'
-import SwipeableMealCard from '../components/SwipeableMealCard'
+import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
 import type { MealEntry, MealInput, MealType } from '../types'
 import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
@@ -72,7 +72,6 @@ export default function TodayPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Delete this entry?')) return
     setActionError(null)
     try {
       if (editingMeal?.id === id) closeForm()
@@ -90,6 +89,7 @@ export default function TodayPage() {
       defaultMealType={editingMeal ? undefined : defaultMealType}
       onSave={handleSave}
       onCancel={closeForm}
+      onDelete={editingMeal ? () => handleDelete(editingMeal.id) : undefined}
     />
   )
 
@@ -170,11 +170,10 @@ export default function TodayPage() {
                   <>
                     {slotMeals.map((meal) => (
                       <div key={meal.id} className="space-y-2">
-                        <SwipeableMealCard
+                        <MealCard
                           meal={meal}
                           hideMealType
                           onEdit={() => startEdit(meal)}
-                          onDelete={() => handleDelete(meal.id)}
                         />
                         {editingMeal?.id === meal.id && form}
                       </div>
