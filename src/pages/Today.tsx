@@ -10,14 +10,12 @@ import MealForm from '../components/MealForm'
 import type { MealEntry, MealInput, MealType } from '../types'
 import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
 
-type AddTarget = 'top' | MealType
-
 export default function TodayPage() {
   const dateKey = todayKey()
   const { meals, error, reload } = useMealsForDate(dateKey)
   const { settings } = useSettings()
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
-  const [addTarget, setAddTarget] = useState<AddTarget | null>(null)
+  const [addTarget, setAddTarget] = useState<MealType | null>(null)
   const [defaultMealType, setDefaultMealType] = useState<MealType>(defaultMealTypeForNow)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -59,10 +57,10 @@ export default function TodayPage() {
     }
   }
 
-  function startAdd(target: AddTarget = 'top') {
+  function startAdd(slot: MealType) {
     setEditingMeal(null)
-    setDefaultMealType(target === 'top' ? defaultMealTypeForNow() : target)
-    setAddTarget(target)
+    setDefaultMealType(slot)
+    setAddTarget(slot)
   }
 
   function startEdit(meal: MealEntry) {
@@ -112,17 +110,6 @@ export default function TodayPage() {
         <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
           {actionError ?? error}
         </p>
-      )}
-
-      {addTarget === 'top' ? (
-        form
-      ) : (
-        <button
-          onClick={() => startAdd('top')}
-          className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
-        >
-          + Add entry
-        </button>
       )}
 
       {meals === undefined ? (
