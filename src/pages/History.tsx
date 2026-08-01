@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import CalorieChart from '../components/CalorieChart'
-import SwipeableMealCard from '../components/SwipeableMealCard'
+import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
 import { addMeal, deleteMeal, updateMeal } from '../db'
 import { useAllMeals, useAllWeights } from '../hooks/useData'
@@ -109,7 +109,6 @@ export default function HistoryPage() {
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Delete this entry?')) return
     setActionError(null)
     try {
       if (editingMeal?.id === id) closeForm()
@@ -217,11 +216,10 @@ export default function HistoryPage() {
                   </h3>
                   {slotMeals.map((meal) => (
                     <div key={meal.id} className="space-y-2">
-                      <SwipeableMealCard
+                      <MealCard
                         meal={meal}
                         hideMealType
                         onEdit={() => startEdit(meal)}
-                        onDelete={() => handleDelete(meal.id)}
                       />
                       {editingMeal?.id === meal.id && (
                         <MealForm
@@ -229,6 +227,7 @@ export default function HistoryPage() {
                           defaultDate={selectedDate}
                           onSave={handleSave}
                           onCancel={closeForm}
+                          onDelete={() => handleDelete(meal.id)}
                         />
                       )}
                     </div>
