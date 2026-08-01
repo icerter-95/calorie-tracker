@@ -445,11 +445,11 @@ export default function UserPage() {
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-2">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
           Goals
         </h2>
-        <div className="space-y-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+        <div className="space-y-2 rounded-2xl bg-white px-3 py-2.5 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm font-medium text-stone-800 dark:text-stone-100">Calories</p>
             <div className="flex items-center gap-2">
@@ -460,7 +460,7 @@ export default function UserPage() {
                 <button
                   type="button"
                   onClick={startEditGoals}
-                  className="rounded-lg px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
+                  className="rounded-lg px-2 py-0.5 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
                 >
                   Edit
                 </button>
@@ -470,10 +470,12 @@ export default function UserPage() {
 
           {editingGoals ? (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <label className="block text-sm">
-                  <span className="mb-1 block text-stone-600 dark:text-stone-300">Lower goal</span>
-                  <div className="flex items-center gap-2">
+                  <span className="mb-0.5 block text-xs text-stone-600 dark:text-stone-300">
+                    Lower goal
+                  </span>
+                  <div className="flex items-center gap-1.5">
                     <input
                       type="number"
                       min={800}
@@ -486,15 +488,17 @@ export default function UserPage() {
                         if (e.key === 'Enter') handleGoalsSave()
                         if (e.key === 'Escape') cancelEditGoals()
                       }}
-                      className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                      className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
                     />
-                    <span className="shrink-0 text-sm text-stone-500 dark:text-stone-400">kcal</span>
+                    <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">kcal</span>
                   </div>
                 </label>
 
                 <label className="block text-sm">
-                  <span className="mb-1 block text-stone-600 dark:text-stone-300">Higher limit</span>
-                  <div className="flex items-center gap-2">
+                  <span className="mb-0.5 block text-xs text-stone-600 dark:text-stone-300">
+                    Higher limit
+                  </span>
+                  <div className="flex items-center gap-1.5">
                     <input
                       type="number"
                       min={800}
@@ -506,22 +510,26 @@ export default function UserPage() {
                         if (e.key === 'Enter') handleGoalsSave()
                         if (e.key === 'Escape') cancelEditGoals()
                       }}
-                      className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                      className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
                     />
-                    <span className="shrink-0 text-sm text-stone-500 dark:text-stone-400">kcal</span>
+                    <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">kcal</span>
                   </div>
                 </label>
               </div>
 
-              <p className="text-xs text-stone-500 dark:text-stone-400">
-                Diary dots: green under lower, yellow between, red over higher.
+              <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+                Limits set diary dot colors
               </p>
 
-              <div className="border-t border-stone-200 pt-4 dark:border-stone-700">
-                <p className="mb-3 text-sm font-medium text-stone-800 dark:text-stone-100">Macros</p>
-                <div className="grid grid-cols-3 gap-3">
+              <div className="border-t border-stone-200 pt-2 dark:border-stone-700">
+                <p className="mb-1.5 text-sm font-medium text-stone-800 dark:text-stone-100">
+                  Macros
+                </p>
+                <div className="grid grid-cols-3 gap-2">
                   <label className="block text-sm">
-                    <span className="mb-1 block text-stone-600 dark:text-stone-300">Protein</span>
+                    <span className="mb-0.5 block text-xs text-stone-600 dark:text-stone-300">
+                      Protein
+                    </span>
                     <div className="flex items-center gap-1">
                       <input
                         type="number"
@@ -534,13 +542,15 @@ export default function UserPage() {
                           if (e.key === 'Enter') handleGoalsSave()
                           if (e.key === 'Escape') cancelEditGoals()
                         }}
-                        className="w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                        className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
                       />
                       <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">g</span>
                     </div>
                   </label>
                   <label className="block text-sm">
-                    <span className="mb-1 block text-stone-600 dark:text-stone-300">Carbs</span>
+                    <span className="mb-0.5 block text-xs text-stone-600 dark:text-stone-300">
+                      Carbs
+                    </span>
                     <div className="flex items-center gap-1">
                       <input
                         type="number"
@@ -553,13 +563,13 @@ export default function UserPage() {
                           if (e.key === 'Enter') handleGoalsSave()
                           if (e.key === 'Escape') cancelEditGoals()
                         }}
-                        className="w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                        className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
                       />
                       <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">g</span>
                     </div>
                   </label>
                   <label className="block text-sm">
-                    <span className="mb-1 block text-stone-600 dark:text-stone-300">Fat</span>
+                    <span className="mb-0.5 block text-xs text-stone-600 dark:text-stone-300">Fat</span>
                     <div className="flex items-center gap-1">
                       <input
                         type="number"
@@ -572,7 +582,7 @@ export default function UserPage() {
                           if (e.key === 'Enter') handleGoalsSave()
                           if (e.key === 'Escape') cancelEditGoals()
                         }}
-                        className="w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                        className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
                       />
                       <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">g</span>
                     </div>
@@ -584,18 +594,18 @@ export default function UserPage() {
                 <p className="text-xs text-red-600 dark:text-red-400">{goalError}</p>
               )}
 
-              <div className="flex justify-end gap-2 border-t border-stone-200 pt-3 dark:border-stone-700">
+              <div className="flex justify-end gap-1.5 border-t border-stone-200 pt-2 dark:border-stone-700">
                 <button
                   type="button"
                   onClick={cancelEditGoals}
-                  className="rounded-lg px-3 py-2 text-sm font-medium text-stone-500 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
+                  className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-stone-500 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleGoalsSave}
-                  className="rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+                  className="rounded-lg bg-teal-700 px-2.5 py-1.5 text-sm font-medium text-white hover:bg-teal-800"
                 >
                   Save
                 </button>
@@ -603,47 +613,49 @@ export default function UserPage() {
             </>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <p className="text-stone-600 dark:text-stone-300">Lower goal</p>
-                  <p className="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
+                  <p className="text-xs text-stone-600 dark:text-stone-300">Lower goal</p>
+                  <p className="font-medium text-stone-900 dark:text-stone-50">
                     {settings.calorieGoalLower.toLocaleString()}{' '}
                     <span className="font-normal text-stone-500 dark:text-stone-400">kcal</span>
                   </p>
                 </div>
                 <div>
-                  <p className="text-stone-600 dark:text-stone-300">Higher limit</p>
-                  <p className="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
+                  <p className="text-xs text-stone-600 dark:text-stone-300">Higher limit</p>
+                  <p className="font-medium text-stone-900 dark:text-stone-50">
                     {settings.calorieGoalUpper.toLocaleString()}{' '}
                     <span className="font-normal text-stone-500 dark:text-stone-400">kcal</span>
                   </p>
                 </div>
               </div>
 
-              <p className="text-xs text-stone-500 dark:text-stone-400">
-                Diary dots: green under lower, yellow between, red over higher.
+              <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+                Limits set diary dot colors
               </p>
 
-              <div className="border-t border-stone-200 pt-4 dark:border-stone-700">
-                <p className="mb-3 text-sm font-medium text-stone-800 dark:text-stone-100">Macros</p>
-                <div className="grid grid-cols-3 gap-3 text-sm">
+              <div className="border-t border-stone-200 pt-2 dark:border-stone-700">
+                <p className="mb-1.5 text-sm font-medium text-stone-800 dark:text-stone-100">
+                  Macros
+                </p>
+                <div className="grid grid-cols-3 gap-2 text-sm">
                   <div>
-                    <p className="text-stone-600 dark:text-stone-300">Protein</p>
-                    <p className="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
+                    <p className="text-xs text-stone-600 dark:text-stone-300">Protein</p>
+                    <p className="font-medium text-stone-900 dark:text-stone-50">
                       {settings.proteinGoal}{' '}
                       <span className="font-normal text-stone-500 dark:text-stone-400">g</span>
                     </p>
                   </div>
                   <div>
-                    <p className="text-stone-600 dark:text-stone-300">Carbs</p>
-                    <p className="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
+                    <p className="text-xs text-stone-600 dark:text-stone-300">Carbs</p>
+                    <p className="font-medium text-stone-900 dark:text-stone-50">
                       {settings.carbsGoal}{' '}
                       <span className="font-normal text-stone-500 dark:text-stone-400">g</span>
                     </p>
                   </div>
                   <div>
-                    <p className="text-stone-600 dark:text-stone-300">Fat</p>
-                    <p className="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
+                    <p className="text-xs text-stone-600 dark:text-stone-300">Fat</p>
+                    <p className="font-medium text-stone-900 dark:text-stone-50">
                       {settings.fatGoal}{' '}
                       <span className="font-normal text-stone-500 dark:text-stone-400">g</span>
                     </p>
