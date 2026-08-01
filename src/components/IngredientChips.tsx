@@ -36,9 +36,7 @@ export default function IngredientChips({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium text-stone-700 dark:text-stone-200">
-          Ingredients
-        </span>
+        <span className="text-sm font-medium text-stone-700 dark:text-stone-200">Tags</span>
         {onSuggest && (
           <button
             type="button"
@@ -51,7 +49,7 @@ export default function IngredientChips({
         )}
       </div>
 
-      {value.length > 0 ? (
+      {value.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {value.map((tag) => (
             <span
@@ -71,10 +69,6 @@ export default function IngredientChips({
             </span>
           ))}
         </div>
-      ) : (
-        <p className="text-xs text-stone-400 dark:text-stone-500">
-          Optional — used for insights like “days with chicken”.
-        </p>
       )}
 
       <div className="flex gap-2">

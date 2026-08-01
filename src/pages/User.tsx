@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { clearAllUserData } from '../db'
 import { seedSampleData } from '../db/seed'
@@ -56,6 +56,8 @@ export default function UserPage() {
   const [nameDraft, setNameDraft] = useState(getDisplayName(user))
   const [nameSaved, setNameSaved] = useState(false)
   const [nameError, setNameError] = useState<string | null>(null)
+  const [editingName, setEditingName] = useState(false)
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false)
   const [dataBusy, setDataBusy] = useState(false)
   const [dataError, setDataError] = useState<string | null>(null)
   const [backfillBusy, setBackfillBusy] = useState(false)
@@ -63,12 +65,26 @@ export default function UserPage() {
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null)
   const [accountBusy, setAccountBusy] = useState(false)
   const [accountError, setAccountError] = useState<string | null>(null)
+  const accountMenuRef = useRef<HTMLDivElement>(null)
 
   const otherAccounts = savedAccounts.filter((a) => a.userId !== user?.id)
 
   useEffect(() => {
     setNameDraft(getDisplayName(user))
+    setEditingName(false)
+    setAccountMenuOpen(false)
   }, [user])
+
+  useEffect(() => {
+    if (!accountMenuOpen) return
+    function handlePointerDown(event: MouseEvent) {
+      if (!accountMenuRef.current?.contains(event.target as Node)) {
+        setAccountMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handlePointerDown)
+    return () => document.removeEventListener('mousedown', handlePointerDown)
+  }, [accountMenuOpen])
 
   const displayName = getDisplayName(user)
   const initials = getInitials(displayName)
@@ -90,6 +106,7 @@ export default function UserPage() {
     try {
       await updateDisplayName(nameDraft)
       setNameSaved(true)
+      setEditingName(false)
       window.setTimeout(() => setNameSaved(false), 1500)
     } catch (err) {
       setNameError(err instanceof Error ? err.message : 'Could not update name')
@@ -184,52 +201,157 @@ export default function UserPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
-        <div className="flex items-center gap-4">
+      <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+        <div className="flex items-center gap-3 px-4 py-3">
           <div
-            className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-teal-700 text-lg font-semibold text-white"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-700 text-sm font-semibold text-white"
             aria-hidden
           >
             {initials}
           </div>
-          <div className="min-w-0">
-            <h2 className="truncate text-lg font-semibold text-stone-900 dark:text-stone-50">
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-base font-semibold text-stone-900 dark:text-stone-50">
               {displayName}
+              {nameSaved && (
+                <span className="ml-2 text-xs font-medium text-teal-700 dark:text-teal-400">
+                  Saved
+                </span>
+              )}
             </h2>
-            <p className="truncate text-sm text-stone-500 dark:text-stone-400">{user?.email}</p>
-            <p className="mt-1 text-xs font-medium text-teal-700 dark:text-teal-400">
-              Signed in · cloud account
-            </p>
+            <p className="truncate text-xs text-stone-500 dark:text-stone-400">{user?.email}</p>
+          </div>
+          <div className="relative shrink-0" ref={accountMenuRef}>
+            <button
+              type="button"
+              aria-label="Account options"
+              aria-haspopup="menu"
+              aria-expanded={accountMenuOpen}
+              onClick={() => setAccountMenuOpen((open) => !open)}
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-stone-400 hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200"
+            >
+              <span className="text-lg leading-none" aria-hidden>
+                ⋯
+              </span>
+            </button>
+            {accountMenuOpen && (
+              <div
+                role="menu"
+                className="absolute right-0 z-10 mt-1 w-48 overflow-hidden rounded-xl bg-white py-1 shadow-lg ring-1 ring-stone-200 dark:bg-stone-800 dark:ring-stone-600"
+              >
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setAccountMenuOpen(false)
+                    setNameError(null)
+                    setNameDraft(getDisplayName(user))
+                    setEditingName(true)
+                  }}
+                  className="block w-full px-3 py-2 text-left text-sm text-stone-700 hover:bg-stone-50 dark:text-stone-100 dark:hover:bg-stone-700"
+                >
+                  Edit display name
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
-        <label className="mt-4 block text-sm">
-          <span className="mb-1 flex items-center justify-between text-stone-600 dark:text-stone-300">
-            Display name
-            {nameSaved && (
-              <span className="text-xs font-medium text-teal-700 dark:text-teal-400">Saved</span>
-            )}
-          </span>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={nameDraft}
-              onChange={(e) => setNameDraft(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') void handleNameSave()
-              }}
-              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-            />
-            <button
-              type="button"
-              onClick={() => void handleNameSave()}
-              className="shrink-0 rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
-            >
-              Save
-            </button>
+        {editingName && (
+          <div className="border-t border-stone-100 px-4 py-3 dark:border-stone-800">
+            <label className="block text-sm">
+              <span className="mb-1 block text-stone-600 dark:text-stone-300">Display name</span>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  autoFocus
+                  value={nameDraft}
+                  onChange={(e) => setNameDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void handleNameSave()
+                    if (e.key === 'Escape') {
+                      setEditingName(false)
+                      setNameError(null)
+                      setNameDraft(getDisplayName(user))
+                    }
+                  }}
+                  className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleNameSave()}
+                  className="shrink-0 rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingName(false)
+                    setNameError(null)
+                    setNameDraft(getDisplayName(user))
+                  }}
+                  className="shrink-0 rounded-lg px-3 py-2 text-sm font-medium text-stone-500 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
+                >
+                  Cancel
+                </button>
+              </div>
+              {nameError && (
+                <p className="mt-1 text-xs text-red-600 dark:text-red-400">{nameError}</p>
+              )}
+            </label>
           </div>
-          {nameError && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{nameError}</p>}
-        </label>
+        )}
+
+        {accountError && (
+          <p className="border-t border-stone-100 px-4 py-2 text-sm text-red-700 dark:border-stone-800 dark:text-red-300">
+            {accountError}
+          </p>
+        )}
+
+        {otherAccounts.map((account) => (
+          <div key={account.userId}>
+            <div className="border-t border-stone-100 dark:border-stone-800" />
+            <div className="flex items-center gap-2 px-4 py-2">
+              <button
+                type="button"
+                disabled={accountBusy}
+                onClick={() => void handleSwitchAccount(account.userId)}
+                className="flex min-w-0 flex-1 items-center gap-3 rounded-xl py-1 text-left hover:bg-stone-50 disabled:opacity-60 dark:hover:bg-stone-800"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-stone-400 text-xs font-semibold text-white">
+                  {getInitials(account.displayName || account.email)}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium text-stone-800 dark:text-stone-100">
+                    Switch to {account.displayName || 'account'}
+                  </span>
+                  <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+                    {account.email}
+                  </span>
+                </span>
+              </button>
+              <button
+                type="button"
+                disabled={accountBusy}
+                onClick={() => removeSavedAccountFromDevice(account.userId)}
+                className="shrink-0 rounded-lg px-2 py-1 text-xs text-stone-400 hover:bg-stone-100 hover:text-stone-600 dark:hover:bg-stone-800"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+
+        <div className="border-t border-stone-100 dark:border-stone-800" />
+        <button
+          type="button"
+          disabled={accountBusy}
+          onClick={() => void handleAddAccount()}
+          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-teal-700 hover:bg-teal-50 disabled:opacity-60 dark:text-teal-400 dark:hover:bg-teal-950/30"
+        >
+          Add another account
+          <span className="text-teal-400">→</span>
+        </button>
       </section>
 
       <section className="space-y-3">
@@ -339,79 +461,6 @@ export default function UserPage() {
             )
           })}
         </ul>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
-          Accounts on this device
-        </h2>
-        {accountError && (
-          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
-            {accountError}
-          </p>
-        )}
-        <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-700 text-xs font-semibold text-white">
-              {initials}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-50">
-                {displayName}
-              </p>
-              <p className="truncate text-xs text-stone-500 dark:text-stone-400">{user?.email}</p>
-              <p className="text-xs font-medium text-teal-700 dark:text-teal-400">Active now</p>
-            </div>
-          </div>
-
-          {otherAccounts.map((account) => (
-            <div key={account.userId}>
-              <div className="border-t border-stone-100 dark:border-stone-800" />
-              <div className="flex items-center gap-2 px-4 py-2">
-                <button
-                  type="button"
-                  disabled={accountBusy}
-                  onClick={() => void handleSwitchAccount(account.userId)}
-                  className="flex min-w-0 flex-1 items-center gap-3 rounded-xl py-1 text-left hover:bg-stone-50 disabled:opacity-60 dark:hover:bg-stone-800"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-stone-400 text-xs font-semibold text-white">
-                    {getInitials(account.displayName || account.email)}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-stone-800 dark:text-stone-100">
-                      Switch to {account.displayName || 'account'}
-                    </span>
-                    <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
-                      {account.email}
-                    </span>
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  disabled={accountBusy}
-                  onClick={() => removeSavedAccountFromDevice(account.userId)}
-                  className="shrink-0 rounded-lg px-2 py-1 text-xs text-stone-400 hover:bg-stone-100 hover:text-stone-600 dark:hover:bg-stone-800"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          ))}
-
-          <div className="border-t border-stone-100 dark:border-stone-800" />
-          <button
-            type="button"
-            disabled={accountBusy}
-            onClick={() => void handleAddAccount()}
-            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-teal-700 hover:bg-teal-50 disabled:opacity-60 dark:text-teal-400 dark:hover:bg-teal-950/30"
-          >
-            Add another account
-            <span className="text-teal-400">→</span>
-          </button>
-        </div>
-        <p className="text-xs text-stone-500 dark:text-stone-400">
-          Tip: keep a separate demo account for sample data so it never mixes with your real logs.
-        </p>
       </section>
 
       <section className="space-y-3">

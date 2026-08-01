@@ -347,7 +347,7 @@ export default function MealForm({
         />
       </label>
 
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-4 gap-1.5">
         <NumberField label="kcal" value={plateCalories} onChange={setPlateCalories} />
         <NumberField label="Protein" value={plateProtein} onChange={setPlateProtein} step />
         <NumberField label="Carbs" value={plateCarbs} onChange={setPlateCarbs} step />
@@ -541,7 +541,7 @@ function NumberField({
         step={step ? 0.1 : 1}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-50"
+        className="w-full rounded-lg border border-stone-300 bg-white px-1.5 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-50"
       />
     </label>
   )
