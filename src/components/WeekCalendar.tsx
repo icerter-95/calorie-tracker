@@ -263,21 +263,19 @@ export default function WeekCalendar({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2">
-          <h2 className="truncate text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
-            {heading}
-          </h2>
+        <h2 className="min-w-0 truncate text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
+          {heading}
+        </h2>
+        <div className="flex shrink-0 items-center gap-1">
           {showTodayButton && (
             <button
               type="button"
               onClick={() => onSelectDate(today)}
-              className="shrink-0 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-400 dark:ring-teal-900 dark:hover:bg-teal-950/70"
+              className="mr-1 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-400 dark:ring-teal-900 dark:hover:bg-teal-950/70"
             >
               Today
             </button>
           )}
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={() => goWeek(-1)}
