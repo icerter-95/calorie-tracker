@@ -1,6 +1,7 @@
 import type { MealEntry } from '../types'
 import { MEAL_TYPE_LABELS } from '../types'
 import { roundMacro } from '../lib/macros'
+import MealPhoto from './MealPhoto'
 
 interface MealCardProps {
   meal: MealEntry
@@ -14,6 +15,13 @@ export default function MealCard({ meal, onEdit, onDelete, hideDelete }: MealCar
 
   return (
     <article className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      {meal.photoUrl && (
+        <MealPhoto
+          photoUrl={meal.photoUrl}
+          alt={meal.description || MEAL_TYPE_LABELS[meal.mealType]}
+          className="mb-3 max-h-40 w-full rounded-xl object-cover"
+        />
+      )}
       <div className="mb-2 flex items-start justify-between gap-2">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-teal-700 dark:text-teal-400">

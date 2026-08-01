@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { deleteAllUserMealPhotos, deleteMealPhoto } from '../lib/mealPhotos'
 import type { MealInput, MealEntry, WeightEntry, WeightInput } from '../types'
 import { mapMealRow, mapWeightRow, type MealRow, type WeightRow } from './mappers'
 
@@ -75,13 +76,23 @@ export async function addMeal(meal: MealInput) {
 export async function updateMeal(id: string, meal: MealInput) {
   const client = requireClient()
 
+  const { data: existing, error: fetchError } = await client
+    .from('meals')
+    .select('photo_url')
+    .eq('id', id)
+    .maybeSingle()
+  if (fetchError) throw fetchError
+
+  const previousPhoto = (existing as { photo_url: string | null } | null)?.photo_url ?? null
+  const nextPhoto = meal.photoUrl ?? null
+
   const { error } = await client
     .from('meals')
     .update({
       date: meal.date,
       meal_type: meal.mealType,
       description: meal.description ?? null,
-      photo_url: meal.photoUrl ?? null,
+      photo_url: nextPhoto,
       items: meal.items,
       total_calories: meal.totalCalories,
       protein_g: meal.proteinG,
@@ -92,12 +103,37 @@ export async function updateMeal(id: string, meal: MealInput) {
     .eq('id', id)
 
   if (error) throw error
+
+  if (previousPhoto && previousPhoto !== nextPhoto) {
+    try {
+      await deleteMealPhoto(previousPhoto)
+    } catch {
+      // Meal row already updated; orphan cleanup can be manual if this fails
+    }
+  }
 }
 
 export async function deleteMeal(id: string) {
   const client = requireClient()
+
+  const { data: existing, error: fetchError } = await client
+    .from('meals')
+    .select('photo_url')
+    .eq('id', id)
+    .maybeSingle()
+  if (fetchError) throw fetchError
+
   const { error } = await client.from('meals').delete().eq('id', id)
   if (error) throw error
+
+  const photoUrl = (existing as { photo_url: string | null } | null)?.photo_url
+  if (photoUrl) {
+    try {
+      await deleteMealPhoto(photoUrl)
+    } catch {
+      // Row deleted; ignore storage cleanup failure
+    }
+  }
 }
 
 export async function addWeight(entry: WeightInput) {
@@ -139,6 +175,12 @@ export async function deleteWeight(id: string) {
 export async function clearAllUserData() {
   const client = requireClient()
   const userId = await requireUserId()
+
+  try {
+    await deleteAllUserMealPhotos()
+  } catch {
+    // Continue clearing table rows even if storage cleanup fails
+  }
 
   const { error: mealsError } = await client.from('meals').delete().eq('user_id', userId)
   if (mealsError) throw mealsError

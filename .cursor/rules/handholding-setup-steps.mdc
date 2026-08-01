@@ -1,0 +1,32 @@
+---
+description: Extra handholding for multi-platform setup steps (dashboards, CLI, keys)
+alwaysApply: true
+---
+
+# Handholding for platform / setup steps
+
+Ignasi prefers clear, click-by-click guidance when a task touches **external platforms** or multiple tools (Supabase, GitHub, Google AI Studio, terminal, browser, phone, etc.).
+
+## When this applies
+
+Any time instructions involve:
+- A web dashboard (Supabase, GitHub, Google AI Studio, etc.)
+- CLI tools (`npx`, `supabase`, `gh`, deploy)
+- Env vars, API keys, secrets
+- Copying values between places
+- “One-time setup” before a feature works
+
+## How to write instructions
+
+- **Name the product and where to click** — e.g. “Supabase dashboard → left sidebar → SQL Editor → New query”
+- **One step = one action** — don’t combine “create key and deploy function” in one bullet
+- **Say what screen looks like / what to copy** — field names, example shapes (`https://xxxx.supabase.co`, `AIza…`)
+- **Say where the value goes next** — “paste into Terminal” / “save in `.env.local` as `VITE_…`”
+- **Warn what NOT to use** — e.g. service_role vs anon; never commit secrets
+- **Success check** — how to know the step worked (green Run, “Deployed”, no error in app)
+- **If UI moved** — note menus change; offer alternate paths or what to search for
+- Prefer a short **overview** (why / order), then the detailed steps
+
+## Tone
+
+Assume less familiarity with dashboards and CLI. Be patient and specific; avoid “just configure Supabase” without the clicks.

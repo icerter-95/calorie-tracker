@@ -1,25 +1,45 @@
 # Calorie Tracker
 
-Personal meal and weight tracker with **cloud sync** (Supabase), email/password login, and a User tab for theme, goals, and account tools.
+Personal meal and weight tracker with **cloud sync** (Supabase), email/password login, plate photos, and optional AI nutrition estimates.
 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) LTS (v20+)
 - A free [Supabase](https://supabase.com) project
+- (For AI estimates) A free [Google AI Studio](https://aistudio.google.com/apikey) Gemini API key
+- (For deploying the Edge Function) [Supabase CLI](https://supabase.com/docs/guides/cli)
 
 ## One-time Supabase setup (required)
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. Open **SQL Editor** → New query → paste and run [`supabase/schema.sql`](./supabase/schema.sql).
-3. Open **Project Settings → API Keys** and copy:
+3. Run [`supabase/storage.sql`](./supabase/storage.sql) the same way (private `meal-photos` bucket + RLS).
+4. Open **Project Settings → API Keys** and copy:
    - Project URL (often under **Data API** / **Connect**)
    - **Publishable** key (`sb_publishable_…`) — or legacy `anon` key
-4. Auth settings (recommended for personal use):
+5. Auth settings (recommended for personal use):
    - **Authentication → Providers → Email** enabled
    - **Confirm email**: turn **off** so signup works immediately
-5. Optional: **Authentication → URL Configuration** — add:
+6. Optional: **Authentication → URL Configuration** — add:
    - `http://localhost:5173/calorie-tracker/`
    - `https://icerter-95.github.io/calorie-tracker/`
+
+## AI plate estimate (optional but recommended)
+
+Photos can be attached without AI. To enable **Estimate from photo**:
+
+1. Create a Gemini API key at [Google AI Studio](https://aistudio.google.com/apikey) (free tier / Flash models).
+2. From this repo (logged into Supabase CLI):
+
+```bash
+cd calorie-tracker
+npx supabase login
+npx supabase link --project-ref YOUR_PROJECT_REF
+npx supabase secrets set GEMINI_API_KEY=your_gemini_key
+npx supabase functions deploy estimate-meal
+```
+
+`YOUR_PROJECT_REF` is the subdomain in your project URL (`https://YOUR_PROJECT_REF.supabase.co`).
 
 ## Run locally
 
@@ -34,8 +54,10 @@ npm run dev
 Open the **Local** URL from the terminal (include `/calorie-tracker/`).
 
 1. **Sign up** with name, email, and password  
-2. Add meals / weight — data is stored in Supabase  
-3. Use **User** to edit name, theme, calorie goal, load sample data, or sign out  
+2. **Add meal** → optional plate photo → **Estimate from photo** → edit totals → save  
+3. Use **User** for theme, calorie goal, sample/clear data, or sign out  
+
+Photos are compressed in the browser before upload (~1280px JPEG) to stay well under Supabase’s free 1 GB storage.
 
 ## GitHub Pages deploy
 
@@ -44,18 +66,19 @@ Add repository secrets (Settings → Secrets and variables → Actions):
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY` (publishable or anon key)
 
-Push to `main`; the existing workflow builds with those env vars.
+Push to `main`; the existing workflow builds with those env vars.  
+Gemini key stays in Supabase secrets (never in GitHub/Vite env).
 
 ## What works
 
 - **Login** — email + password; display name at signup (editable in User)
-- **Today** — meals with plate description and/or items + macros; goal remaining + macros summary
+- **Today** — meals with photo, plate description and/or items + macros; AI plate estimate; goal remaining
 - **History** — weekly/monthly calorie charts + weight overlay
 - **Weight** — log/edit/delete weight entries
 - **User** — profile/name, theme, calorie goal, health stubs, sample/clear cloud data, sign out
 
 ## Stack
 
-Vite · React · TypeScript · Tailwind CSS · Supabase (Postgres + Auth) · Recharts · React Router
+Vite · React · TypeScript · Tailwind CSS · Supabase (Postgres + Auth + Storage + Edge Functions) · Gemini Flash · Recharts · React Router
 
 See [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md) for goals and roadmap.

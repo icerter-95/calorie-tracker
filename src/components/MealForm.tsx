@@ -1,5 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { compressImage } from '../lib/compressImage'
+import { estimatePlateFromPhoto } from '../lib/estimateMeal'
 import { roundMacro, sumItemMacros } from '../lib/macros'
+import { resolvePhotoUrl, uploadMealPhoto } from '../lib/mealPhotos'
 import type { MealEntry, MealInput, MealItem, MealType } from '../types'
 import { MEAL_TYPE_LABELS } from '../types'
 
@@ -19,6 +22,10 @@ const emptyItem = (): MealItem => ({
 })
 
 export default function MealForm({ initial, defaultDate, onSave, onCancel }: MealFormProps) {
+  const libraryInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const previewObjectUrl = useRef<string | null>(null)
+
   const [date, setDate] = useState(initial?.date ?? defaultDate ?? '')
   const [mealType, setMealType] = useState<MealType>(initial?.mealType ?? 'lunch')
   const [description, setDescription] = useState(initial?.description ?? '')
@@ -39,7 +46,15 @@ export default function MealForm({ initial, defaultDate, onSave, onCancel }: Mea
   )
   const [note, setNote] = useState(initial?.note ?? '')
   const [saving, setSaving] = useState(false)
+  const [estimating, setEstimating] = useState(false)
+  const [pickingPhoto, setPickingPhoto] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+
+  /** Existing storage path (or null if removed). */
+  const [storedPhotoPath, setStoredPhotoPath] = useState<string | null>(initial?.photoUrl ?? null)
+  /** New compressed blob waiting to upload on save. */
+  const [pendingPhoto, setPendingPhoto] = useState<Blob | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
 
   useEffect(() => {
     if (!initial) return
@@ -52,7 +67,51 @@ export default function MealForm({ initial, defaultDate, onSave, onCancel }: Mea
     setPlateCarbs(!initial.items.length ? String(initial.carbsG || '') : '')
     setPlateFat(!initial.items.length ? String(initial.fatG || '') : '')
     setNote(initial.note ?? '')
+    setStoredPhotoPath(initial.photoUrl ?? null)
+    setPendingPhoto(null)
+    setFormError(null)
   }, [initial])
+
+  useEffect(() => {
+    let cancelled = false
+
+    if (pendingPhoto) {
+      if (previewObjectUrl.current) {
+        URL.revokeObjectURL(previewObjectUrl.current)
+        previewObjectUrl.current = null
+      }
+      const url = URL.createObjectURL(pendingPhoto)
+      previewObjectUrl.current = url
+      setPhotoPreview(url)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    if (storedPhotoPath) {
+      resolvePhotoUrl(storedPhotoPath)
+        .then((url) => {
+          if (!cancelled) setPhotoPreview(url)
+        })
+        .catch(() => {
+          if (!cancelled) setPhotoPreview(null)
+        })
+    } else {
+      setPhotoPreview(null)
+    }
+
+    return () => {
+      cancelled = true
+    }
+  }, [pendingPhoto, storedPhotoPath])
+
+  useEffect(() => {
+    return () => {
+      if (previewObjectUrl.current) {
+        URL.revokeObjectURL(previewObjectUrl.current)
+      }
+    }
+  }, [])
 
   const cleanedPreview = useMemo(
     () =>
@@ -86,6 +145,8 @@ export default function MealForm({ initial, defaultDate, onSave, onCancel }: Mea
         fatG: Number(plateFat) || 0,
       }
 
+  const hasPhoto = Boolean(pendingPhoto || storedPhotoPath)
+
   function updateItem(index: number, field: keyof MealItem, value: string | number) {
     setItems((prev) =>
       prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
@@ -100,6 +161,63 @@ export default function MealForm({ initial, defaultDate, onSave, onCancel }: Mea
     setItems((prev) => (prev.length <= 1 ? [emptyItem()] : prev.filter((_, i) => i !== index)))
   }
 
+  async function handlePhotoPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+
+    setFormError(null)
+    setPickingPhoto(true)
+    try {
+      const compressed = await compressImage(file)
+      setPendingPhoto(compressed)
+      setStoredPhotoPath(null)
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not process photo')
+    } finally {
+      setPickingPhoto(false)
+    }
+  }
+
+  function removePhoto() {
+    setPendingPhoto(null)
+    setStoredPhotoPath(null)
+    setPhotoPreview(null)
+  }
+
+  async function handleEstimate() {
+    if (!pendingPhoto && !storedPhotoPath) {
+      setFormError('Add a plate photo first.')
+      return
+    }
+
+    setFormError(null)
+    setEstimating(true)
+    try {
+      let blob = pendingPhoto
+      if (!blob && storedPhotoPath) {
+        const url = await resolvePhotoUrl(storedPhotoPath)
+        if (!url) throw new Error('Could not load photo for estimate')
+        const res = await fetch(url)
+        if (!res.ok) throw new Error('Could not load photo for estimate')
+        blob = await res.blob()
+      }
+      if (!blob) throw new Error('No photo available')
+
+      const estimate = await estimatePlateFromPhoto(blob)
+      setDescription(estimate.description)
+      setItems([emptyItem()])
+      setPlateCalories(estimate.calories ? String(estimate.calories) : '')
+      setPlateProtein(estimate.proteinG ? String(estimate.proteinG) : '')
+      setPlateCarbs(estimate.carbsG ? String(estimate.carbsG) : '')
+      setPlateFat(estimate.fatG ? String(estimate.fatG) : '')
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not estimate meal')
+    } finally {
+      setEstimating(false)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setFormError(null)
@@ -107,8 +225,8 @@ export default function MealForm({ initial, defaultDate, onSave, onCancel }: Mea
     const desc = description.trim()
     const usingItemsNow = cleanedPreview.length > 0
 
-    if (!usingItemsNow && !desc) {
-      setFormError('Add a plate description, or at least one food item.')
+    if (!usingItemsNow && !desc && !hasPhoto) {
+      setFormError('Add a plate photo/description, or at least one food item.')
       return
     }
 
@@ -122,16 +240,24 @@ export default function MealForm({ initial, defaultDate, onSave, onCancel }: Mea
         }
 
     if (totals.calories <= 0 && totals.proteinG <= 0 && totals.carbsG <= 0 && totals.fatG <= 0) {
-      setFormError('Enter calories or macros for the meal.')
+      setFormError('Enter calories or macros, or estimate from the photo.')
       return
     }
 
     setSaving(true)
     try {
+      let photoUrl: string | undefined
+      if (pendingPhoto) {
+        photoUrl = await uploadMealPhoto(pendingPhoto)
+      } else if (storedPhotoPath) {
+        photoUrl = storedPhotoPath
+      }
+
       await onSave({
         date,
         mealType,
         description: desc || undefined,
+        photoUrl,
         items: usingItemsNow ? cleanedPreview : [],
         totalCalories: Math.round(totals.calories),
         proteinG: roundMacro(totals.proteinG),
@@ -159,6 +285,80 @@ export default function MealForm({ initial, defaultDate, onSave, onCancel }: Mea
         >
           Cancel
         </button>
+      </div>
+
+      <div className="space-y-2">
+        <span className="text-sm font-medium text-stone-700 dark:text-stone-200">Plate photo</span>
+        {photoPreview ? (
+          <div className="overflow-hidden rounded-xl ring-1 ring-stone-200 dark:ring-stone-700">
+            <img
+              src={photoPreview}
+              alt="Plate preview"
+              className="max-h-56 w-full object-cover"
+            />
+          </div>
+        ) : (
+          <p className="rounded-xl bg-stone-50 px-3 py-4 text-center text-sm text-stone-500 dark:bg-stone-800/60 dark:text-stone-400">
+            Optional — take or upload a whole-plate photo
+          </p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => libraryInputRef.current?.click()}
+            disabled={pickingPhoto || saving || estimating}
+            className="rounded-lg bg-stone-100 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-60 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+          >
+            {pickingPhoto ? 'Processing…' : hasPhoto ? 'Choose photo' : 'Photo library'}
+          </button>
+          <button
+            type="button"
+            onClick={() => cameraInputRef.current?.click()}
+            disabled={pickingPhoto || saving || estimating}
+            className="rounded-lg bg-stone-100 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-60 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+          >
+            Take photo
+          </button>
+          {hasPhoto && (
+            <>
+              <button
+                type="button"
+                onClick={handleEstimate}
+                disabled={estimating || saving || pickingPhoto}
+                className="rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+              >
+                {estimating ? 'Estimating…' : 'Estimate from photo'}
+              </button>
+              <button
+                type="button"
+                onClick={removePhoto}
+                disabled={saving || estimating}
+                className="rounded-lg px-3 py-2 text-sm text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800"
+              >
+                Remove
+              </button>
+            </>
+          )}
+        </div>
+        {/* No capture = Photos / Files picker (most reliable). Separate input for camera. */}
+        <input
+          ref={libraryInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoPick}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={handlePhotoPick}
+        />
+        <p className="text-xs text-stone-400 dark:text-stone-500">
+          Prefer Photo library if the camera preview is black. Photos are compressed before upload.
+        </p>
       </div>
 
       <div className="flex gap-3">
@@ -341,7 +541,7 @@ export default function MealForm({ initial, defaultDate, onSave, onCancel }: Mea
         </div>
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || estimating || pickingPhoto}
           className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
         >
           {saving ? 'Saving…' : initial ? 'Save changes' : 'Save meal'}
