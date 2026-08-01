@@ -8,9 +8,17 @@ interface MealCardProps {
   onEdit: () => void
   onDelete: () => void
   hideDelete?: boolean
+  /** When true, omit the meal-type label (parent already groups by slot). */
+  hideMealType?: boolean
 }
 
-export default function MealCard({ meal, onEdit, onDelete, hideDelete }: MealCardProps) {
+export default function MealCard({
+  meal,
+  onEdit,
+  onDelete,
+  hideDelete,
+  hideMealType,
+}: MealCardProps) {
   const hasMacros = meal.proteinG > 0 || meal.carbsG > 0 || meal.fatG > 0
 
   return (
@@ -24,9 +32,11 @@ export default function MealCard({ meal, onEdit, onDelete, hideDelete }: MealCar
       )}
       <div className="mb-2 flex items-start justify-between gap-2">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-teal-700 dark:text-teal-400">
-            {MEAL_TYPE_LABELS[meal.mealType]}
-          </p>
+          {!hideMealType && (
+            <p className="text-xs font-medium uppercase tracking-wide text-teal-700 dark:text-teal-400">
+              {MEAL_TYPE_LABELS[meal.mealType]}
+            </p>
+          )}
           {meal.description && (
             <p className="text-sm font-medium text-stone-800 dark:text-stone-100">
               {meal.description}
@@ -59,6 +69,19 @@ export default function MealCard({ meal, onEdit, onDelete, hideDelete }: MealCar
           )}
         </div>
       </div>
+
+      {meal.ingredients.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1">
+          {meal.ingredients.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-md bg-stone-100 px-1.5 py-0.5 text-[11px] font-medium text-stone-600 dark:bg-stone-800 dark:text-stone-300"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
 
       {meal.items.length > 0 && (
         <ul className="space-y-1 text-sm text-stone-600 dark:text-stone-300">

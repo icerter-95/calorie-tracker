@@ -1,4 +1,4 @@
-// Supabase Edge Function — plate photo → nutrition estimate via Gemini Flash
+// Supabase Edge Function — plate photo → nutrition + ingredient tags via Gemini Flash
 // Deploy: npx supabase functions deploy estimate-meal
 // Secret: npx supabase secrets set GEMINI_API_KEY=your_key
 
@@ -20,6 +20,7 @@ type PlateEstimate = {
   proteinG: number
   carbsG: number
   fatG: number
+  ingredients: string[]
 }
 
 // Prefer a current free-tier Flash model. Override anytime with secret GEMINI_MODEL.
@@ -71,17 +72,20 @@ Analyze this whole-plate meal photo.
 
 Rules:
 1. Estimate the ACTUAL portion visible — not a generic cookbook serving.
-2. Use plate size, utensils, or other visible scale cues when present.
+2. Use plate size, utensils, or other scale cues when present.
 3. Prefer whole-plate totals (one meal), not a long itemized recipe.
 4. description: short English name for the plate (e.g. "Grilled chicken with rice and vegetables").
 5. calories: integer kcal for the whole plate.
 6. proteinG, carbsG, fatG: grams for the whole plate (one decimal ok).
-7. If the image is not food, return zeros and description "Not a meal".
+7. ingredients: array of 3–10 BASE ingredient tags in lowercase English.
+   - Use generic food names only: "chicken", "rice", "egg", "tomato" — NOT preparations like "fried chicken", "scrambled eggs", "basmati rice".
+   - Singular forms when possible.
+   - Do NOT split calories per ingredient.
+8. If the image is not food, return zeros, description "Not a meal", ingredients [].
 
 Return ONLY valid JSON with keys:
-description, calories, proteinG, carbsG, fatG`
+description, calories, proteinG, carbsG, fatG, ingredients`
 
-    // REST JSON uses camelCase for inline image parts
     const geminiUrl =
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent` +
       `?key=${encodeURIComponent(geminiKey)}`
@@ -192,12 +196,16 @@ function summarizeGeminiError(status: number, errText: string): string {
 function parseEstimate(text: string): PlateEstimate {
   const cleaned = text.replace(/```json|```/g, '').trim()
   const data = JSON.parse(cleaned) as Partial<PlateEstimate>
+  const ingredients = Array.isArray(data.ingredients)
+    ? data.ingredients.map((x) => String(x).trim()).filter(Boolean)
+    : []
   return {
     description: String(data.description ?? '').trim(),
     calories: Math.max(0, Math.round(Number(data.calories) || 0)),
     proteinG: Math.max(0, Number(data.proteinG) || 0),
     carbsG: Math.max(0, Number(data.carbsG) || 0),
     fatG: Math.max(0, Number(data.fatG) || 0),
+    ingredients,
   }
 }
 

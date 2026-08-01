@@ -15,6 +15,8 @@ export interface MealEntry {
   description?: string
   photoUrl?: string
   items: MealItem[]
+  /** Canonical ingredient tags for search/insights (no calorie split). */
+  ingredients: string[]
   totalCalories: number
   proteinG: number
   carbsG: number
@@ -49,12 +51,15 @@ export type MealInput = {
   description?: string
   photoUrl?: string
   items: MealItem[]
+  ingredients: string[]
   totalCalories: number
   proteinG: number
   carbsG: number
   fatG: number
   note?: string
 }
+
+export const MEAL_TYPE_ORDER: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack']
 
 export type WeightInput = {
   date: string

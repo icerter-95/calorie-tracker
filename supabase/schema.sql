@@ -10,6 +10,7 @@ create table if not exists public.meals (
   description text,
   photo_url text,
   items jsonb not null default '[]'::jsonb,
+  ingredients text[] not null default '{}'::text[],
   total_calories integer not null default 0,
   protein_g numeric(8, 1) not null default 0,
   carbs_g numeric(8, 1) not null default 0,
@@ -20,6 +21,7 @@ create table if not exists public.meals (
 
 create index if not exists meals_user_date_idx on public.meals (user_id, date);
 create index if not exists meals_user_created_idx on public.meals (user_id, created_at desc);
+create index if not exists meals_ingredients_gin_idx on public.meals using gin (ingredients);
 
 -- Weight entries
 create table if not exists public.weights (

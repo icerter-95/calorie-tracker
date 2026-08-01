@@ -1,19 +1,24 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { addMeal, deleteMeal, updateMeal } from '../db'
 import { useMealsForDate } from '../hooks/useData'
 import { useSettings } from '../hooks/useSettings'
 import { formatDisplayDate, todayKey } from '../lib/dates'
 import { roundMacro } from '../lib/macros'
+import { defaultMealTypeForNow } from '../lib/mealTypeDefaults'
 import SwipeableMealCard from '../components/SwipeableMealCard'
 import MealForm from '../components/MealForm'
-import type { MealEntry, MealInput } from '../types'
+import type { MealEntry, MealInput, MealType } from '../types'
+import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
+
+type AddTarget = 'top' | MealType
 
 export default function TodayPage() {
   const dateKey = todayKey()
   const { meals, error, reload } = useMealsForDate(dateKey)
   const { settings } = useSettings()
-  const [showForm, setShowForm] = useState(false)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
+  const [addTarget, setAddTarget] = useState<AddTarget | null>(null)
+  const [defaultMealType, setDefaultMealType] = useState<MealType>(defaultMealTypeForNow)
   const [actionError, setActionError] = useState<string | null>(null)
 
   const totalCalories = (meals ?? []).reduce((sum, m) => sum + m.totalCalories, 0)
@@ -23,6 +28,22 @@ export default function TodayPage() {
   const goal = settings.dailyCalorieGoal
   const remaining = goal - totalCalories
 
+  const bySlot = useMemo(() => {
+    const map = Object.fromEntries(MEAL_TYPE_ORDER.map((t) => [t, [] as MealEntry[]])) as Record<
+      MealType,
+      MealEntry[]
+    >
+    for (const meal of meals ?? []) {
+      map[meal.mealType].push(meal)
+    }
+    return map
+  }, [meals])
+
+  function closeForm() {
+    setEditingMeal(null)
+    setAddTarget(null)
+  }
+
   async function handleSave(data: MealInput) {
     setActionError(null)
     try {
@@ -31,29 +52,46 @@ export default function TodayPage() {
       } else {
         await addMeal(data)
       }
-      setShowForm(false)
-      setEditingMeal(null)
+      closeForm()
       reload()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not save meal')
     }
   }
 
+  function startAdd(target: AddTarget = 'top') {
+    setEditingMeal(null)
+    setDefaultMealType(target === 'top' ? defaultMealTypeForNow() : target)
+    setAddTarget(target)
+  }
+
   function startEdit(meal: MealEntry) {
+    setAddTarget(null)
     setEditingMeal(meal)
-    setShowForm(true)
+    setDefaultMealType(meal.mealType)
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Delete this meal?')) return
+    if (!window.confirm('Delete this entry?')) return
     setActionError(null)
     try {
+      if (editingMeal?.id === id) closeForm()
       await deleteMeal(id)
       reload()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not delete meal')
     }
   }
+
+  const form = (
+    <MealForm
+      initial={editingMeal ?? undefined}
+      defaultDate={dateKey}
+      defaultMealType={editingMeal ? undefined : defaultMealType}
+      onSave={handleSave}
+      onCancel={closeForm}
+    />
+  )
 
   return (
     <div className="space-y-4">
@@ -76,51 +114,89 @@ export default function TodayPage() {
         </p>
       )}
 
-      {!showForm && (
+      {addTarget === 'top' ? (
+        form
+      ) : (
         <button
-          onClick={() => {
-            setEditingMeal(null)
-            setShowForm(true)
-          }}
+          onClick={() => startAdd('top')}
           className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
         >
-          + Add meal
+          + Add entry
         </button>
       )}
 
-      {showForm && (
-        <MealForm
-          initial={editingMeal ?? undefined}
-          defaultDate={dateKey}
-          onSave={handleSave}
-          onCancel={() => {
-            setShowForm(false)
-            setEditingMeal(null)
-          }}
-        />
-      )}
+      {meals === undefined ? (
+        <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
+      ) : (
+        <div className="space-y-4">
+          {MEAL_TYPE_ORDER.map((slot) => {
+            const slotMeals = bySlot[slot]
+            const slotKcal = slotMeals.reduce((s, m) => s + m.totalCalories, 0)
+            const isMain = slot !== 'snack'
+            const empty = slotMeals.length === 0
+            const addingHere = addTarget === slot
 
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
-          Meals
-        </h2>
-        {meals === undefined ? (
-          <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
-        ) : meals.length === 0 ? (
-          <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
-            No meals logged yet. Tap "Add meal" to start.
-          </p>
-        ) : (
-          meals.map((meal) => (
-            <SwipeableMealCard
-              key={meal.id}
-              meal={meal}
-              onEdit={() => startEdit(meal)}
-              onDelete={() => handleDelete(meal.id)}
-            />
-          ))
-        )}
-      </section>
+            return (
+              <section key={slot} className="space-y-2">
+                <div className="flex items-baseline justify-between px-1">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                    {MEAL_TYPE_LABELS[slot]}
+                  </h2>
+                  {!empty && (
+                    <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                      {slotKcal} kcal
+                    </span>
+                  )}
+                </div>
+
+                {empty ? (
+                  addingHere ? (
+                    form
+                  ) : (
+                    <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+                      <p className="text-sm text-stone-500 dark:text-stone-400">
+                        {isMain ? 'Not logged' : 'No snacks yet'}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => startAdd(slot)}
+                        className="text-sm font-medium text-teal-700 hover:text-teal-800 dark:text-teal-400"
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  )
+                ) : (
+                  <>
+                    {slotMeals.map((meal) => (
+                      <div key={meal.id} className="space-y-2">
+                        <SwipeableMealCard
+                          meal={meal}
+                          hideMealType
+                          onEdit={() => startEdit(meal)}
+                          onDelete={() => handleDelete(meal.id)}
+                        />
+                        {editingMeal?.id === meal.id && form}
+                      </div>
+                    ))}
+                    {addingHere ? (
+                      form
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => startAdd(slot)}
+                        className="w-full rounded-xl py-2 text-sm font-medium text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-stone-900"
+                      >
+                        + Add {MEAL_TYPE_LABELS[slot].toLowerCase()}
+                      </button>
+                    )}
+                  </>
+                )}
+              </section>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

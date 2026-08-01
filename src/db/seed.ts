@@ -1,24 +1,59 @@
 import { subDays } from 'date-fns'
 import { toDateKey } from '../lib/dates'
+import { normalizeIngredientTags } from '../lib/ingredients'
 import type { MealInput, MealItem, WeightInput } from '../types'
 import { clearAllUserData, addMeal, addWeight } from './index'
 
-function meal(
+type Totals = { calories: number; proteinG: number; carbsG: number; fatG: number }
+
+/**
+ * Preferred logging shape: description + whole-meal totals + ingredient tags.
+ * No food-item calorie breakdown.
+ */
+function entry(
   daysAgo: number,
   mealType: MealInput['mealType'],
-  items: MealItem[],
-  extras?: { description?: string; note?: string },
+  description: string,
+  totals: Totals,
+  extras?: { note?: string; ingredients?: string[] },
 ): MealInput {
-  const date = toDateKey(subDays(new Date(), daysAgo))
+  return {
+    date: toDateKey(subDays(new Date(), daysAgo)),
+    mealType,
+    description,
+    items: [],
+    ingredients: normalizeIngredientTags(extras?.ingredients ?? [description]),
+    totalCalories: totals.calories,
+    proteinG: totals.proteinG,
+    carbsG: totals.carbsG,
+    fatG: totals.fatG,
+    note: extras?.note,
+  }
+}
+
+/** Optional power-user path: itemized foods (kept as 1–2 demo rows only). */
+function withItems(
+  daysAgo: number,
+  mealType: MealInput['mealType'],
+  description: string,
+  items: MealItem[],
+  extras?: { note?: string; ingredients?: string[] },
+): MealInput {
   const totalCalories = items.reduce((sum, i) => sum + i.calories, 0)
   const proteinG = items.reduce((sum, i) => sum + (i.proteinG ?? 0), 0)
   const carbsG = items.reduce((sum, i) => sum + (i.carbsG ?? 0), 0)
   const fatG = items.reduce((sum, i) => sum + (i.fatG ?? 0), 0)
   return {
-    date,
+    date: toDateKey(subDays(new Date(), daysAgo)),
     mealType,
-    description: extras?.description,
+    description,
     items,
+    ingredients: normalizeIngredientTags(
+      extras?.ingredients ?? [
+        description,
+        ...items.map((i) => i.name),
+      ],
+    ),
     totalCalories,
     proteinG,
     carbsG,
@@ -27,85 +62,142 @@ function meal(
   }
 }
 
-function plate(
-  daysAgo: number,
-  mealType: MealInput['mealType'],
-  description: string,
-  totals: { calories: number; proteinG: number; carbsG: number; fatG: number },
-  note?: string,
-): MealInput {
-  return {
-    date: toDateKey(subDays(new Date(), daysAgo)),
-    mealType,
-    description,
-    items: [],
-    totalCalories: totals.calories,
-    proteinG: totals.proteinG,
-    carbsG: totals.carbsG,
-    fatG: totals.fatG,
-    note,
-  }
-}
-
 function weight(daysAgo: number, weightKg: number): WeightInput {
   return { date: toDateKey(subDays(new Date(), daysAgo)), weightKg }
 }
 
+/**
+ * Demo week shaped like the preferred UX:
+ * - Most logs = description + plate totals + tags
+ * - Some skipped breakfasts (for Insights)
+ * - Multiple snacks / two lunch photos on one day
+ * - One itemized snack as the optional breakdown example
+ */
 const SAMPLE_MEALS: MealInput[] = [
-  meal(0, 'breakfast', [
-    { name: 'Greek yogurt', calories: 120, proteinG: 15, carbsG: 8, fatG: 4 },
-    { name: 'Granola', calories: 180, proteinG: 5, carbsG: 28, fatG: 6 },
-    { name: 'Blueberries', calories: 60, proteinG: 1, carbsG: 14, fatG: 0 },
-  ]),
-  plate(0, 'lunch', 'Chicken rice bowl', { calories: 600, proteinG: 42, carbsG: 65, fatG: 16 }, 'Meal prep'),
-  meal(0, 'snack', [{ name: 'Apple', calories: 95, proteinG: 0, carbsG: 25, fatG: 0 }]),
+  // Today — skipped breakfast; two lunch photos; snacks
+  entry(0, 'lunch', 'Chicken rice bowl', { calories: 580, proteinG: 40, carbsG: 62, fatG: 15 }, {
+    note: 'Meal prep photo 1',
+    ingredients: ['chicken', 'rice', 'vegetables'],
+  }),
+  entry(0, 'lunch', 'Side salad with olive oil', { calories: 120, proteinG: 3, carbsG: 8, fatG: 9 }, {
+    note: 'Second photo',
+    ingredients: ['salad', 'olive oil'],
+  }),
+  entry(0, 'dinner', 'Salmon with roasted vegetables', {
+    calories: 620,
+    proteinG: 42,
+    carbsG: 28,
+    fatG: 32,
+  }, {
+    ingredients: ['fish', 'vegetables', 'potato'],
+  }),
+  entry(0, 'snack', 'Greek yogurt', { calories: 140, proteinG: 15, carbsG: 10, fatG: 4 }, {
+    ingredients: ['yogurt'],
+  }),
+  entry(0, 'snack', 'Apple', { calories: 95, proteinG: 0, carbsG: 25, fatG: 0 }, {
+    ingredients: ['apple'],
+  }),
 
-  meal(1, 'breakfast', [
-    { name: 'Scrambled eggs (2)', calories: 180, proteinG: 12, carbsG: 2, fatG: 14 },
-    { name: 'Toast with butter', calories: 150, proteinG: 4, carbsG: 18, fatG: 7 },
-  ]),
-  meal(1, 'lunch', [
-    { name: 'Tuna sandwich', calories: 420, proteinG: 28, carbsG: 38, fatG: 16 },
-    { name: 'Crisps', calories: 130, proteinG: 2, carbsG: 14, fatG: 8 },
-  ]),
-  meal(1, 'dinner', [
-    { name: 'Salmon fillet', calories: 350, proteinG: 34, carbsG: 0, fatG: 22 },
-    { name: 'Roasted vegetables', calories: 120, proteinG: 3, carbsG: 18, fatG: 4 },
-    { name: 'Quinoa', calories: 180, proteinG: 6, carbsG: 32, fatG: 3 },
-  ]),
-  meal(1, 'snack', [{ name: 'Protein bar', calories: 200, proteinG: 20, carbsG: 18, fatG: 7 }]),
+  // Yesterday — full day
+  entry(1, 'breakfast', 'Eggs on toast', { calories: 340, proteinG: 18, carbsG: 22, fatG: 20 }, {
+    ingredients: ['egg', 'bread', 'butter'],
+  }),
+  entry(1, 'lunch', 'Tuna sandwich and crisps', {
+    calories: 550,
+    proteinG: 30,
+    carbsG: 52,
+    fatG: 24,
+  }, {
+    ingredients: ['fish', 'bread', 'chips'],
+  }),
+  entry(1, 'dinner', 'Chicken quinoa bowl', { calories: 640, proteinG: 45, carbsG: 55, fatG: 22 }, {
+    ingredients: ['chicken', 'quinoa', 'vegetables'],
+  }),
+  entry(1, 'snack', 'Protein bar', { calories: 200, proteinG: 20, carbsG: 18, fatG: 7 }, {
+    ingredients: ['protein bar'],
+  }),
 
-  plate(2, 'breakfast', 'Oatmeal with banana', { calories: 310, proteinG: 10, carbsG: 52, fatG: 7 }),
-  plate(2, 'lunch', 'Caesar salad with chicken', { calories: 480, proteinG: 35, carbsG: 18, fatG: 28 }),
-  meal(2, 'dinner', [
-    { name: 'Pasta bolognese', calories: 620, proteinG: 28, carbsG: 72, fatG: 22 },
-    { name: 'Garlic bread', calories: 180, proteinG: 5, carbsG: 24, fatG: 7 },
-  ]),
+  // 2 days ago — skipped breakfast
+  entry(2, 'lunch', 'Caesar salad with chicken', {
+    calories: 480,
+    proteinG: 35,
+    carbsG: 18,
+    fatG: 28,
+  }, {
+    ingredients: ['chicken', 'salad', 'cheese'],
+  }),
+  entry(2, 'dinner', 'Pasta bolognese', { calories: 720, proteinG: 32, carbsG: 78, fatG: 26 }, {
+    ingredients: ['pasta', 'beef', 'tomato'],
+  }),
+  entry(2, 'snack', 'Banana', { calories: 105, proteinG: 1, carbsG: 27, fatG: 0 }, {
+    ingredients: ['banana'],
+  }),
 
-  plate(3, 'breakfast', 'Smoothie bowl', { calories: 340, proteinG: 12, carbsG: 55, fatG: 8 }),
-  plate(3, 'lunch', 'Sushi set (12 pcs)', { calories: 510, proteinG: 28, carbsG: 68, fatG: 10 }),
-  plate(3, 'dinner', 'Vegetable stir-fry with tofu', { calories: 440, proteinG: 22, carbsG: 40, fatG: 20 }),
+  // 3 days ago
+  entry(3, 'breakfast', 'Oatmeal with banana', { calories: 310, proteinG: 10, carbsG: 52, fatG: 7 }, {
+    ingredients: ['oats', 'banana', 'milk'],
+  }),
+  entry(3, 'lunch', 'Sushi set', { calories: 510, proteinG: 28, carbsG: 68, fatG: 10 }, {
+    ingredients: ['fish', 'rice'],
+  }),
+  entry(3, 'dinner', 'Vegetable stir-fry with tofu', {
+    calories: 440,
+    proteinG: 22,
+    carbsG: 40,
+    fatG: 20,
+  }, {
+    ingredients: ['vegetables', 'tofu', 'rice'],
+  }),
 
-  plate(4, 'breakfast', 'Croissant + coffee', { calories: 290, proteinG: 6, carbsG: 32, fatG: 15 }),
-  plate(4, 'lunch', 'Burrito bowl', { calories: 680, proteinG: 36, carbsG: 70, fatG: 26 }),
-  plate(4, 'dinner', 'Homemade soup + bread', { calories: 390, proteinG: 14, carbsG: 48, fatG: 14 }),
-  meal(4, 'snack', [{ name: 'Dark chocolate', calories: 120, proteinG: 2, carbsG: 10, fatG: 8 }]),
-
-  plate(5, 'breakfast', 'Avocado toast', { calories: 320, proteinG: 8, carbsG: 30, fatG: 18 }),
-  plate(5, 'lunch', 'Leftover pasta', { calories: 550, proteinG: 20, carbsG: 68, fatG: 18 }),
-  meal(
-    5,
-    'dinner',
+  // 4 days ago — skipped dinner; itemized snack (optional path demo)
+  entry(4, 'breakfast', 'Avocado toast', { calories: 320, proteinG: 8, carbsG: 30, fatG: 18 }, {
+    ingredients: ['avocado', 'bread'],
+  }),
+  entry(4, 'lunch', 'Burrito bowl', { calories: 680, proteinG: 36, carbsG: 70, fatG: 26 }, {
+    ingredients: ['chicken', 'rice', 'beans', 'avocado'],
+  }),
+  withItems(
+    4,
+    'snack',
+    'Yogurt bowl',
     [
-      { name: 'Pizza (2 slices)', calories: 520, proteinG: 22, carbsG: 56, fatG: 22 },
-      { name: 'Side salad', calories: 70, proteinG: 2, carbsG: 8, fatG: 3 },
+      { name: 'Greek yogurt', calories: 120, proteinG: 15, carbsG: 8, fatG: 4 },
+      { name: 'Granola', calories: 160, proteinG: 4, carbsG: 24, fatG: 5 },
+      { name: 'Blueberries', calories: 40, proteinG: 0, carbsG: 10, fatG: 0 },
     ],
-    { note: 'Friday night' },
+    { note: 'Optional item breakdown example', ingredients: ['yogurt', 'granola', 'blueberry'] },
   ),
 
-  plate(6, 'breakfast', 'Pancakes with maple syrup', { calories: 450, proteinG: 10, carbsG: 70, fatG: 14 }),
-  plate(6, 'lunch', 'BBQ chicken wrap', { calories: 490, proteinG: 32, carbsG: 45, fatG: 18 }),
-  plate(6, 'dinner', 'Steak with potatoes', { calories: 720, proteinG: 48, carbsG: 40, fatG: 35 }),
+  // 5 days ago — chicken again (for “days with chicken”)
+  entry(5, 'breakfast', 'Smoothie bowl', { calories: 340, proteinG: 12, carbsG: 55, fatG: 8 }, {
+    ingredients: ['banana', 'berry', 'yogurt'],
+  }),
+  entry(5, 'lunch', 'Leftover chicken rice', { calories: 520, proteinG: 34, carbsG: 58, fatG: 14 }, {
+    ingredients: ['chicken', 'rice'],
+  }),
+  entry(5, 'dinner', 'Pizza and side salad', { calories: 590, proteinG: 24, carbsG: 64, fatG: 25 }, {
+    note: 'Friday night',
+    ingredients: ['pizza', 'salad', 'cheese'],
+  }),
+
+  // 6 days ago — high-calorie day
+  entry(6, 'breakfast', 'Pancakes with maple syrup', {
+    calories: 450,
+    proteinG: 10,
+    carbsG: 70,
+    fatG: 14,
+  }, {
+    ingredients: ['egg', 'milk'],
+  }),
+  entry(6, 'lunch', 'BBQ chicken wrap', { calories: 490, proteinG: 32, carbsG: 45, fatG: 18 }, {
+    ingredients: ['chicken', 'bread'],
+  }),
+  entry(6, 'dinner', 'Steak with potatoes', { calories: 720, proteinG: 48, carbsG: 40, fatG: 35 }, {
+    ingredients: ['beef', 'potato'],
+  }),
+  entry(6, 'snack', 'Dark chocolate', { calories: 150, proteinG: 2, carbsG: 14, fatG: 10 }, {
+    ingredients: ['chocolate'],
+  }),
 ]
 
 const SAMPLE_WEIGHTS: WeightInput[] = [
@@ -122,10 +214,10 @@ const SAMPLE_WEIGHTS: WeightInput[] = [
 /** Replace the signed-in user's meals/weights with demo data (cloud). */
 export async function seedSampleData() {
   await clearAllUserData()
-  for (const entry of SAMPLE_MEALS) {
-    await addMeal(entry)
+  for (const row of SAMPLE_MEALS) {
+    await addMeal(row)
   }
-  for (const entry of SAMPLE_WEIGHTS) {
-    await addWeight(entry)
+  for (const row of SAMPLE_WEIGHTS) {
+    await addWeight(row)
   }
 }

@@ -11,9 +11,15 @@ interface SwipeableMealCardProps {
   meal: MealEntry
   onEdit: () => void
   onDelete: () => void
+  hideMealType?: boolean
 }
 
-export default function SwipeableMealCard({ meal, onEdit, onDelete }: SwipeableMealCardProps) {
+export default function SwipeableMealCard({
+  meal,
+  onEdit,
+  onDelete,
+  hideMealType,
+}: SwipeableMealCardProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [offset, setOffset] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -135,7 +141,13 @@ export default function SwipeableMealCard({ meal, onEdit, onDelete }: SwipeableM
         onPointerUp={finishDrag}
         onPointerCancel={finishDrag}
       >
-        <MealCard meal={meal} onEdit={onEdit} onDelete={onDelete} hideDelete />
+        <MealCard
+          meal={meal}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          hideDelete
+          hideMealType={hideMealType}
+        />
       </div>
     </div>
   )

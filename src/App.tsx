@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/AuthProvider'
 import Layout from './components/Layout'
 import HistoryPage from './pages/History'
+import InsightsPage from './pages/Insights'
 import LoginPage from './pages/Login'
 import TodayPage from './pages/Today'
 import UserPage from './pages/User'
@@ -27,6 +28,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<TodayPage />} />
         <Route path="history" element={<HistoryPage />} />
+        <Route path="insights" element={<InsightsPage />} />
         <Route path="weight" element={<WeightPage />} />
         <Route path="user" element={<UserPage />} />
       </Route>

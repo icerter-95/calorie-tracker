@@ -11,7 +11,9 @@ import {
   getWeekRange,
   sumCaloriesForDate,
 } from '../lib/dates'
-import type { MealEntry, MealInput } from '../types'
+import { defaultMealTypeForNow } from '../lib/mealTypeDefaults'
+import type { MealEntry, MealInput, MealType } from '../types'
+import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
 
 type Range = 'week' | 'month'
 
@@ -19,8 +21,9 @@ export default function HistoryPage() {
   const [range, setRange] = useState<Range>('week')
   const [showWeight, setShowWeight] = useState(true)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [showForm, setShowForm] = useState(false)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
+  const [adding, setAdding] = useState(false)
+  const [defaultMealType, setDefaultMealType] = useState<MealType>(defaultMealTypeForNow)
   const [actionError, setActionError] = useState<string | null>(null)
   const { meals, error: mealsError, reload: reloadMeals } = useAllMeals()
   const { weights, error: weightsError } = useAllWeights()
@@ -32,14 +35,19 @@ export default function HistoryPage() {
 
   useEffect(() => {
     setSelectedDate(null)
-    setShowForm(false)
+    setAdding(false)
     setEditingMeal(null)
   }, [range])
 
   useEffect(() => {
-    setShowForm(false)
+    setAdding(false)
     setEditingMeal(null)
   }, [selectedDate])
+
+  function closeForm() {
+    setAdding(false)
+    setEditingMeal(null)
+  }
 
   const summaries = useMemo(
     () => buildDailySummaries(meals ?? [], dateKeys),
@@ -58,6 +66,17 @@ export default function HistoryPage() {
     return sumCaloriesForDate(meals, selectedDate)
   }, [meals, selectedDate])
 
+  const selectedBySlot = useMemo(() => {
+    const map = Object.fromEntries(MEAL_TYPE_ORDER.map((t) => [t, [] as MealEntry[]])) as Record<
+      MealType,
+      MealEntry[]
+    >
+    for (const meal of selectedDayMeals) {
+      map[meal.mealType].push(meal)
+    }
+    return map
+  }, [selectedDayMeals])
+
   const periodTotal = summaries.reduce((sum, d) => sum + d.totalCalories, 0)
   const activeDays = summaries.filter((d) => d.totalCalories > 0).length
   const average = activeDays > 0 ? Math.round(periodTotal / activeDays) : 0
@@ -70,28 +89,30 @@ export default function HistoryPage() {
       } else {
         await addMeal(data)
       }
-      setShowForm(false)
-      setEditingMeal(null)
+      closeForm()
       reloadMeals()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not save meal')
     }
   }
 
-  function startAdd() {
+  function startAdd(slot?: MealType) {
     setEditingMeal(null)
-    setShowForm(true)
+    setDefaultMealType(slot ?? defaultMealTypeForNow())
+    setAdding(true)
   }
 
   function startEdit(meal: MealEntry) {
+    setAdding(false)
     setEditingMeal(meal)
-    setShowForm(true)
+    setDefaultMealType(meal.mealType)
   }
 
   async function handleDelete(id: string) {
-    if (!window.confirm('Delete this meal?')) return
+    if (!window.confirm('Delete this entry?')) return
     setActionError(null)
     try {
+      if (editingMeal?.id === id) closeForm()
       await deleteMeal(id)
       reloadMeals()
     } catch (err) {
@@ -163,22 +184,19 @@ export default function HistoryPage() {
             </span>
           </div>
 
-          {showForm ? (
+          {adding ? (
             <MealForm
-              initial={editingMeal ?? undefined}
               defaultDate={selectedDate}
+              defaultMealType={defaultMealType}
               onSave={handleSave}
-              onCancel={() => {
-                setShowForm(false)
-                setEditingMeal(null)
-              }}
+              onCancel={closeForm}
             />
           ) : (
             <button
-              onClick={startAdd}
+              onClick={() => startAdd()}
               className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
             >
-              + Add meal
+              + Add entry
             </button>
           )}
 
@@ -186,17 +204,38 @@ export default function HistoryPage() {
             <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
           ) : selectedDayMeals.length === 0 ? (
             <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
-              No meals logged on this day. Tap "Add meal" to log one.
+              No entries on this day. Tap "Add entry" to log one.
             </p>
           ) : (
-            selectedDayMeals.map((meal) => (
-              <SwipeableMealCard
-                key={meal.id}
-                meal={meal}
-                onEdit={() => startEdit(meal)}
-                onDelete={() => handleDelete(meal.id)}
-              />
-            ))
+            MEAL_TYPE_ORDER.map((slot) => {
+              const slotMeals = selectedBySlot[slot]
+              if (slotMeals.length === 0) return null
+              return (
+                <div key={slot} className="space-y-2">
+                  <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                    {MEAL_TYPE_LABELS[slot]}
+                  </h3>
+                  {slotMeals.map((meal) => (
+                    <div key={meal.id} className="space-y-2">
+                      <SwipeableMealCard
+                        meal={meal}
+                        hideMealType
+                        onEdit={() => startEdit(meal)}
+                        onDelete={() => handleDelete(meal.id)}
+                      />
+                      {editingMeal?.id === meal.id && (
+                        <MealForm
+                          initial={meal}
+                          defaultDate={selectedDate}
+                          onSave={handleSave}
+                          onCancel={closeForm}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )
+            })
           )}
         </section>
       )}

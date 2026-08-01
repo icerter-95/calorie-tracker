@@ -8,6 +8,7 @@ export type MealRow = {
   description: string | null
   photo_url: string | null
   items: MealItem[] | null
+  ingredients: string[] | null
   total_calories: number
   protein_g: number | string
   carbs_g: number | string
@@ -37,6 +38,7 @@ export function mapMealRow(row: MealRow): MealEntry {
     description: row.description ?? undefined,
     photoUrl: row.photo_url ?? undefined,
     items: Array.isArray(row.items) ? row.items : [],
+    ingredients: Array.isArray(row.ingredients) ? row.ingredients : [],
     totalCalories: num(row.total_calories),
     proteinG: num(row.protein_g),
     carbsG: num(row.carbs_g),

@@ -63,6 +63,7 @@ export async function addMeal(meal: MealInput) {
     description: meal.description ?? null,
     photo_url: meal.photoUrl ?? null,
     items: meal.items,
+    ingredients: meal.ingredients,
     total_calories: meal.totalCalories,
     protein_g: meal.proteinG,
     carbs_g: meal.carbsG,
@@ -94,6 +95,7 @@ export async function updateMeal(id: string, meal: MealInput) {
       description: meal.description ?? null,
       photo_url: nextPhoto,
       items: meal.items,
+      ingredients: meal.ingredients,
       total_calories: meal.totalCalories,
       protein_g: meal.proteinG,
       carbs_g: meal.carbsG,
@@ -168,6 +170,13 @@ export async function updateWeight(id: string, entry: WeightInput) {
 export async function deleteWeight(id: string) {
   const client = requireClient()
   const { error } = await client.from('weights').delete().eq('id', id)
+  if (error) throw error
+}
+
+/** Update only ingredient tags (used by backfill). */
+export async function updateMealIngredients(id: string, ingredients: string[]) {
+  const client = requireClient()
+  const { error } = await client.from('meals').update({ ingredients }).eq('id', id)
   if (error) throw error
 }
 
