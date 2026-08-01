@@ -7,6 +7,8 @@ interface IngredientChipsProps {
   onSuggest?: () => void | Promise<void>
   suggesting?: boolean
   disabled?: boolean
+  /** Hide the "Tags" section label; keep actions + placeholders. */
+  hideLabel?: boolean
 }
 
 export default function IngredientChips({
@@ -15,6 +17,7 @@ export default function IngredientChips({
   onSuggest,
   suggesting,
   disabled,
+  hideLabel,
 }: IngredientChipsProps) {
   const [draft, setDraft] = useState('')
 
@@ -35,19 +38,27 @@ export default function IngredientChips({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-medium text-stone-700 dark:text-stone-200">Tags</span>
-        {onSuggest && (
-          <button
-            type="button"
-            onClick={() => void onSuggest()}
-            disabled={disabled || suggesting}
-            className="text-sm font-medium text-teal-700 hover:text-teal-800 disabled:opacity-60 dark:text-teal-400"
-          >
-            {suggesting ? 'Suggesting…' : 'Suggest tags'}
-          </button>
-        )}
-      </div>
+      {(onSuggest || !hideLabel) && (
+        <div className="flex items-center justify-between gap-2">
+          {!hideLabel ? (
+            <span className="text-sm font-medium text-stone-700 dark:text-stone-200">Tags</span>
+          ) : (
+            <span className="sr-only">Tags</span>
+          )}
+          {onSuggest && (
+            <button
+              type="button"
+              onClick={() => void onSuggest()}
+              disabled={disabled || suggesting}
+              className={`text-sm font-medium text-teal-700 hover:text-teal-800 disabled:opacity-60 dark:text-teal-400 ${
+                hideLabel ? 'ml-auto' : ''
+              }`}
+            >
+              {suggesting ? 'Suggesting…' : 'Suggest'}
+            </button>
+          )}
+        </div>
+      )}
 
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
@@ -83,7 +94,7 @@ export default function IngredientChips({
               addTag(draft)
             }
           }}
-          placeholder="Add tag (e.g. chicken)"
+          placeholder="Add tag"
           className="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
         />
         <button
