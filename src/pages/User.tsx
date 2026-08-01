@@ -470,50 +470,48 @@ export default function UserPage() {
 
           {editingGoals ? (
             <>
-              <label className="block text-sm">
-                <span className="mb-1 block text-stone-600 dark:text-stone-300">
-                  Lower goal (weight loss)
-                </span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={800}
-                    max={6000}
-                    step={50}
-                    autoFocus
-                    value={calorieLowerDraft}
-                    onChange={(e) => setCalorieLowerDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleGoalsSave()
-                      if (e.key === 'Escape') cancelEditGoals()
-                    }}
-                    className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-                  />
-                  <span className="shrink-0 text-sm text-stone-500 dark:text-stone-400">kcal</span>
-                </div>
-              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <label className="block text-sm">
+                  <span className="mb-1 block text-stone-600 dark:text-stone-300">Lower goal</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={800}
+                      max={6000}
+                      step={50}
+                      autoFocus
+                      value={calorieLowerDraft}
+                      onChange={(e) => setCalorieLowerDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleGoalsSave()
+                        if (e.key === 'Escape') cancelEditGoals()
+                      }}
+                      className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                    />
+                    <span className="shrink-0 text-sm text-stone-500 dark:text-stone-400">kcal</span>
+                  </div>
+                </label>
 
-              <label className="block text-sm">
-                <span className="mb-1 block text-stone-600 dark:text-stone-300">
-                  Higher limit (maintenance)
-                </span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={800}
-                    max={6000}
-                    step={50}
-                    value={calorieUpperDraft}
-                    onChange={(e) => setCalorieUpperDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleGoalsSave()
-                      if (e.key === 'Escape') cancelEditGoals()
-                    }}
-                    className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-                  />
-                  <span className="shrink-0 text-sm text-stone-500 dark:text-stone-400">kcal</span>
-                </div>
-              </label>
+                <label className="block text-sm">
+                  <span className="mb-1 block text-stone-600 dark:text-stone-300">Higher limit</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={800}
+                      max={6000}
+                      step={50}
+                      value={calorieUpperDraft}
+                      onChange={(e) => setCalorieUpperDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleGoalsSave()
+                        if (e.key === 'Escape') cancelEditGoals()
+                      }}
+                      className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                    />
+                    <span className="shrink-0 text-sm text-stone-500 dark:text-stone-400">kcal</span>
+                  </div>
+                </label>
+              </div>
 
               <p className="text-xs text-stone-500 dark:text-stone-400">
                 Diary dots: green under lower, yellow between, red over higher.
@@ -605,16 +603,16 @@ export default function UserPage() {
             </>
           ) : (
             <>
-              <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-stone-600 dark:text-stone-300">Lower goal (weight loss)</p>
+                  <p className="text-stone-600 dark:text-stone-300">Lower goal</p>
                   <p className="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
                     {settings.calorieGoalLower.toLocaleString()}{' '}
                     <span className="font-normal text-stone-500 dark:text-stone-400">kcal</span>
                   </p>
                 </div>
                 <div>
-                  <p className="text-stone-600 dark:text-stone-300">Higher limit (maintenance)</p>
+                  <p className="text-stone-600 dark:text-stone-300">Higher limit</p>
                   <p className="mt-0.5 font-medium text-stone-900 dark:text-stone-50">
                     {settings.calorieGoalUpper.toLocaleString()}{' '}
                     <span className="font-normal text-stone-500 dark:text-stone-400">kcal</span>
