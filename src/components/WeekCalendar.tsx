@@ -1,9 +1,17 @@
 import { format, parseISO } from 'date-fns'
-import { useEffect, useRef, useState } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type TransitionEvent as ReactTransitionEvent,
+} from 'react'
 import { dayCalorieStatus, type DayCalorieStatus } from '../types/settings'
 import { formatDayHeading, getWeekRange, shiftWeek, todayKey } from '../lib/dates'
 
 const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const
+const SWIPE_THRESHOLD = 0.22
+const SNAP_MS = 220
 
 const DOT_CLASS: Record<Exclude<DayCalorieStatus, 'none'>, string> = {
   'on-target': 'bg-emerald-500',
@@ -30,6 +38,7 @@ function WeekStrip({
   hasEntriesByDate,
   calorieGoalLower,
   calorieGoalUpper,
+  suppressClicks,
 }: {
   weekDays: string[]
   selectedDate: string
@@ -38,9 +47,10 @@ function WeekStrip({
   hasEntriesByDate: Record<string, boolean>
   calorieGoalLower: number
   calorieGoalUpper: number
+  suppressClicks: boolean
 }) {
   return (
-    <div className="grid min-w-full shrink-0 snap-center grid-cols-7 gap-1">
+    <div className="grid w-full shrink-0 grid-cols-7 gap-1">
       {weekDays.map((dateKey, index) => {
         const date = parseISO(dateKey)
         const selected = dateKey === selectedDate
@@ -56,7 +66,9 @@ function WeekStrip({
           <button
             key={dateKey}
             type="button"
-            onClick={() => onSelectDate(dateKey)}
+            onClick={() => {
+              if (!suppressClicks) onSelectDate(dateKey)
+            }}
             className="flex flex-col items-center gap-1 rounded-xl py-1.5 transition-colors hover:bg-stone-200/60 dark:hover:bg-stone-800/80"
             aria-label={format(date, 'EEEE d MMMM')}
             aria-current={selected ? 'date' : undefined}
@@ -99,15 +111,24 @@ export default function WeekCalendar({
   calorieGoalLower,
   calorieGoalUpper,
 }: WeekCalendarProps) {
-  const scrollerRef = useRef<HTMLDivElement>(null)
-  const settlingRef = useRef(false)
-  const [scrollReady, setScrollReady] = useState(false)
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const offsetRef = useRef(0)
+  const draggingRef = useRef(false)
+  const startXRef = useRef(0)
+  const startYRef = useRef(0)
+  const axisLockRef = useRef<'x' | 'y' | null>(null)
+  const pendingDeltaRef = useRef(0)
+  const widthRef = useRef(0)
+  const snapTimerRef = useRef(0)
+  const settlingSnapRef = useRef(false)
+
+  const [offsetPx, setOffsetPx] = useState(0)
+  const [snapping, setSnapping] = useState(false)
+  const [suppressClicks, setSuppressClicks] = useState(false)
 
   const heading = formatDayHeading(selectedDate)
   const today = todayKey()
-  const currentWeekStart = getWeekRange(today)[0]
-  const selectedWeekStart = getWeekRange(selectedDate)[0]
-  const isCurrentWeek = selectedWeekStart === currentWeekStart
+  const showTodayButton = selectedDate !== today
 
   const weeks = [
     getWeekRange(shiftWeek(selectedDate, -1)),
@@ -115,67 +136,129 @@ export default function WeekCalendar({
     getWeekRange(shiftWeek(selectedDate, 1)),
   ]
 
+  function measureWidth() {
+    widthRef.current = viewportRef.current?.clientWidth ?? 0
+    return widthRef.current
+  }
+
+  function setOffset(next: number, withSnap: boolean) {
+    offsetRef.current = next
+    setOffsetPx(next)
+    setSnapping(withSnap)
+  }
+
   function goWeek(delta: number) {
     onSelectDate(shiftWeek(selectedDate, delta))
   }
 
-  function scrollToCenter(behavior: ScrollBehavior = 'auto') {
-    const el = scrollerRef.current
-    if (!el) return
-    el.scrollTo({ left: el.clientWidth, behavior })
+  function settleAfterSnap() {
+    window.clearTimeout(snapTimerRef.current)
+    if (!settlingSnapRef.current) return
+    settlingSnapRef.current = false
+    const delta = pendingDeltaRef.current
+    pendingDeltaRef.current = 0
+    setSnapping(false)
+    // Jump the track back under the new week with no transition (avoids bounce).
+    offsetRef.current = 0
+    setOffsetPx(0)
+    if (delta !== 0) {
+      onSelectDate(shiftWeek(selectedDate, delta))
+    }
   }
 
-  // Keep the pager centered on the middle (selected) week after date changes.
+  function finishSwipe(delta: -1 | 0 | 1) {
+    const width = measureWidth() || 1
+    window.clearTimeout(snapTimerRef.current)
+
+    if (delta === 0) {
+      pendingDeltaRef.current = 0
+      if (Math.abs(offsetRef.current) < 1) {
+        settlingSnapRef.current = false
+        setOffset(0, false)
+        return
+      }
+      settlingSnapRef.current = true
+      setOffset(0, true)
+      snapTimerRef.current = window.setTimeout(settleAfterSnap, SNAP_MS + 40)
+      return
+    }
+
+    pendingDeltaRef.current = delta
+    settlingSnapRef.current = true
+    setOffset(-delta * width, true)
+    snapTimerRef.current = window.setTimeout(settleAfterSnap, SNAP_MS + 40)
+  }
+
+  function handleTransitionEnd(event: ReactTransitionEvent<HTMLDivElement>) {
+    if (event.target !== event.currentTarget) return
+    if (event.propertyName && event.propertyName !== 'transform') return
+    settleAfterSnap()
+  }
+
   useEffect(() => {
-    settlingRef.current = true
-    scrollToCenter('auto')
-    setScrollReady(true)
-    const id = window.setTimeout(() => {
-      settlingRef.current = false
-    }, 50)
-    return () => window.clearTimeout(id)
+    return () => window.clearTimeout(snapTimerRef.current)
+  }, [])
+
+  useEffect(() => {
+    // Keep track centered when date changes via arrows / Today / day tap.
+    if (!draggingRef.current && pendingDeltaRef.current === 0) {
+      offsetRef.current = 0
+      setOffsetPx(0)
+      setSnapping(false)
+    }
   }, [selectedDate])
 
   useEffect(() => {
-    const el = scrollerRef.current
-    if (!el) return
+    function onResize() {
+      measureWidth()
+    }
+    window.addEventListener('resize', onResize)
+    measureWidth()
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
-    function applyPage(page: number) {
-      if (settlingRef.current) return
-      if (page <= 0) {
-        settlingRef.current = true
-        onSelectDate(shiftWeek(selectedDate, -1))
-      } else if (page >= 2) {
-        settlingRef.current = true
-        onSelectDate(shiftWeek(selectedDate, 1))
-      } else {
-        scrollToCenter('smooth')
-      }
+  function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (snapping) return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    draggingRef.current = true
+    axisLockRef.current = null
+    startXRef.current = event.clientX
+    startYRef.current = event.clientY
+    measureWidth()
+    setSnapping(false)
+  }
+
+  function onPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!draggingRef.current || snapping) return
+    const dx = event.clientX - startXRef.current
+    const dy = event.clientY - startYRef.current
+
+    if (!axisLockRef.current) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return
+      axisLockRef.current = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'
+    }
+    if (axisLockRef.current === 'y') return
+
+    event.preventDefault()
+    if (Math.abs(dx) > 8) setSuppressClicks(true)
+    setOffset(dx, false)
+  }
+
+  function onPointerUp() {
+    if (!draggingRef.current) return
+    draggingRef.current = false
+    const width = measureWidth() || 1
+    const dx = offsetRef.current
+
+    if (axisLockRef.current !== 'x' || Math.abs(dx) < width * SWIPE_THRESHOLD) {
+      finishSwipe(0)
+    } else {
+      finishSwipe(dx > 0 ? -1 : 1)
     }
 
-    function onScrollEnd() {
-      if (!el || settlingRef.current) return
-      const width = el.clientWidth || 1
-      const page = Math.round(el.scrollLeft / width)
-      applyPage(page)
-    }
-
-    // Prefer native scrollend; fall back to a short debounce on scroll.
-    let debounceId = 0
-    function onScroll() {
-      if (settlingRef.current) return
-      window.clearTimeout(debounceId)
-      debounceId = window.setTimeout(onScrollEnd, 80)
-    }
-
-    el.addEventListener('scrollend', onScrollEnd)
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      el.removeEventListener('scrollend', onScrollEnd)
-      el.removeEventListener('scroll', onScroll)
-      window.clearTimeout(debounceId)
-    }
-  }, [selectedDate, onSelectDate])
+    axisLockRef.current = null
+    window.setTimeout(() => setSuppressClicks(false), 0)
+  }
 
   return (
     <div className="space-y-3">
@@ -184,7 +267,7 @@ export default function WeekCalendar({
           <h2 className="truncate text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
             {heading}
           </h2>
-          {!isCurrentWeek && (
+          {showTodayButton && (
             <button
               type="button"
               onClick={() => onSelectDate(today)}
@@ -215,24 +298,36 @@ export default function WeekCalendar({
       </div>
 
       <div
-        ref={scrollerRef}
-        className={`flex overflow-x-auto scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-          scrollReady ? 'snap-x snap-mandatory' : ''
-        }`}
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        ref={viewportRef}
+        className="overflow-hidden touch-pan-y"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
       >
-        {weeks.map((weekDays, index) => (
-          <WeekStrip
-            key={`${weekDays[0]}-${index}`}
-            weekDays={weekDays}
-            selectedDate={selectedDate}
-            onSelectDate={onSelectDate}
-            caloriesByDate={caloriesByDate}
-            hasEntriesByDate={hasEntriesByDate}
-            calorieGoalLower={calorieGoalLower}
-            calorieGoalUpper={calorieGoalUpper}
-          />
-        ))}
+        <div
+          className="flex w-[300%] will-change-transform"
+          style={{
+            transform: `translate3d(calc(-33.3333% + ${offsetPx}px), 0, 0)`,
+            transition: snapping ? `transform ${SNAP_MS}ms ease-out` : 'none',
+          }}
+          onTransitionEnd={handleTransitionEnd}
+        >
+          {weeks.map((weekDays) => (
+            <div key={weekDays[0]} className="w-1/3 shrink-0">
+              <WeekStrip
+                weekDays={weekDays}
+                selectedDate={selectedDate}
+                onSelectDate={onSelectDate}
+                caloriesByDate={caloriesByDate}
+                hasEntriesByDate={hasEntriesByDate}
+                calorieGoalLower={calorieGoalLower}
+                calorieGoalUpper={calorieGoalUpper}
+                suppressClicks={suppressClicks}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
