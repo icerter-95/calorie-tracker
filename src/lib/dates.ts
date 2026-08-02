@@ -4,11 +4,13 @@ import {
   endOfMonth,
   endOfWeek,
   format,
+  isAfter,
   isSameDay,
   isToday,
   parseISO,
   startOfMonth,
   startOfWeek,
+  subDays,
 } from 'date-fns'
 
 export function todayKey(): string {
@@ -57,6 +59,23 @@ export function getMonthRange(reference = new Date()) {
   const start = startOfMonth(reference)
   const end = endOfMonth(reference)
   return eachDayOfInterval({ start, end }).map(toDateKey)
+}
+
+/** Inclusive date keys between two yyyy-MM-dd strings (order-independent). */
+export function getCustomRange(startKey: string, endKey: string) {
+  const a = parseISO(startKey)
+  const b = parseISO(endKey)
+  const start = isAfter(a, b) ? b : a
+  const end = isAfter(a, b) ? a : b
+  return eachDayOfInterval({ start, end }).map(toDateKey)
+}
+
+/** Default custom window: last 14 days including today. */
+export function defaultCustomRange(reference = new Date()) {
+  return {
+    start: toDateKey(subDays(reference, 13)),
+    end: toDateKey(reference),
+  }
 }
 
 export function sumCaloriesForDate(

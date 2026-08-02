@@ -1,4 +1,5 @@
 import type { User } from '@supabase/supabase-js'
+import { getStoredAvatarUrl } from './profileAvatar'
 
 export function getDisplayName(user: User | null | undefined): string {
   const meta = user?.user_metadata?.display_name
@@ -8,6 +9,14 @@ export function getDisplayName(user: User | null | undefined): string {
   if (email) return email.split('@')[0] || 'there'
 
   return 'there'
+}
+
+export function getAvatarUrl(user: User | null | undefined): string | null {
+  const meta = user?.user_metadata?.avatar_url
+  if (typeof meta === 'string' && meta.trim().startsWith('data:image/')) {
+    return meta.trim()
+  }
+  return getStoredAvatarUrl(user?.id)
 }
 
 export function getInitials(name: string): string {

@@ -25,12 +25,31 @@ export interface MealEntry {
   createdAt: number
 }
 
+export type HealthDataSource = 'manual' | 'apple-health'
+
 export interface WeightEntry {
   id: string
   date: string
   weightKg: number
+  source: HealthDataSource
+  syncedAt?: number
   note?: string
   createdAt: number
+}
+
+export interface StepsEntry {
+  id: string
+  date: string
+  steps: number
+  source: HealthDataSource
+  syncedAt?: number
+  createdAt: number
+}
+
+export interface HealthSyncTokenInfo {
+  tokenPrefix: string
+  createdAt: number
+  lastUsedAt?: number
 }
 
 export interface DailyCalorieSummary {

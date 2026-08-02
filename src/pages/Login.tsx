@@ -1,19 +1,23 @@
 import { useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
-import { getInitials } from '../lib/userProfile'
+import UserAvatar from '../components/UserAvatar'
+
+type SignInMethod = 'email' | 'username'
 
 export default function LoginPage() {
   const {
     configured,
     signIn,
+    signInWithUsername,
     signUp,
     savedAccounts,
     switchAccount,
     removeSavedAccountFromDevice,
   } = useAuth()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
-  const [displayName, setDisplayName] = useState('')
+  const [signInMethod, setSignInMethod] = useState<SignInMethod>('username')
   const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
@@ -49,18 +53,22 @@ export default function LoginPage() {
     setBusy(true)
     try {
       if (mode === 'signin') {
-        await signIn(email.trim(), password)
+        if (signInMethod === 'username') {
+          await signInWithUsername(username, password)
+        } else {
+          await signIn(email.trim(), password)
+        }
       } else {
-        const name = displayName.trim()
-        if (!name) {
-          setError('Please enter your name.')
+        if (!username.trim()) {
+          setError('Please enter a username.')
           return
         }
-        await signUp(email.trim(), password, name)
+        await signUp(email.trim(), password, username)
         setInfo(
           'Account created. If email confirmation is enabled in Supabase, check your inbox before signing in.',
         )
         setMode('signin')
+        setSignInMethod('username')
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed')
@@ -81,8 +89,29 @@ export default function LoginPage() {
     }
   }
 
+  const usingUsername = mode === 'signin' && signInMethod === 'username'
+  // Most recent saved account (the one you left when adding another).
+  const backAccount = savedAccounts[0] ?? null
+  const backLabel = backAccount?.displayName || backAccount?.email || 'previous account'
+
   return (
     <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4 py-8">
+      {backAccount && (
+        <div className="mb-4">
+          <button
+            type="button"
+            disabled={Boolean(switchingId)}
+            onClick={() => void handleSwitch(backAccount.userId)}
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-700 px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-teal-800 disabled:opacity-60"
+          >
+            <span aria-hidden>←</span>
+            {switchingId === backAccount.userId
+              ? 'Going back…'
+              : `Cancel — back to ${backLabel}`}
+          </button>
+        </div>
+      )}
+
       {savedAccounts.length > 0 && (
         <section className="mb-4 space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
           <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-50">
@@ -100,9 +129,11 @@ export default function LoginPage() {
                   onClick={() => void handleSwitch(account.userId)}
                   className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-1 py-1 text-left hover:bg-stone-50 disabled:opacity-60 dark:hover:bg-stone-800"
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-700 text-xs font-semibold text-white">
-                    {getInitials(account.displayName || account.email)}
-                  </span>
+                  <UserAvatar
+                    name={account.displayName || account.email}
+                    avatarUrl={account.avatarUrl}
+                    size="sm"
+                  />
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-medium text-stone-900 dark:text-stone-50">
                       {switchingId === account.userId
@@ -138,7 +169,7 @@ export default function LoginPage() {
           <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
             {savedAccounts.length > 0
               ? mode === 'signin'
-                ? 'Or sign in with email to add / restore an account.'
+                ? 'Or sign in to add / restore an account.'
                 : 'Create another account (e.g. a demo for sample data).'
               : mode === 'signin'
                 ? 'Sign in to sync your meals across devices.'
@@ -146,35 +177,80 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {mode === 'signup' && (
+        {mode === 'signin' && (
+          <div className="grid grid-cols-2 gap-1 rounded-xl bg-stone-100 p-1 dark:bg-stone-800">
+            <button
+              type="button"
+              onClick={() => {
+                setSignInMethod('username')
+                setError(null)
+              }}
+              className={`rounded-lg py-1.5 text-sm font-medium transition-colors ${
+                signInMethod === 'username'
+                  ? 'bg-white text-stone-900 shadow-sm dark:bg-stone-700 dark:text-stone-50'
+                  : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
+              }`}
+            >
+              Username
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSignInMethod('email')
+                setError(null)
+              }}
+              className={`rounded-lg py-1.5 text-sm font-medium transition-colors ${
+                signInMethod === 'email'
+                  ? 'bg-white text-stone-900 shadow-sm dark:bg-stone-700 dark:text-stone-50'
+                  : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
+              }`}
+            >
+              Email
+            </button>
+          </div>
+        )}
+
+        {(mode === 'signup' || usingUsername) && (
           <label className="block text-sm">
-            <span className="mb-1 block text-stone-600 dark:text-stone-300">Name</span>
+            <span className="mb-1 block text-stone-600 dark:text-stone-300">Username</span>
             <input
               type="text"
               required
-              autoComplete="name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="e.g. Ignasi or Demo"
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="e.g. ignasi"
+              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+            />
+            {mode === 'signup' && (
+              <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">
+                Your name in the app and for signing in. 3–20 chars, letters/numbers/_.
+              </span>
+            )}
+          </label>
+        )}
+
+        {(mode === 'signup' || !usingUsername) && (
+          <label className="block text-sm">
+            <span className="mb-1 block text-stone-600 dark:text-stone-300">Email</span>
+            <input
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
             />
           </label>
         )}
 
         <label className="block text-sm">
-          <span className="mb-1 block text-stone-600 dark:text-stone-300">Email</span>
-          <input
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-          />
-        </label>
-
-        <label className="block text-sm">
-          <span className="mb-1 block text-stone-600 dark:text-stone-300">Password</span>
+          <span className="mb-1 block text-stone-600 dark:text-stone-300">
+            {usingUsername ? 'Passcode' : 'Password'}
+          </span>
           <input
             type="password"
             required
@@ -184,6 +260,11 @@ export default function LoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
           />
+          {usingUsername && (
+            <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">
+              Same as your account password. Change it in Profile → Account info.
+            </span>
+          )}
         </label>
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
@@ -199,12 +280,13 @@ export default function LoginPage() {
 
         <button
           type="button"
+          disabled={Boolean(switchingId)}
           onClick={() => {
             setMode((m) => (m === 'signin' ? 'signup' : 'signin'))
             setError(null)
             setInfo(null)
           }}
-          className="w-full text-sm text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200"
+          className="w-full text-sm text-stone-600 hover:text-stone-900 disabled:opacity-60 dark:text-stone-400 dark:hover:text-stone-200"
         >
           {mode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
         </button>

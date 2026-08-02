@@ -3,3 +3,7 @@
 
 [functions.estimate-meal]
 verify_jwt = true
+
+# Shortcut uses a personal sync token (x-health-sync-token), not a user JWT.
+[functions.sync-health]
+verify_jwt = false

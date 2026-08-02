@@ -1,12 +1,18 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/AuthProvider'
 import Layout from './components/Layout'
+import DiaryPage from './pages/Diary'
+import HealthPage from './pages/Health'
 import HistoryPage from './pages/History'
 import InsightsPage from './pages/Insights'
 import LoginPage from './pages/Login'
-import DiaryPage from './pages/Diary'
-import UserPage from './pages/User'
-import WeightPage from './pages/Weight'
+import WeightHistoryPage from './pages/WeightHistory'
+import AccountInfoSettings from './pages/user/AccountInfoSettings'
+import AppearanceSettings from './pages/user/AppearanceSettings'
+import ConnectionsSettings from './pages/user/ConnectionsSettings'
+import DataSettings from './pages/user/DataSettings'
+import GoalsSettings from './pages/user/GoalsSettings'
+import UserHub from './pages/user/UserHub'
 
 export default function App() {
   const { configured, loading, session } = useAuth()
@@ -27,10 +33,20 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<DiaryPage />} />
-        <Route path="history" element={<HistoryPage />} />
+        <Route path="progress" element={<HistoryPage />} />
+        <Route path="history" element={<Navigate to="/progress" replace />} />
         <Route path="insights" element={<InsightsPage />} />
-        <Route path="weight" element={<WeightPage />} />
-        <Route path="user" element={<UserPage />} />
+        <Route path="health" element={<HealthPage />} />
+        <Route path="health/weight-history" element={<WeightHistoryPage />} />
+        <Route path="weight" element={<Navigate to="/health" replace />} />
+        <Route path="user">
+          <Route index element={<UserHub />} />
+          <Route path="account" element={<AccountInfoSettings />} />
+          <Route path="appearance" element={<AppearanceSettings />} />
+          <Route path="goals" element={<GoalsSettings />} />
+          <Route path="connections" element={<ConnectionsSettings />} />
+          <Route path="data" element={<DataSettings />} />
+        </Route>
       </Route>
     </Routes>
   )

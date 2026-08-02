@@ -1,7 +1,21 @@
 import { supabase } from '../lib/supabase'
 import { deleteAllUserMealPhotos, deleteMealPhoto } from '../lib/mealPhotos'
-import type { MealInput, MealEntry, WeightEntry, WeightInput } from '../types'
-import { mapMealRow, mapWeightRow, type MealRow, type WeightRow } from './mappers'
+import type {
+  HealthSyncTokenInfo,
+  MealInput,
+  MealEntry,
+  StepsEntry,
+  WeightEntry,
+  WeightInput,
+} from '../types'
+import {
+  mapMealRow,
+  mapStepsRow,
+  mapWeightRow,
+  type MealRow,
+  type StepsRow,
+  type WeightRow,
+} from './mappers'
 
 function requireClient() {
   if (!supabase) {
@@ -138,6 +152,29 @@ export async function deleteMeal(id: string) {
   }
 }
 
+export async function fetchAllSteps(): Promise<StepsEntry[]> {
+  const client = requireClient()
+  const { data, error } = await client
+    .from('steps')
+    .select('*')
+    .order('date', { ascending: true })
+
+  if (error) throw error
+  return (data as StepsRow[]).map(mapStepsRow)
+}
+
+export async function fetchStepsForDate(dateKey: string): Promise<StepsEntry | null> {
+  const client = requireClient()
+  const { data, error } = await client
+    .from('steps')
+    .select('*')
+    .eq('date', dateKey)
+    .maybeSingle()
+
+  if (error) throw error
+  return data ? mapStepsRow(data as StepsRow) : null
+}
+
 export async function addWeight(entry: WeightInput) {
   const client = requireClient()
   const userId = await requireUserId()
@@ -146,6 +183,7 @@ export async function addWeight(entry: WeightInput) {
     user_id: userId,
     date: entry.date,
     weight_kg: entry.weightKg,
+    source: 'manual',
     note: entry.note ?? null,
   })
 
@@ -180,7 +218,7 @@ export async function updateMealIngredients(id: string, ingredients: string[]) {
   if (error) throw error
 }
 
-/** Delete all meals and weights for the signed-in user (RLS-scoped). */
+/** Delete all meals, weights, and steps for the signed-in user (RLS-scoped). */
 export async function clearAllUserData() {
   const client = requireClient()
   const userId = await requireUserId()
@@ -196,4 +234,75 @@ export async function clearAllUserData() {
 
   const { error: weightsError } = await client.from('weights').delete().eq('user_id', userId)
   if (weightsError) throw weightsError
+
+  const { error: stepsError } = await client.from('steps').delete().eq('user_id', userId)
+  if (stepsError) throw stepsError
+}
+
+export async function fetchHealthSyncTokenInfo(): Promise<HealthSyncTokenInfo | null> {
+  const client = requireClient()
+  const { data, error } = await client
+    .from('health_sync_tokens')
+    .select('token_prefix, created_at, last_used_at')
+    .maybeSingle()
+
+  if (error) throw error
+  if (!data) return null
+
+  return {
+    tokenPrefix: data.token_prefix as string,
+    createdAt: new Date(data.created_at as string).getTime(),
+    lastUsedAt: data.last_used_at
+      ? new Date(data.last_used_at as string).getTime()
+      : undefined,
+  }
+}
+
+/** Creates/replaces the sync token. Returns the plaintext once for the Shortcut. */
+export async function rotateHealthSyncToken(): Promise<string> {
+  const client = requireClient()
+  const userId = await requireUserId()
+  const token = generateSyncToken()
+  const tokenHash = await sha256Hex(token)
+  const tokenPrefix = token.slice(0, 8)
+
+  const { error } = await client.from('health_sync_tokens').upsert({
+    user_id: userId,
+    token_hash: tokenHash,
+    token_prefix: tokenPrefix,
+    last_used_at: null,
+    created_at: new Date().toISOString(),
+  })
+
+  if (error) throw error
+  return token
+}
+
+export async function deleteHealthSyncToken() {
+  const client = requireClient()
+  const userId = await requireUserId()
+  const { error } = await client.from('health_sync_tokens').delete().eq('user_id', userId)
+  if (error) throw error
+}
+
+function generateSyncToken() {
+  const bytes = new Uint8Array(24)
+  crypto.getRandomValues(bytes)
+  return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+async function sha256Hex(value: string) {
+  const data = new TextEncoder().encode(value)
+  const digest = await crypto.subtle.digest('SHA-256', data)
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+export function getHealthSyncEndpoint(): string | null {
+  const url = import.meta.env.VITE_SUPABASE_URL as string | undefined
+  if (!url) return null
+  return `${url.replace(/\/$/, '')}/functions/v1/sync-health`
+}
+
+export function getSupabaseAnonKey(): string | null {
+  return (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined) ?? null
 }

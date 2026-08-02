@@ -2,23 +2,38 @@ import { useEffect, useMemo, useState } from 'react'
 import CalorieChart from '../components/CalorieChart'
 import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
+import PeriodStats from '../components/PeriodStats'
+import StepsSnapshot from '../components/StepsSnapshot'
 import { addMeal, deleteMeal, updateMeal } from '../db'
-import { useAllMeals, useAllWeights } from '../hooks/useData'
+import { useAllMeals, useAllSteps, useAllWeights } from '../hooks/useData'
 import {
   buildDailySummaries,
+  defaultCustomRange,
   formatDisplayDate,
+  formatShortDate,
+  getCustomRange,
   getMonthRange,
   getWeekRange,
   sumCaloriesForDate,
+  todayKey,
 } from '../lib/dates'
 import { defaultMealTypeForNow } from '../lib/mealTypeDefaults'
 import type { MealEntry, MealInput, MealType } from '../types'
 import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
 
-type Range = 'week' | 'month'
+type Range = 'week' | 'month' | 'custom'
+
+const RANGE_LABELS: Record<Range, string> = {
+  week: 'This week',
+  month: 'This month',
+  custom: 'Custom',
+}
 
 export default function HistoryPage() {
+  const initialCustom = defaultCustomRange()
   const [range, setRange] = useState<Range>('week')
+  const [customStart, setCustomStart] = useState(initialCustom.start)
+  const [customEnd, setCustomEnd] = useState(initialCustom.end)
   const [showWeight, setShowWeight] = useState(true)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
@@ -27,17 +42,19 @@ export default function HistoryPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const { meals, error: mealsError, reload: reloadMeals } = useAllMeals()
   const { weights, error: weightsError } = useAllWeights()
+  const { steps, error: stepsError } = useAllSteps()
 
-  const dateKeys = useMemo(
-    () => (range === 'week' ? getWeekRange() : getMonthRange()),
-    [range],
-  )
+  const dateKeys = useMemo(() => {
+    if (range === 'week') return getWeekRange()
+    if (range === 'month') return getMonthRange()
+    return getCustomRange(customStart, customEnd)
+  }, [range, customStart, customEnd])
 
   useEffect(() => {
     setSelectedDate(null)
     setAdding(false)
     setEditingMeal(null)
-  }, [range])
+  }, [range, customStart, customEnd])
 
   useEffect(() => {
     setAdding(false)
@@ -77,9 +94,51 @@ export default function HistoryPage() {
     return map
   }, [selectedDayMeals])
 
-  const periodTotal = summaries.reduce((sum, d) => sum + d.totalCalories, 0)
-  const activeDays = summaries.filter((d) => d.totalCalories > 0).length
-  const average = activeDays > 0 ? Math.round(periodTotal / activeDays) : 0
+  const today = todayKey()
+  const datesWithEntries = useMemo(() => {
+    const set = new Set<string>()
+    for (const meal of meals ?? []) set.add(meal.date)
+    return set
+  }, [meals])
+
+  // Days logged: any day in range with at least one meal entry.
+  const activeDays = summaries.filter((d) => datesWithEntries.has(d.date)).length
+
+  // Averages only use finished days (exclude today) that have entries,
+  // so an in-progress day doesn't pull the daily average down.
+  const finishedLoggedSummaries = summaries.filter(
+    (d) => d.date < today && datesWithEntries.has(d.date),
+  )
+  const average =
+    finishedLoggedSummaries.length > 0
+      ? Math.round(
+          finishedLoggedSummaries.reduce((sum, d) => sum + d.totalCalories, 0) /
+            finishedLoggedSummaries.length,
+        )
+      : 0
+
+  const stepsInRange = useMemo(() => {
+    const set = new Set(dateKeys)
+    return (steps ?? []).filter((s) => set.has(s.date))
+  }, [steps, dateKeys])
+
+  const finishedSteps = stepsInRange.filter((s) => s.date < today)
+  const stepsAvg =
+    finishedSteps.length > 0
+      ? Math.round(finishedSteps.reduce((sum, s) => sum + s.steps, 0) / finishedSteps.length)
+      : null
+
+  const customFootnote =
+    range === 'custom' && dateKeys.length > 0
+      ? `${formatShortDate(dateKeys[0]!)} – ${formatShortDate(dateKeys[dateKeys.length - 1]!)}`
+      : undefined
+
+  const selectedDaySteps = useMemo(() => {
+    if (!selectedDate || steps === undefined) return undefined
+    return steps.find((s) => s.date === selectedDate) ?? null
+  }, [steps, selectedDate])
+
+  const chartHeight = dateKeys.length > 20 ? 320 : 280
 
   async function handleSave(data: MealInput) {
     setActionError(null)
@@ -121,27 +180,55 @@ export default function HistoryPage() {
 
   return (
     <div className="space-y-4">
-      <section className="flex gap-2">
-        {(['week', 'month'] as Range[]).map((r) => (
-          <button
-            key={r}
-            onClick={() => setRange(r)}
-            className={`flex-1 rounded-xl py-2 text-sm font-medium capitalize ${
-              range === r
-                ? 'bg-teal-700 text-white'
-                : 'bg-white text-stone-600 ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:text-stone-300 dark:ring-stone-700 dark:hover:bg-stone-800'
-            }`}
-          >
-            This {r}
-          </button>
-        ))}
+      <section className="space-y-2">
+        <div className="flex gap-2">
+          {(['week', 'month', 'custom'] as Range[]).map((r) => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={`flex-1 rounded-xl py-2 text-sm font-medium ${
+                range === r
+                  ? 'bg-teal-700 text-white'
+                  : 'bg-white text-stone-600 ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:text-stone-300 dark:ring-stone-700 dark:hover:bg-stone-800'
+              }`}
+            >
+              {RANGE_LABELS[r]}
+            </button>
+          ))}
+        </div>
+
+        {range === 'custom' && (
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block text-sm">
+              <span className="mb-1 block text-stone-600 dark:text-stone-300">From</span>
+              <input
+                type="date"
+                value={customStart}
+                max={customEnd}
+                onChange={(e) => setCustomStart(e.target.value)}
+                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+              />
+            </label>
+            <label className="block text-sm">
+              <span className="mb-1 block text-stone-600 dark:text-stone-300">To</span>
+              <input
+                type="date"
+                value={customEnd}
+                min={customStart}
+                onChange={(e) => setCustomEnd(e.target.value)}
+                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+              />
+            </label>
+          </div>
+        )}
       </section>
 
-      <section className="grid grid-cols-3 gap-2">
-        <StatCard label="Total" value={`${periodTotal}`} unit="kcal" />
-        <StatCard label="Avg / day" value={`${average}`} unit="kcal" />
-        <StatCard label="Days logged" value={`${activeDays}`} unit="" />
-      </section>
+      <PeriodStats
+        daysLogged={activeDays}
+        avgCalories={average}
+        avgSteps={stepsAvg}
+        footnote={customFootnote}
+      />
 
       <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
         <input
@@ -157,7 +244,7 @@ export default function HistoryPage() {
         data={summaries}
         weights={weights ?? []}
         showWeight={showWeight}
-        height={range === 'month' ? 320 : 280}
+        height={chartHeight}
         selectedDate={selectedDate}
         onDaySelect={setSelectedDate}
       />
@@ -166,9 +253,9 @@ export default function HistoryPage() {
         {selectedDate ? 'Selected day — tap another bar to switch' : 'Tap a bar to view meals for that day'}
       </p>
 
-      {(mealsError || weightsError || actionError) && (
+      {(mealsError || weightsError || stepsError || actionError) && (
         <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
-          {actionError ?? mealsError ?? weightsError}
+          {actionError ?? mealsError ?? weightsError ?? stepsError}
         </p>
       )}
 
@@ -182,6 +269,8 @@ export default function HistoryPage() {
               {selectedDayTotal} kcal
             </span>
           </div>
+
+          <StepsSnapshot entry={selectedDaySteps} />
 
           {adding ? (
             <MealForm
@@ -239,20 +328,6 @@ export default function HistoryPage() {
           )}
         </section>
       )}
-    </div>
-  )
-}
-
-function StatCard({ label, value, unit }: { label: string; value: string; unit: string }) {
-  return (
-    <div className="rounded-2xl bg-white p-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
-      <p className="text-xs text-stone-500 dark:text-stone-400">{label}</p>
-      <p className="text-lg font-semibold text-stone-900 dark:text-stone-50">
-        {value}
-        {unit && (
-          <span className="ml-1 text-xs font-normal text-stone-500 dark:text-stone-400">{unit}</span>
-        )}
-      </p>
     </div>
   )
 }

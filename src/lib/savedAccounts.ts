@@ -1,4 +1,5 @@
 import type { Session } from '@supabase/supabase-js'
+import { getStoredAvatarUrl } from './profileAvatar'
 import { getDisplayName } from './userProfile'
 
 const STORAGE_KEY = 'calorie-tracker.saved-accounts'
@@ -7,12 +8,16 @@ export type SavedAccount = {
   userId: string
   email: string
   displayName: string
+  avatarUrl?: string | null
   accessToken: string
   refreshToken: string
   updatedAt: number
 }
 
-export type SavedAccountSummary = Pick<SavedAccount, 'userId' | 'email' | 'displayName' | 'updatedAt'>
+export type SavedAccountSummary = Pick<
+  SavedAccount,
+  'userId' | 'email' | 'displayName' | 'avatarUrl' | 'updatedAt'
+>
 
 function readAll(): SavedAccount[] {
   try {
@@ -41,10 +46,11 @@ export function listSavedAccounts(): SavedAccount[] {
 }
 
 export function listSavedAccountSummaries(): SavedAccountSummary[] {
-  return listSavedAccounts().map(({ userId, email, displayName, updatedAt }) => ({
+  return listSavedAccounts().map(({ userId, email, displayName, avatarUrl, updatedAt }) => ({
     userId,
     email,
     displayName,
+    avatarUrl,
     updatedAt,
   }))
 }
@@ -59,6 +65,11 @@ export function upsertSavedAccountFromSession(session: Session): SavedAccount[] 
     userId: user.id,
     email: user.email ?? '',
     displayName: getDisplayName(user),
+    avatarUrl: (() => {
+      const meta = user.user_metadata?.avatar_url
+      if (typeof meta === 'string' && meta.trim().startsWith('data:image/')) return meta.trim()
+      return getStoredAvatarUrl(user.id)
+    })(),
     accessToken: session.access_token,
     refreshToken: session.refresh_token,
     updatedAt: Date.now(),

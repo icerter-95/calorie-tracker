@@ -1,4 +1,11 @@
-import type { MealEntry, MealItem, MealType, WeightEntry } from '../types'
+import type {
+  HealthDataSource,
+  MealEntry,
+  MealItem,
+  MealType,
+  StepsEntry,
+  WeightEntry,
+} from '../types'
 
 export type MealRow = {
   id: string
@@ -22,7 +29,19 @@ export type WeightRow = {
   user_id: string
   date: string
   weight_kg: number | string
+  source?: string | null
+  synced_at?: string | null
   note: string | null
+  created_at: string
+}
+
+export type StepsRow = {
+  id: string
+  user_id: string
+  date: string
+  steps: number
+  source: string
+  synced_at: string | null
   created_at: string
 }
 
@@ -48,12 +67,29 @@ export function mapMealRow(row: MealRow): MealEntry {
   }
 }
 
+function mapSource(value: string | null | undefined): HealthDataSource {
+  return value === 'apple-health' ? 'apple-health' : 'manual'
+}
+
 export function mapWeightRow(row: WeightRow): WeightEntry {
   return {
     id: row.id,
     date: row.date,
     weightKg: num(row.weight_kg),
+    source: mapSource(row.source),
+    syncedAt: row.synced_at ? new Date(row.synced_at).getTime() : undefined,
     note: row.note ?? undefined,
+    createdAt: new Date(row.created_at).getTime(),
+  }
+}
+
+export function mapStepsRow(row: StepsRow): StepsEntry {
+  return {
+    id: row.id,
+    date: row.date,
+    steps: Math.round(num(row.steps)),
+    source: mapSource(row.source),
+    syncedAt: row.synced_at ? new Date(row.synced_at).getTime() : undefined,
     createdAt: new Date(row.created_at).getTime(),
   }
 }

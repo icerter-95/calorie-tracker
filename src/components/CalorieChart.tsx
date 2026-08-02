@@ -22,6 +22,24 @@ interface CalorieChartProps {
   onDaySelect?: (date: string) => void
 }
 
+/** Zoom the kcal axis around logged days (~±600) so small day-to-day swings read clearly. */
+function calorieAxisDomain(values: number[]): [number, number] {
+  const logged = values.filter((v) => v > 0)
+  if (logged.length === 0) return [0, 1200]
+
+  const min = Math.min(...logged)
+  const max = Math.max(...logged)
+  const avg = logged.reduce((sum, v) => sum + v, 0) / logged.length
+  const pad = 600
+  const lo = Math.min(avg - pad, min)
+  const hi = Math.max(avg + pad, max)
+  const step = 100
+  return [
+    Math.max(0, Math.floor(lo / step) * step),
+    Math.ceil(hi / step) * step,
+  ]
+}
+
 export default function CalorieChart({
   data,
   weights = [],
@@ -37,6 +55,8 @@ export default function CalorieChart({
     label: formatShortDate(d.date),
     weightKg: weightByDate[d.date] ?? null,
   }))
+
+  const calorieDomain = calorieAxisDomain(chartData.map((d) => d.totalCalories))
 
   if (chartData.every((d) => d.totalCalories === 0 && d.weightKg == null)) {
     return (
@@ -57,6 +77,8 @@ export default function CalorieChart({
           <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
           <YAxis
             yAxisId="calories"
+            domain={calorieDomain}
+            allowDataOverflow
             tick={{ fontSize: 11 }}
             width={52}
             tickMargin={6}
