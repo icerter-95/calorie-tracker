@@ -23,8 +23,9 @@ export function useEdgeSwipeBack(
   useEffect(() => {
     if (!enabled) return
 
-    const el = targetRef.current
-    if (!el) return
+    const node = targetRef.current
+    if (!node) return
+    const target: HTMLElement = node
 
     let tracking = false
     let startX = 0
@@ -34,29 +35,27 @@ export function useEdgeSwipeBack(
     let horizontal = false
 
     function resetTransform(animate: boolean) {
-      if (!el) return
-      el.style.transition = animate ? 'transform 220ms cubic-bezier(0.32, 0.72, 0, 1)' : 'none'
-      el.style.transform = 'translateX(0)'
+      target.style.transition = animate ? 'transform 220ms cubic-bezier(0.32, 0.72, 0, 1)' : 'none'
+      target.style.transform = 'translateX(0)'
       if (animate) {
         const clear = () => {
-          el.style.transition = ''
-          el.removeEventListener('transitionend', clear)
+          target.style.transition = ''
+          target.removeEventListener('transitionend', clear)
         }
-        el.addEventListener('transitionend', clear)
+        target.addEventListener('transitionend', clear)
       } else {
-        el.style.transition = ''
+        target.style.transition = ''
       }
     }
 
     function finishBack() {
-      if (!el) return
-      el.style.transition = 'transform 220ms cubic-bezier(0.32, 0.72, 0, 1)'
-      el.style.transform = 'translateX(100%)'
+      target.style.transition = 'transform 220ms cubic-bezier(0.32, 0.72, 0, 1)'
+      target.style.transform = 'translateX(100%)'
       window.setTimeout(() => {
         onBackRef.current()
         // Reset after navigation; next page mounts fresh, but clear styles anyway
-        el.style.transition = 'none'
-        el.style.transform = ''
+        target.style.transition = 'none'
+        target.style.transform = ''
       }, 200)
     }
 
@@ -71,7 +70,7 @@ export function useEdgeSwipeBack(
       startX = touch.clientX
       startY = touch.clientY
       currentX = 0
-      el.style.transition = 'none'
+      target.style.transition = 'none'
     }
 
     function onTouchMove(event: TouchEvent) {
@@ -95,7 +94,7 @@ export function useEdgeSwipeBack(
       // Prevent vertical scroll / browser overscroll while swiping back
       event.preventDefault()
       currentX = Math.max(0, dx)
-      el.style.transform = `translateX(${currentX}px)`
+      target.style.transform = `translateX(${currentX}px)`
     }
 
     function onTouchEnd() {
@@ -120,18 +119,18 @@ export function useEdgeSwipeBack(
       resetTransform(true)
     }
 
-    el.addEventListener('touchstart', onTouchStart, { passive: true })
-    el.addEventListener('touchmove', onTouchMove, { passive: false })
-    el.addEventListener('touchend', onTouchEnd)
-    el.addEventListener('touchcancel', onTouchCancel)
+    target.addEventListener('touchstart', onTouchStart, { passive: true })
+    target.addEventListener('touchmove', onTouchMove, { passive: false })
+    target.addEventListener('touchend', onTouchEnd)
+    target.addEventListener('touchcancel', onTouchCancel)
 
     return () => {
-      el.removeEventListener('touchstart', onTouchStart)
-      el.removeEventListener('touchmove', onTouchMove)
-      el.removeEventListener('touchend', onTouchEnd)
-      el.removeEventListener('touchcancel', onTouchCancel)
-      el.style.transition = ''
-      el.style.transform = ''
+      target.removeEventListener('touchstart', onTouchStart)
+      target.removeEventListener('touchmove', onTouchMove)
+      target.removeEventListener('touchend', onTouchEnd)
+      target.removeEventListener('touchcancel', onTouchCancel)
+      target.style.transition = ''
+      target.style.transform = ''
     }
   }, [enabled, edgeWidth, commitDistance, targetRef])
 }
