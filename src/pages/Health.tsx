@@ -148,7 +148,7 @@ export default function HealthPage() {
   const error = weightsError ?? stepsError
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {(error || actionError) && (
         <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
           {actionError ?? error}
@@ -156,7 +156,7 @@ export default function HealthPage() {
       )}
 
       {/* Weight card */}
-      <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      <section className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
         <div className="flex items-start justify-between gap-3">
           <p className="text-xs font-medium uppercase tracking-wide text-amber-800/80 dark:text-amber-400/90">
             Weight
@@ -279,9 +279,9 @@ export default function HealthPage() {
           </form>
         )}
 
-        <div className="mt-4">
+        <div className="mt-3">
           {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={160}>
               <LineChart data={chartData} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#78716c' }} />
@@ -310,11 +310,11 @@ export default function HealthPage() {
       </section>
 
       {/* Steps card */}
-      <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      <section className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
         <p className="text-xs font-medium uppercase tracking-wide text-teal-800/80 dark:text-teal-400/90">
           Steps
         </p>
-        <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
+        <p className="mt-1 text-5xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
           {stepsAvg7 != null ? stepsAvg7.toLocaleString() : '—'}
         </p>
         <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
@@ -323,9 +323,9 @@ export default function HealthPage() {
             : 'No steps synced yet'}
         </p>
 
-        <div className="mt-4">
+        <div className="mt-3">
           {stepsChartData.some((d) => d.steps > 0) ? (
-            <ResponsiveContainer width="100%" height={180}>
+            <ResponsiveContainer width="100%" height={160}>
               <BarChart data={stepsChartData} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
                 <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#78716c' }} />
@@ -363,7 +363,7 @@ export default function HealthPage() {
         </div>
 
         <p className="mt-2 text-xs text-stone-400 dark:text-stone-500">
-          Syncs from your iPhone automation — not live during the day.
+          iPhone sync · not live during the day
         </p>
       </section>
     </div>
