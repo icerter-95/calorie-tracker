@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   fetchAllMeals,
   fetchAllSteps,
@@ -9,13 +9,38 @@ import {
 import { useAuth } from '../auth/AuthProvider'
 import type { MealEntry, StepsEntry, WeightEntry } from '../types'
 
+/** Collects reload() promises and resolves them when the matching fetch finishes. */
+function useReloadGate() {
+  const pendingResolvers = useRef<Array<() => void>>([])
+
+  const armReload = useCallback((bump: () => void) => {
+    return new Promise<void>((resolve) => {
+      pendingResolvers.current.push(resolve)
+      bump()
+    })
+  }, [])
+
+  const resolvePending = useCallback(() => {
+    const resolvers = pendingResolvers.current
+    pendingResolvers.current = []
+    for (const resolve of resolvers) resolve()
+  }, [])
+
+  // If the consumer unmounts mid-reload (e.g. tab change during pull-to-refresh),
+  // resolve waiters so the Layout spinner cannot hang forever.
+  useEffect(() => () => resolvePending(), [resolvePending])
+
+  return { armReload, resolvePending }
+}
+
 export function useAllMeals() {
   const { user } = useAuth()
   const [meals, setMeals] = useState<MealEntry[] | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [version, setVersion] = useState(0)
+  const { armReload, resolvePending } = useReloadGate()
 
-  const reload = useCallback(() => setVersion((v) => v + 1), [])
+  const reload = useCallback(() => armReload(() => setVersion((v) => v + 1)), [armReload])
 
   useEffect(() => {
     let cancelled = false
@@ -29,11 +54,14 @@ export function useAllMeals() {
       .catch((err: unknown) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load meals')
       })
+      .finally(() => {
+        if (!cancelled) resolvePending()
+      })
 
     return () => {
       cancelled = true
     }
-  }, [user?.id, version])
+  }, [user?.id, version, resolvePending])
 
   return { meals, error, reload }
 }
@@ -43,8 +71,9 @@ export function useMealsForDate(dateKey: string) {
   const [meals, setMeals] = useState<MealEntry[] | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [version, setVersion] = useState(0)
+  const { armReload, resolvePending } = useReloadGate()
 
-  const reload = useCallback(() => setVersion((v) => v + 1), [])
+  const reload = useCallback(() => armReload(() => setVersion((v) => v + 1)), [armReload])
 
   useEffect(() => {
     let cancelled = false
@@ -58,11 +87,14 @@ export function useMealsForDate(dateKey: string) {
       .catch((err: unknown) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load meals')
       })
+      .finally(() => {
+        if (!cancelled) resolvePending()
+      })
 
     return () => {
       cancelled = true
     }
-  }, [user?.id, dateKey, version])
+  }, [user?.id, dateKey, version, resolvePending])
 
   return { meals, error, reload }
 }
@@ -72,8 +104,9 @@ export function useAllWeights() {
   const [weights, setWeights] = useState<WeightEntry[] | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [version, setVersion] = useState(0)
+  const { armReload, resolvePending } = useReloadGate()
 
-  const reload = useCallback(() => setVersion((v) => v + 1), [])
+  const reload = useCallback(() => armReload(() => setVersion((v) => v + 1)), [armReload])
 
   useEffect(() => {
     let cancelled = false
@@ -87,11 +120,14 @@ export function useAllWeights() {
       .catch((err: unknown) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load weights')
       })
+      .finally(() => {
+        if (!cancelled) resolvePending()
+      })
 
     return () => {
       cancelled = true
     }
-  }, [user?.id, version])
+  }, [user?.id, version, resolvePending])
 
   return { weights, error, reload }
 }
@@ -101,8 +137,9 @@ export function useAllSteps() {
   const [steps, setSteps] = useState<StepsEntry[] | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [version, setVersion] = useState(0)
+  const { armReload, resolvePending } = useReloadGate()
 
-  const reload = useCallback(() => setVersion((v) => v + 1), [])
+  const reload = useCallback(() => armReload(() => setVersion((v) => v + 1)), [armReload])
 
   useEffect(() => {
     let cancelled = false
@@ -116,11 +153,14 @@ export function useAllSteps() {
       .catch((err: unknown) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load steps')
       })
+      .finally(() => {
+        if (!cancelled) resolvePending()
+      })
 
     return () => {
       cancelled = true
     }
-  }, [user?.id, version])
+  }, [user?.id, version, resolvePending])
 
   return { steps, error, reload }
 }
@@ -130,8 +170,9 @@ export function useStepsForDate(dateKey: string) {
   const [entry, setEntry] = useState<StepsEntry | null | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const [version, setVersion] = useState(0)
+  const { armReload, resolvePending } = useReloadGate()
 
-  const reload = useCallback(() => setVersion((v) => v + 1), [])
+  const reload = useCallback(() => armReload(() => setVersion((v) => v + 1)), [armReload])
 
   useEffect(() => {
     let cancelled = false
@@ -145,11 +186,14 @@ export function useStepsForDate(dateKey: string) {
       .catch((err: unknown) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load steps')
       })
+      .finally(() => {
+        if (!cancelled) resolvePending()
+      })
 
     return () => {
       cancelled = true
     }
-  }, [user?.id, dateKey, version])
+  }, [user?.id, dateKey, version, resolvePending])
 
   return { entry, error, reload }
 }

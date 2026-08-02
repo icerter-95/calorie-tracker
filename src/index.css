@@ -3,9 +3,25 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    /* Prefer our intentional pull-to-refresh over browser overscroll refresh */
+    overscroll-behavior-y: none;
+  }
+
   body {
     @apply bg-stone-100 text-stone-900 antialiased dark:bg-stone-950 dark:text-stone-50;
+    overscroll-behavior-y: none;
   }
+}
+
+@keyframes ptr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ptr-spinner {
+  animation: ptr-spin 0.7s linear infinite;
 }
 
 @layer components {

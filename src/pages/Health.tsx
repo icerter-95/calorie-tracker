@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { eachDayOfInterval, parseISO, subDays } from 'date-fns'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -15,6 +15,7 @@ import {
 } from 'recharts'
 import { addWeight, updateWeight } from '../db'
 import { useAllSteps, useAllWeights } from '../hooks/useData'
+import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import { formatShortDate, todayKey, toDateKey } from '../lib/dates'
 import type { WeightEntry } from '../types'
 
@@ -29,8 +30,14 @@ const GRID_STROKE = '#e7e5e4'
 export default function HealthPage() {
   const navigate = useNavigate()
   const { weights, error: weightsError, reload: reloadWeights } = useAllWeights()
-  const { steps, error: stepsError } = useAllSteps()
+  const { steps, error: stepsError, reload: reloadSteps } = useAllSteps()
   const [showForm, setShowForm] = useState(false)
+
+  const pullToRefresh = useCallback(async () => {
+    await Promise.all([reloadWeights(), reloadSteps()])
+  }, [reloadWeights, reloadSteps])
+
+  useRegisterPullToRefresh(pullToRefresh)
   const [menuOpen, setMenuOpen] = useState(false)
   const [editing, setEditing] = useState<WeightEntry | null>(null)
   const [date, setDate] = useState(todayKey())

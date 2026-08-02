@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import CalorieChart from '../components/CalorieChart'
 import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
@@ -6,6 +6,7 @@ import PeriodStats from '../components/PeriodStats'
 import StepsSnapshot from '../components/StepsSnapshot'
 import { addMeal, deleteMeal, updateMeal } from '../db'
 import { useAllMeals, useAllSteps, useAllWeights } from '../hooks/useData'
+import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import {
   buildDailySummaries,
   defaultCustomRange,
@@ -41,8 +42,14 @@ export default function HistoryPage() {
   const [defaultMealType, setDefaultMealType] = useState<MealType>(defaultMealTypeForNow)
   const [actionError, setActionError] = useState<string | null>(null)
   const { meals, error: mealsError, reload: reloadMeals } = useAllMeals()
-  const { weights, error: weightsError } = useAllWeights()
-  const { steps, error: stepsError } = useAllSteps()
+  const { weights, error: weightsError, reload: reloadWeights } = useAllWeights()
+  const { steps, error: stepsError, reload: reloadSteps } = useAllSteps()
+
+  const pullToRefresh = useCallback(async () => {
+    await Promise.all([reloadMeals(), reloadWeights(), reloadSteps()])
+  }, [reloadMeals, reloadWeights, reloadSteps])
+
+  useRegisterPullToRefresh(pullToRefresh)
 
   const dateKeys = useMemo(() => {
     if (range === 'week') return getWeekRange()

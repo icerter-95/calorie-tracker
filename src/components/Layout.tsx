@@ -1,9 +1,12 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
 import { useEdgeSwipeBack } from '../hooks/useEdgeSwipeBack'
+import { usePullToRefresh } from '../hooks/usePullToRefresh'
+import type { PullToRefreshOutletContext } from '../hooks/useRegisterPullToRefresh'
 import { getAvatarUrl, getDisplayName } from '../lib/userProfile'
 import { DiaryIcon, HealthIcon, ProgressIcon } from './NavIcons'
+import PullToRefreshIndicator from './PullToRefreshIndicator'
 import UserAvatar from './UserAvatar'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
@@ -47,6 +50,9 @@ export default function Layout() {
   const navigate = useNavigate()
   const shellRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLElement>(null)
+  const mainRef = useRef<HTMLElement>(null)
+  const pullRefreshHandlerRef = useRef<(() => Promise<void>) | null>(null)
+  const [pullRefreshEnabled, setPullRefreshEnabled] = useState(false)
   const isUserArea = location.pathname === '/user' || location.pathname.startsWith('/user/')
   const isUserHub = location.pathname === '/user'
   const isUserSubpage = isUserArea && !isUserHub
@@ -61,6 +67,24 @@ export default function Layout() {
   const sectionTitle = isStackPage
     ? STACK_PAGE_TITLES[location.pathname]
     : (USER_SECTION_TITLES[location.pathname] ?? 'Profile')
+
+  const setPullToRefresh = useCallback((handler: (() => Promise<void>) | null) => {
+    pullRefreshHandlerRef.current = handler
+    setPullRefreshEnabled(handler != null)
+  }, [])
+
+  const handlePullRefresh = useCallback(async () => {
+    const handler = pullRefreshHandlerRef.current
+    if (handler) await handler()
+  }, [])
+
+  const { pullDistance, refreshing, threshold } = usePullToRefresh({
+    onRefresh: handlePullRefresh,
+    enabled: pullRefreshEnabled,
+    contentRef: mainRef,
+  })
+
+  const outletContext: PullToRefreshOutletContext = { setPullToRefresh }
 
   function openUser() {
     navigate('/user', { state: { from: location.pathname } })
@@ -160,9 +184,19 @@ export default function Layout() {
         )}
       </header>
 
-      <main className={`flex-1 px-4 py-4 ${hidesTabBar ? 'pb-8' : 'pb-24'}`}>
-        <Outlet />
-      </main>
+      <div className="relative flex-1">
+        <PullToRefreshIndicator
+          pullDistance={pullDistance}
+          refreshing={refreshing}
+          threshold={threshold}
+        />
+        <main
+          ref={mainRef}
+          className={`will-change-transform px-4 py-4 ${hidesTabBar ? 'pb-8' : 'pb-24'}`}
+        >
+          <Outlet context={outletContext} />
+        </main>
+      </div>
 
       {!hidesTabBar && (
         <nav className="fixed bottom-0 left-0 right-0 border-t border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-950">
