@@ -37,12 +37,26 @@
 input[type='date'],
 select {
   box-sizing: border-box;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
 }
 
+/* iOS Safari date inputs have a large intrinsic min-width; keep them in-grid. */
+input[type='date'] {
+  display: block;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 input[type='date']::-webkit-date-and-time-value {
   min-width: 0;
+  text-align: left;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+input[type='date']::-webkit-datetime-edit {
+  min-width: 0;
+  overflow: hidden;
 }

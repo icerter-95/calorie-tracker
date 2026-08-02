@@ -206,24 +206,24 @@ export default function HistoryPage() {
 
         {range === 'custom' && (
           <div className="grid grid-cols-2 gap-3">
-            <label className="block text-sm">
+            <label className="block min-w-0 text-sm">
               <span className="mb-1 block text-stone-600 dark:text-stone-300">From</span>
               <input
                 type="date"
                 value={customStart}
                 max={customEnd}
                 onChange={(e) => setCustomStart(e.target.value)}
-                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                className="w-full min-w-0 max-w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
               />
             </label>
-            <label className="block text-sm">
+            <label className="block min-w-0 text-sm">
               <span className="mb-1 block text-stone-600 dark:text-stone-300">To</span>
               <input
                 type="date"
                 value={customEnd}
                 min={customStart}
                 onChange={(e) => setCustomEnd(e.target.value)}
-                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                className="w-full min-w-0 max-w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
               />
             </label>
           </div>
