@@ -1,8 +1,8 @@
 /** Bottom-nav icons — stroke logos that inherit `currentColor`. */
 
 const iconProps = {
-  width: 22,
-  height: 22,
+  width: 20,
+  height: 20,
   viewBox: '0 0 24 24',
   fill: 'none' as const,
   stroke: 'currentColor',
