@@ -10,7 +10,7 @@ import PullToRefreshIndicator from './PullToRefreshIndicator'
 import UserAvatar from './UserAvatar'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `flex flex-1 flex-col items-center gap-1 py-2 text-xs font-medium transition-colors ${
+  `flex flex-1 flex-col items-center gap-1 pt-3.5 pb-2.5 text-xs font-medium transition-colors ${
     isActive
       ? 'text-teal-700 dark:text-teal-400'
       : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200'
@@ -192,15 +192,15 @@ export default function Layout() {
         />
         <main
           ref={mainRef}
-          className={`will-change-transform px-4 py-4 ${hidesTabBar ? 'pb-8' : 'pb-24'}`}
+          className={`will-change-transform px-4 py-4 ${hidesTabBar ? 'pb-8' : 'pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))]'}`}
         >
           <Outlet context={outletContext} />
         </main>
       </div>
 
       {!hidesTabBar && (
-        <nav className="fixed bottom-0 left-0 right-0 border-t border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-950">
-          <div className="mx-auto flex max-w-lg">
+        <nav className="fixed bottom-0 left-0 right-0 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom,0px)] dark:border-stone-800 dark:bg-stone-950">
+          <div className="mx-auto flex min-h-16 max-w-lg items-center">
             <NavLink to="/" end className={linkClass}>
               <DiaryIcon />
               Diary
