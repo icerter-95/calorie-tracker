@@ -1,10 +1,11 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { addMeal, deleteMeal, updateMeal } from '../db'
 import DaySummaryCard from '../components/DaySummaryCard'
 import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
 import WeekCalendar from '../components/WeekCalendar'
 import { useAllMeals, useMealsForDate } from '../hooks/useData'
+import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import { useSettings } from '../hooks/useSettings'
 import { todayKey } from '../lib/dates'
 import { defaultMealTypeForNow } from '../lib/mealTypeDefaults'
@@ -29,9 +30,15 @@ export default function DiaryPage() {
   const { settings } = useSettings()
 
   function reloadDayAndWeek() {
-    reload()
-    reloadAllMeals()
+    void reload()
+    void reloadAllMeals()
   }
+
+  const pullToRefresh = useCallback(async () => {
+    await Promise.all([reload(), reloadAllMeals()])
+  }, [reload, reloadAllMeals])
+
+  useRegisterPullToRefresh(pullToRefresh)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
   const [addTarget, setAddTarget] = useState<MealType | null>(null)
   const [defaultMealType, setDefaultMealType] = useState<MealType>(defaultMealTypeForNow)

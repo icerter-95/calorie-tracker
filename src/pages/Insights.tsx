@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useAllMeals } from '../hooks/useData'
+import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import {
   averageCaloriesForSlot,
   countSkippedSlots,
@@ -20,7 +21,13 @@ export default function InsightsPage() {
   const [range, setRange] = useState<Range>('month')
   const [foodQuery, setFoodQuery] = useState('chicken')
   const [searched, setSearched] = useState('chicken')
-  const { meals, error } = useAllMeals()
+  const { meals, error, reload } = useAllMeals()
+
+  const pullToRefresh = useCallback(async () => {
+    await reload()
+  }, [reload])
+
+  useRegisterPullToRefresh(pullToRefresh)
 
   const dateKeys = useMemo(
     () => (range === 'week' ? getWeekRange() : getMonthRange()),

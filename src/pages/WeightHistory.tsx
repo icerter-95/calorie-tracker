@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { addWeight, deleteWeight, updateWeight } from '../db'
 import { useAllWeights } from '../hooks/useData'
+import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import { formatShortDate, todayKey } from '../lib/dates'
 import type { WeightEntry } from '../types'
 
@@ -17,6 +18,12 @@ function formatSyncLabel(ts?: number) {
 export default function WeightHistoryPage() {
   const { weights, error: weightsError, reload: reloadWeights } = useAllWeights()
   const [showForm, setShowForm] = useState(false)
+
+  const pullToRefresh = useCallback(async () => {
+    await reloadWeights()
+  }, [reloadWeights])
+
+  useRegisterPullToRefresh(pullToRefresh)
   const [editing, setEditing] = useState<WeightEntry | null>(null)
   const [date, setDate] = useState(todayKey())
   const [weightKg, setWeightKg] = useState('')
