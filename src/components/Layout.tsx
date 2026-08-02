@@ -37,10 +37,13 @@ export default function Layout() {
             <span aria-hidden>📊</span>
             History
           </NavLink>
-          <NavLink to="/insights" className={linkClass}>
-            <span aria-hidden>✨</span>
-            Insights
-          </NavLink>
+          {/* Temporarily hidden — route and page kept for later */}
+          {false && (
+            <NavLink to="/insights" className={linkClass}>
+              <span aria-hidden>✨</span>
+              Insights
+            </NavLink>
+          )}
           <NavLink to="/weight" className={linkClass}>
             <span aria-hidden>⚖️</span>
             Weight
