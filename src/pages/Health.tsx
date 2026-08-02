@@ -212,10 +212,10 @@ export default function HealthPage() {
           </div>
         </div>
 
-        <p className="mt-1 text-5xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
+        <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
           {latest ? `${latest.weightKg}` : '—'}
           {latest && (
-            <span className="ml-1.5 text-xl font-semibold text-stone-500 dark:text-stone-400">kg</span>
+            <span className="ml-1.5 text-lg font-semibold text-stone-500 dark:text-stone-400">kg</span>
           )}
         </p>
         <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
@@ -314,7 +314,7 @@ export default function HealthPage() {
         <p className="text-xs font-medium uppercase tracking-wide text-teal-800/80 dark:text-teal-400/90">
           Steps
         </p>
-        <p className="mt-1 text-5xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
+        <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
           {stepsAvg7 != null ? stepsAvg7.toLocaleString() : '—'}
         </p>
         <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
