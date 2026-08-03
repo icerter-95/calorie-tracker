@@ -59,10 +59,11 @@ Text: """${text.slice(0, 800)}"""
 
 Rules:
 1. Return JSON only: { "ingredients": string[] }
-2. 1–10 BASE ingredient tags in lowercase English.
-3. Use generic food names: "chicken", "rice", "egg", "tomato" — NOT preparations like "fried chicken", "scrambled eggs".
-4. Singular forms when possible.
-5. If nothing edible is clear, return { "ingredients": [] }.`
+2. 1–6 MAIN ingredient tags in lowercase English — only the primary foods that define the meal.
+3. EXCLUDE cooking aids, seasonings, and pantry staples: oil, olive oil, butter (as cooking fat), salt, pepper, flour, sugar, spices, herbs, garlic, onion (when used as seasoning), vinegar, soy sauce, water, stock, broth, and similar minor ingredients.
+4. Use generic food names: "chicken", "rice", "egg", "tomato" — NOT preparations like "fried chicken", "scrambled eggs".
+5. Singular forms when possible.
+6. If nothing edible is clear, return { "ingredients": [] }.`
 
     const geminiUrl =
       `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent` +
