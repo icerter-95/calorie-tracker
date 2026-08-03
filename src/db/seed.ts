@@ -81,7 +81,7 @@ const SAMPLE_MEALS: MealInput[] = [
   }),
   entry(0, 'lunch', 'Side salad with olive oil', { calories: 120, proteinG: 3, carbsG: 8, fatG: 9 }, {
     note: 'Second photo',
-    ingredients: ['salad', 'olive oil'],
+    ingredients: ['salad'],
   }),
   entry(0, 'dinner', 'Salmon with roasted vegetables', {
     calories: 620,

@@ -76,12 +76,57 @@ const SYNONYMS: Record<string, string> = {
   vegetables: 'vegetables',
   'roasted vegetables': 'vegetables',
   // other
-  'olive oil': 'olive oil',
-  oil: 'oil',
   'protein bar': 'protein bar',
   crisps: 'chips',
   chips: 'chips',
 }
+
+/** Cooking aids / seasonings / pantry staples — not useful as meal tags. */
+const MINOR_INGREDIENTS = new Set([
+  'oil',
+  'olive oil',
+  'vegetable oil',
+  'canola oil',
+  'sunflower oil',
+  'coconut oil',
+  'sesame oil',
+  'cooking oil',
+  'salt',
+  'pepper',
+  'black pepper',
+  'white pepper',
+  'flour',
+  'wheat flour',
+  'sugar',
+  'brown sugar',
+  'spice',
+  'spices',
+  'seasoning',
+  'seasonings',
+  'herb',
+  'herbs',
+  'vinegar',
+  'soy sauce',
+  'water',
+  'stock',
+  'broth',
+  'bouillon',
+  'garlic',
+  'garlic powder',
+  'onion powder',
+  'paprika',
+  'cumin',
+  'oregano',
+  'basil',
+  'thyme',
+  'cinnamon',
+  'chili powder',
+  'margarine',
+  'shortening',
+  'baking powder',
+  'baking soda',
+  'cornstarch',
+])
 
 function basicNormalize(raw: string): string {
   return raw
@@ -93,30 +138,40 @@ function basicNormalize(raw: string): string {
     .trim()
 }
 
-/** Map one raw tag to a canonical ingredient tag (or null if empty). */
+/** Map one raw tag to a canonical ingredient tag (or null if empty / minor). */
 export function normalizeIngredientTag(raw: string): string | null {
   const base = basicNormalize(raw)
   if (!base) return null
-  if (SYNONYMS[base]) return SYNONYMS[base]
 
-  // Phrase contains a known synonym key (longest match first)
-  const keys = Object.keys(SYNONYMS).sort((a, b) => b.length - a.length)
-  for (const key of keys) {
-    if (base === key || base.includes(key)) {
-      return SYNONYMS[key]
+  let tag: string | null = null
+  if (SYNONYMS[base]) {
+    tag = SYNONYMS[base]
+  } else {
+    // Phrase contains a known synonym key (longest match first)
+    const keys = Object.keys(SYNONYMS).sort((a, b) => b.length - a.length)
+    for (const key of keys) {
+      if (base === key || base.includes(key)) {
+        tag = SYNONYMS[key]
+        break
+      }
     }
+    if (!tag) tag = base
   }
 
-  // Drop ultra-generic noise
-  if (['food', 'meal', 'plate', 'dish', 'sauce', 'gravy', 'seasoning', 'spice'].includes(base)) {
+  // Drop ultra-generic noise and minor pantry / seasoning tags
+  if (
+    ['food', 'meal', 'plate', 'dish', 'sauce', 'gravy'].includes(tag) ||
+    MINOR_INGREDIENTS.has(tag) ||
+    MINOR_INGREDIENTS.has(base)
+  ) {
     return null
   }
 
-  return base
+  return tag
 }
 
 /** Normalize a list; dedupe; cap length. */
-export function normalizeIngredientTags(raw: string[], max = 12): string[] {
+export function normalizeIngredientTags(raw: string[], max = 6): string[] {
   const seen = new Set<string>()
   const out: string[] = []
   for (const item of raw) {

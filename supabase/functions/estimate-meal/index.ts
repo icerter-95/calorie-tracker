@@ -77,7 +77,9 @@ Rules:
 4. description: short English name for the plate (e.g. "Grilled chicken with rice and vegetables").
 5. calories: integer kcal for the whole plate.
 6. proteinG, carbsG, fatG: grams for the whole plate (one decimal ok).
-7. ingredients: array of 3–10 BASE ingredient tags in lowercase English.
+7. ingredients: array of 1–6 MAIN ingredient tags in lowercase English.
+   - Only the primary foods that define the meal (e.g. "chicken", "rice", "broccoli") — NOT cooking aids, seasonings, or pantry staples.
+   - EXCLUDE: oil, olive oil, butter (as cooking fat), salt, pepper, flour, sugar, spices, herbs, garlic, onion (when used as seasoning), vinegar, soy sauce, water, stock, broth, and similar minor ingredients.
    - Use generic food names only: "chicken", "rice", "egg", "tomato" — NOT preparations like "fried chicken", "scrambled eggs", "basmati rice".
    - Singular forms when possible.
    - Do NOT split calories per ingredient.
