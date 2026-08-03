@@ -29,8 +29,7 @@ export default function MealForm({
   onDelete,
 }: MealFormProps) {
   const isEdit = Boolean(initial)
-  const libraryInputRef = useRef<HTMLInputElement>(null)
-  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const photoInputRef = useRef<HTMLInputElement>(null)
   const previewObjectUrl = useRef<string | null>(null)
 
   /** Create flow: which log method is selected (both buttons stay visible). */
@@ -123,6 +122,10 @@ export default function MealForm({
   const busy = saving || estimating || pickingPhoto || suggestingTags
   const hasPhoto = Boolean(pendingPhoto || storedPhotoPath)
 
+  function openPhotoPicker() {
+    photoInputRef.current?.click()
+  }
+
   async function runEstimate(blob: Blob) {
     setEstimating(true)
     setFormError(null)
@@ -155,7 +158,6 @@ export default function MealForm({
     setPickingPhoto(true)
     try {
       const compressed = await compressImage(file)
-      // Retake / new photo replaces previous
       setPendingPhoto(compressed)
       setStoredPhotoPath(null)
       setPickingPhoto(false)
@@ -172,12 +174,16 @@ export default function MealForm({
     if (method === 'manual') {
       setPendingPhoto(null)
       setStoredPhotoPath(null)
+      return
     }
+    // Photo: open the native sheet immediately (Take Photo / Library / Browse on iOS).
+    openPhotoPicker()
   }
 
   function startRetake() {
     setRetaking(true)
     setFormError(null)
+    openPhotoPicker()
   }
 
   function cancelRetake() {
@@ -239,8 +245,6 @@ export default function MealForm({
         photoUrl = storedPhotoPath
       }
 
-      // Preferred path: whole-meal totals. Keep prior item lines only if editing
-      // and the user did not retake/replace nutrition via photo.
       const keepItems =
         isEdit && !pendingPhoto && (initial?.items?.length ?? 0) > 0 ? initial!.items : []
 
@@ -264,58 +268,38 @@ export default function MealForm({
     }
   }
 
-  const photoInputs = (
-    <>
-      <input
-        ref={libraryInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handlePhotoPick}
-      />
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="hidden"
-        onChange={handlePhotoPick}
-      />
-    </>
+  const photoInput = (
+    <input
+      ref={photoInputRef}
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={handlePhotoPick}
+    />
   )
 
-  const photoMenu = (
-    <div className="flex flex-wrap items-center gap-1.5">
+  const photoStatus = (pickingPhoto || estimating) && (
+    <span className="text-xs text-teal-700 dark:text-teal-400">
+      {pickingPhoto ? 'Processing…' : 'Estimating…'}
+    </span>
+  )
+
+  const choosePhotoButton = (
+    <div className="flex flex-wrap items-center gap-2">
       <button
         type="button"
         disabled={busy}
-        onClick={() => cameraInputRef.current?.click()}
+        onClick={openPhotoPicker}
         className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-60 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
       >
-        Camera
+        {hasPhoto ? 'Change photo' : 'Choose photo'}
       </button>
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => libraryInputRef.current?.click()}
-        className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-60 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
-      >
-        Upload
-      </button>
-      {(pickingPhoto || estimating) && (
-        <span className="text-xs text-teal-700 dark:text-teal-400">
-          {pickingPhoto ? 'Processing…' : 'Estimating…'}
-        </span>
-      )}
+      {photoStatus}
     </div>
   )
 
   const slotPicker = (
-    <div
-      className="grid grid-cols-4 gap-1"
-      role="group"
-      aria-label="Meal slot"
-    >
+    <div className="grid grid-cols-4 gap-1" role="group" aria-label="Meal slot">
       {MEAL_TYPE_ORDER.map((slot) => {
         const selected = mealType === slot
         return (
@@ -432,6 +416,43 @@ export default function MealForm({
     </div>
   )
 
+  const actionFooter = (
+    <div className="flex items-center justify-between gap-2 border-t border-stone-100 pt-3 dark:border-stone-800">
+      {onDelete ? (
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            if (!window.confirm('Delete this entry?')) return
+            void onDelete()
+          }}
+          className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-950/40"
+        >
+          Delete
+        </button>
+      ) : (
+        <span />
+      )}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={onCancel}
+          className="rounded-xl px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 disabled:opacity-60 dark:text-stone-300 dark:hover:bg-stone-800"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={busy}
+          className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+      </div>
+    </div>
+  )
+
   // ——— Create form ———
   if (!isEdit) {
     return (
@@ -439,28 +460,19 @@ export default function MealForm({
         onSubmit={handleSubmit}
         className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
       >
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-stone-900 dark:text-stone-50">Add entry</h2>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-sm text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"
-          >
-            Cancel
-          </button>
-        </div>
+        <h2 className="text-base font-semibold text-stone-900 dark:text-stone-50">Add entry</h2>
 
         {slotPicker}
         {methodPicker}
 
         {createMethod === 'photo' && (
           <div className="space-y-3">
-            {photoMenu}
             {photoPreview && (
               <div className="overflow-hidden rounded-xl ring-1 ring-stone-200 dark:ring-stone-700">
                 <img src={photoPreview} alt="" className="max-h-44 w-full object-cover" />
               </div>
             )}
+            {choosePhotoButton}
             {(hasPhoto || estimating) && detailsFields()}
           </div>
         )}
@@ -469,39 +481,23 @@ export default function MealForm({
 
         {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
 
-        {createMethod && (createMethod === 'manual' || hasPhoto) && (
-          <div className="flex justify-end border-t border-stone-100 pt-3 dark:border-stone-800">
-            <button
-              type="submit"
-              disabled={busy}
-              className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
-            >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-          </div>
-        )}
-        {photoInputs}
+        {createMethod && actionFooter}
+        {photoInput}
       </form>
     )
   }
 
-  // ——— Edit form: in-place nested layer (replaces the meal card) ———
+  // ——— Edit form ———
   return (
     <form
       onSubmit={handleSubmit}
       aria-label="Edit meal entry"
       className="overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-teal-700/25 dark:bg-stone-900 dark:ring-teal-400/30"
     >
-      {/* Photo stays once on the parent surface — not repeated in the edit well */}
       {photoPreview && !retaking && (
-        <img
-          src={photoPreview}
-          alt=""
-          className="max-h-40 w-full object-cover"
-        />
+        <img src={photoPreview} alt="" className="max-h-40 w-full object-cover" />
       )}
 
-      {/* Recessed second-level well: lower elevation = nested under the entry */}
       <div className="space-y-3 bg-stone-100/90 p-3 shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] dark:bg-stone-950/70 dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.35)]">
         <div className="flex items-center justify-between gap-2">
           {!retaking ? (
@@ -522,23 +518,17 @@ export default function MealForm({
               Keep photo
             </button>
           )}
-          <button
-            type="button"
-            onClick={onCancel}
-            className="text-xs font-medium text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200"
-          >
-            Cancel
-          </button>
+          {photoStatus}
         </div>
 
-        {retaking && photoMenu}
+        {retaking && !pickingPhoto && !estimating && choosePhotoButton}
 
         {slotPicker}
         {detailsFields({ compact: true })}
 
         {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
 
-        <div className="flex items-center justify-between border-t border-stone-200/80 pt-2.5 dark:border-stone-800">
+        <div className="flex items-center justify-between gap-2 border-t border-stone-200/80 pt-2.5 dark:border-stone-800">
           {onDelete ? (
             <button
               type="button"
@@ -554,16 +544,26 @@ export default function MealForm({
           ) : (
             <span />
           )}
-          <button
-            type="submit"
-            disabled={busy}
-            className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
-          >
-            {saving ? 'Saving…' : 'Save'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={onCancel}
+              className="rounded-xl px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 disabled:opacity-60 dark:text-stone-300 dark:hover:bg-stone-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={busy}
+              className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+          </div>
         </div>
       </div>
-      {photoInputs}
+      {photoInput}
     </form>
   )
 }

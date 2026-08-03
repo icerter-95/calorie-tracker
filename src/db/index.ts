@@ -55,6 +55,15 @@ export async function fetchMealsForDate(dateKey: string): Promise<MealEntry[]> {
   return (data as MealRow[]).map(mapMealRow)
 }
 
+export async function fetchMealById(id: string): Promise<MealEntry | null> {
+  const client = requireClient()
+  const { data, error } = await client.from('meals').select('*').eq('id', id).maybeSingle()
+
+  if (error) throw error
+  if (!data) return null
+  return mapMealRow(data as MealRow)
+}
+
 export async function fetchAllWeights(): Promise<WeightEntry[]> {
   const client = requireClient()
   const { data, error } = await client

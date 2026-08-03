@@ -3,7 +3,6 @@ import CalorieChart from '../components/CalorieChart'
 import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
 import PeriodStats from '../components/PeriodStats'
-import StepsSnapshot from '../components/StepsSnapshot'
 import { addMeal, deleteMeal, updateMeal } from '../db'
 import { useAllMeals, useAllSteps, useAllWeights } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
@@ -13,8 +12,7 @@ import {
   formatDisplayDate,
   formatShortDate,
   getCustomRange,
-  getMonthRange,
-  getWeekRange,
+  getLastDaysRange,
   sumCaloriesForDate,
   todayKey,
 } from '../lib/dates'
@@ -25,8 +23,8 @@ import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
 type Range = 'week' | 'month' | 'custom'
 
 const RANGE_LABELS: Record<Range, string> = {
-  week: 'This week',
-  month: 'This month',
+  week: 'Last 7 days',
+  month: 'Last 30 days',
   custom: 'Custom',
 }
 
@@ -52,8 +50,8 @@ export default function HistoryPage() {
   useRegisterPullToRefresh(pullToRefresh)
 
   const dateKeys = useMemo(() => {
-    if (range === 'week') return getWeekRange()
-    if (range === 'month') return getMonthRange()
+    if (range === 'week') return getLastDaysRange(7)
+    if (range === 'month') return getLastDaysRange(30)
     return getCustomRange(customStart, customEnd)
   }, [range, customStart, customEnd])
 
@@ -139,11 +137,6 @@ export default function HistoryPage() {
     range === 'custom' && dateKeys.length > 0
       ? `${formatShortDate(dateKeys[0]!)} – ${formatShortDate(dateKeys[dateKeys.length - 1]!)}`
       : undefined
-
-  const selectedDaySteps = useMemo(() => {
-    if (!selectedDate || steps === undefined) return undefined
-    return steps.find((s) => s.date === selectedDate) ?? null
-  }, [steps, selectedDate])
 
   const chartHeight = dateKeys.length > 20 ? 320 : 280
 
@@ -277,8 +270,6 @@ export default function HistoryPage() {
             </span>
           </div>
 
-          <StepsSnapshot entry={selectedDaySteps} />
-
           {adding ? (
             <MealForm
               defaultDate={selectedDate}
@@ -288,10 +279,11 @@ export default function HistoryPage() {
             />
           ) : (
             <button
+              type="button"
               onClick={() => startAdd()}
               className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
             >
-              + Add entry
+              + Add meal
             </button>
           )}
 
@@ -299,7 +291,7 @@ export default function HistoryPage() {
             <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
           ) : selectedDayMeals.length === 0 ? (
             <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
-              No entries on this day. Tap "Add entry" to log one.
+              No entries on this day. Tap “Add meal” to log one.
             </p>
           ) : (
             MEAL_TYPE_ORDER.map((slot) => {
@@ -325,6 +317,7 @@ export default function HistoryPage() {
                         key={meal.id}
                         meal={meal}
                         hideMealType
+                        from="/progress"
                         onEdit={() => startEdit(meal)}
                       />
                     ),

@@ -61,6 +61,13 @@ export function getMonthRange(reference = new Date()) {
   return eachDayOfInterval({ start, end }).map(toDateKey)
 }
 
+/** Rolling window of the last `days` calendar days, including today. */
+export function getLastDaysRange(days: number, reference = new Date()) {
+  const end = typeof reference === 'string' ? parseISO(reference) : reference
+  const start = subDays(end, Math.max(days, 1) - 1)
+  return eachDayOfInterval({ start, end }).map(toDateKey)
+}
+
 /** Inclusive date keys between two yyyy-MM-dd strings (order-independent). */
 export function getCustomRange(startKey: string, endKey: string) {
   const a = parseISO(startKey)

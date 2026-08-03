@@ -3,6 +3,7 @@ import {
   fetchAllMeals,
   fetchAllSteps,
   fetchAllWeights,
+  fetchMealById,
   fetchMealsForDate,
   fetchStepsForDate,
 } from '../db'
@@ -64,6 +65,50 @@ export function useAllMeals() {
   }, [user?.id, version, resolvePending])
 
   return { meals, error, reload }
+}
+
+export function useMeal(id: string | undefined) {
+  const { user } = useAuth()
+  const [meal, setMeal] = useState<MealEntry | null | undefined>(undefined)
+  const [error, setError] = useState<string | null>(null)
+  const [version, setVersion] = useState(0)
+  const { armReload, resolvePending } = useReloadGate()
+
+  const reload = useCallback(() => armReload(() => setVersion((v) => v + 1)), [armReload])
+
+  useEffect(() => {
+    let cancelled = false
+    setError(null)
+
+    if (!id || !user) {
+      setMeal(null)
+      resolvePending()
+      return () => {
+        cancelled = true
+      }
+    }
+
+    setMeal(undefined)
+    fetchMealById(id)
+      .then((result) => {
+        if (!cancelled) setMeal(result)
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setMeal(null)
+          setError(err instanceof Error ? err.message : 'Failed to load meal')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) resolvePending()
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [user?.id, id, version, resolvePending])
+
+  return { meal, error, reload }
 }
 
 export function useMealsForDate(dateKey: string) {

@@ -174,24 +174,22 @@ export default function AppleHealthSetup() {
           <p className="font-medium text-stone-800 dark:text-stone-100">What the Shortcut sends</p>
           <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed">
             <li>
-              <strong>Weight:</strong> latest Body Mass in Health + that sample’s own date (not
-              “today” — so skipped weigh-in days don’t create fake rows)
+              <strong>Steps:</strong> today’s cumulative step total from Apple Health (upserts the
+              same day — later runs overwrite with a higher count)
             </li>
             <li>
-              <strong>Steps:</strong> full step total for yesterday
+              <strong>Weight (optional):</strong> latest Body Mass + that sample’s own date
             </li>
           </ul>
           <p className="text-xs text-stone-500 dark:text-stone-400">
-            Build a Shortcut named “Sync Health to Calorie Tracker”, test it once, then attach a
-            Time of Day Automation (Ask Before Running off). Exact tap-by-tap steps are in chat /
-            your setup notes for iOS 26.
+            Build a Shortcut named “Sync Today Steps”, test it once, then add three Time of Day
+            Automations (e.g. 12:00 / 18:00 / 22:00) with Ask Before Running off. Tap-by-tap steps
+            are in chat for iOS 26.
           </p>
           <p className="text-xs font-medium text-stone-800 dark:text-stone-100">JSON body shape</p>
           <code className="block whitespace-pre-wrap break-all rounded-lg bg-stone-100 px-2 py-1.5 text-[10px] text-stone-700 dark:bg-stone-800 dark:text-stone-200">{`{
-  "weight_kg": 78.4,
-  "weight_date": "2026-07-30",
   "steps": 8421,
-  "steps_date": "2026-08-01"
+  "steps_date": "2026-08-02"
 }`}</code>
 
           <CopyRow

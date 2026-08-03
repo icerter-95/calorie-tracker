@@ -40,7 +40,7 @@ export default function DiaryPage() {
 
   useRegisterPullToRefresh(pullToRefresh)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
-  const [addTarget, setAddTarget] = useState<MealType | null>(null)
+  const [adding, setAdding] = useState(false)
   const [defaultMealType, setDefaultMealType] = useState<MealType>(defaultMealTypeForNow)
   const [actionError, setActionError] = useState<string | null>(null)
 
@@ -125,7 +125,6 @@ export default function DiaryPage() {
     restoreScrollAnchor(anchor)
     if (mealsStillStale) return
 
-    // Re-apply after paint in case late layout shifted section tops.
     requestAnimationFrame(() => restoreScrollAnchor(anchor))
     pendingScrollAnchor.current = null
     pendingScrollDate.current = null
@@ -138,13 +137,13 @@ export default function DiaryPage() {
     mealsAtSelectRef.current = meals
     setSelectedDate(dateKey)
     setEditingMeal(null)
-    setAddTarget(null)
+    setAdding(false)
     setActionError(null)
   }
 
   function closeForm() {
     setEditingMeal(null)
-    setAddTarget(null)
+    setAdding(false)
   }
 
   async function handleSave(data: MealInput) {
@@ -162,14 +161,14 @@ export default function DiaryPage() {
     }
   }
 
-  function startAdd(slot: MealType) {
+  function startAdd() {
     setEditingMeal(null)
-    setDefaultMealType(slot)
-    setAddTarget(slot)
+    setDefaultMealType(defaultMealTypeForNow())
+    setAdding(true)
   }
 
   function startEdit(meal: MealEntry) {
-    setAddTarget(null)
+    setAdding(false)
     setEditingMeal(meal)
     setDefaultMealType(meal.mealType)
   }
@@ -184,17 +183,6 @@ export default function DiaryPage() {
       setActionError(err instanceof Error ? err.message : 'Could not delete meal')
     }
   }
-
-  const form = (
-    <MealForm
-      initial={editingMeal ?? undefined}
-      defaultDate={selectedDate}
-      defaultMealType={editingMeal ? undefined : defaultMealType}
-      onSave={handleSave}
-      onCancel={closeForm}
-      onDelete={editingMeal ? () => handleDelete(editingMeal.id) : undefined}
-    />
-  )
 
   return (
     <div className="space-y-4">
@@ -219,6 +207,23 @@ export default function DiaryPage() {
         fatGoal={settings.fatGoal}
       />
 
+      {adding ? (
+        <MealForm
+          defaultDate={selectedDate}
+          defaultMealType={defaultMealType}
+          onSave={handleSave}
+          onCancel={closeForm}
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={startAdd}
+          className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
+        >
+          + Add meal
+        </button>
+      )}
+
       {(error || actionError) && (
         <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
           {actionError ?? error}
@@ -231,10 +236,9 @@ export default function DiaryPage() {
         <div className="space-y-4">
           {MEAL_TYPE_ORDER.map((slot) => {
             const slotMeals = bySlot[slot]
+            if (slotMeals.length === 0) return null
+
             const slotKcal = slotMeals.reduce((s, m) => s + m.totalCalories, 0)
-            const isMain = slot !== 'snack'
-            const empty = slotMeals.length === 0
-            const addingHere = addTarget === slot
 
             return (
               <section
@@ -248,60 +252,40 @@ export default function DiaryPage() {
                   <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
                     {MEAL_TYPE_LABELS[slot]}
                   </h2>
-                  {!empty && (
-                    <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
-                      {slotKcal} kcal
-                    </span>
-                  )}
+                  <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                    {slotKcal} kcal
+                  </span>
                 </div>
 
-                {empty ? (
-                  addingHere ? (
-                    form
+                {slotMeals.map((meal) =>
+                  editingMeal?.id === meal.id ? (
+                    <MealForm
+                      key={meal.id}
+                      initial={meal}
+                      defaultDate={selectedDate}
+                      onSave={handleSave}
+                      onCancel={closeForm}
+                      onDelete={() => handleDelete(meal.id)}
+                    />
                   ) : (
-                    <div className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
-                      <p className="text-sm text-stone-500 dark:text-stone-400">
-                        {isMain ? 'Not logged' : 'No snacks yet'}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => startAdd(slot)}
-                        className="text-sm font-medium text-teal-700 hover:text-teal-800 dark:text-teal-400"
-                      >
-                        + Add
-                      </button>
-                    </div>
-                  )
-                ) : (
-                  <>
-                    {slotMeals.map((meal) =>
-                      editingMeal?.id === meal.id ? (
-                        <div key={meal.id}>{form}</div>
-                      ) : (
-                        <MealCard
-                          key={meal.id}
-                          meal={meal}
-                          hideMealType
-                          onEdit={() => startEdit(meal)}
-                        />
-                      ),
-                    )}
-                    {addingHere ? (
-                      form
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => startAdd(slot)}
-                        className="w-full rounded-xl py-2 text-sm font-medium text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-stone-900"
-                      >
-                        + Add {MEAL_TYPE_LABELS[slot].toLowerCase()}
-                      </button>
-                    )}
-                  </>
+                    <MealCard
+                      key={meal.id}
+                      meal={meal}
+                      hideMealType
+                      from="/"
+                      onEdit={() => startEdit(meal)}
+                    />
+                  ),
                 )}
               </section>
             )
           })}
+
+          {(meals?.length ?? 0) === 0 && !adding && (
+            <p className="rounded-2xl bg-white p-4 text-center text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
+              No meals yet. Tap “Add meal” to log one.
+            </p>
+          )}
         </div>
       )}
     </div>

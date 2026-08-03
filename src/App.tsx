@@ -6,6 +6,7 @@ import HealthPage from './pages/Health'
 import HistoryPage from './pages/History'
 import InsightsPage from './pages/Insights'
 import LoginPage from './pages/Login'
+import MealDetailPage from './pages/MealDetail'
 import WeightHistoryPage from './pages/WeightHistory'
 import AccountInfoSettings from './pages/user/AccountInfoSettings'
 import AppearanceSettings from './pages/user/AppearanceSettings'
@@ -33,6 +34,7 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<DiaryPage />} />
+        <Route path="meal/:id" element={<MealDetailPage />} />
         <Route path="progress" element={<HistoryPage />} />
         <Route path="history" element={<Navigate to="/progress" replace />} />
         <Route path="insights" element={<InsightsPage />} />

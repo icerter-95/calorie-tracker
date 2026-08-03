@@ -38,6 +38,10 @@ const STACK_PAGE_TITLES: Record<string, string> = {
   '/health/weight-history': 'Weight history',
 }
 
+const STACK_PAGE_BACK: Record<string, string> = {
+  '/health/weight-history': 'Health',
+}
+
 type UserLocationState = {
   from?: string
 }
@@ -56,17 +60,23 @@ export default function Layout() {
   const isUserArea = location.pathname === '/user' || location.pathname.startsWith('/user/')
   const isUserHub = location.pathname === '/user'
   const isUserSubpage = isUserArea && !isUserHub
-  const isStackPage = location.pathname in STACK_PAGE_TITLES
+  const isMealDetail = /^\/meal\/[^/]+$/.test(location.pathname)
+  const isFixedStackPage = location.pathname in STACK_PAGE_TITLES
+  const isStackPage = isFixedStackPage || isMealDetail
   const hidesTabBar = isUserArea || isStackPage
   const fromPath = (location.state as UserLocationState | null)?.from
   const backLabel = isUserSubpage
     ? 'Profile'
-    : isStackPage
-      ? 'Health'
-      : (fromPath && PAGE_LABELS[fromPath]) || 'Back'
-  const sectionTitle = isStackPage
-    ? STACK_PAGE_TITLES[location.pathname]
-    : (USER_SECTION_TITLES[location.pathname] ?? 'Profile')
+    : isMealDetail
+      ? (fromPath && PAGE_LABELS[fromPath]) || 'Back'
+      : isFixedStackPage
+        ? STACK_PAGE_BACK[location.pathname] ?? 'Back'
+        : (fromPath && PAGE_LABELS[fromPath]) || 'Back'
+  const sectionTitle = isMealDetail
+    ? 'Meal'
+    : isFixedStackPage
+      ? STACK_PAGE_TITLES[location.pathname]
+      : (USER_SECTION_TITLES[location.pathname] ?? 'Profile')
 
   const setPullToRefresh = useCallback((handler: (() => Promise<void>) | null) => {
     pullRefreshHandlerRef.current = handler
@@ -100,7 +110,11 @@ export default function Layout() {
       navigate('/user', { state: { from: fromPath }, replace: true })
       return
     }
-    if (isStackPage) {
+    if (isMealDetail) {
+      navigate(fromPath && !fromPath.startsWith('/user') ? fromPath : '/', { replace: true })
+      return
+    }
+    if (isFixedStackPage) {
       navigate('/health', { replace: true })
       return
     }
@@ -109,7 +123,7 @@ export default function Layout() {
       return
     }
     navigate('/', { replace: true })
-  }, [fromPath, isStackPage, isUserSubpage, navigate])
+  }, [fromPath, isFixedStackPage, isMealDetail, isUserSubpage, navigate])
 
   useEdgeSwipeBack(shellRef, {
     enabled: hidesTabBar,
