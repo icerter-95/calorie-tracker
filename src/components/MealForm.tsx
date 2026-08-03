@@ -284,20 +284,6 @@ export default function MealForm({
     </span>
   )
 
-  const choosePhotoButton = (
-    <div className="flex flex-wrap items-center gap-2">
-      <button
-        type="button"
-        disabled={busy}
-        onClick={openPhotoPicker}
-        className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-60 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
-      >
-        {hasPhoto ? 'Change photo' : 'Choose photo'}
-      </button>
-      {photoStatus}
-    </div>
-  )
-
   const slotPicker = (
     <div className="grid grid-cols-4 gap-1" role="group" aria-label="Meal slot">
       {MEAL_TYPE_ORDER.map((slot) => {
@@ -472,7 +458,7 @@ export default function MealForm({
                 <img src={photoPreview} alt="" className="max-h-44 w-full object-cover" />
               </div>
             )}
-            {choosePhotoButton}
+            {photoStatus}
             {(hasPhoto || estimating) && detailsFields()}
           </div>
         )}
@@ -521,7 +507,18 @@ export default function MealForm({
           {photoStatus}
         </div>
 
-        {retaking && !pickingPhoto && !estimating && choosePhotoButton}
+        {retaking && !pickingPhoto && !estimating && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={openPhotoPicker}
+              className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-60 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+            >
+              Choose photo
+            </button>
+          </div>
+        )}
 
         {slotPicker}
         {detailsFields({ compact: true })}
