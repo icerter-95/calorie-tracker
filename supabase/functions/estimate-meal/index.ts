@@ -3,6 +3,12 @@
 // Secret: npx supabase secrets set GEMINI_API_KEY=your_key
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+import {
+  blockReason,
+  candidateText,
+  generateContentWithFallback,
+  summarizeGeminiError,
+} from '../_shared/gemini.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,9 +28,6 @@ type PlateEstimate = {
   fatG: number
   ingredients: string[]
 }
-
-// Prefer a current free-tier Flash model. Override anytime with secret GEMINI_MODEL.
-const MODEL = Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash-lite'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -88,38 +91,28 @@ Rules:
 Return ONLY valid JSON with keys:
 description, calories, proteinG, carbsG, fatG, ingredients`
 
-    const geminiUrl =
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent` +
-      `?key=${encodeURIComponent(geminiKey)}`
-
-    const geminiRes = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt },
-              {
-                inlineData: {
-                  mimeType,
-                  data: imageBase64,
-                },
+    const geminiResult = await generateContentWithFallback(geminiKey, {
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType,
+                data: imageBase64,
               },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.2,
-          responseMimeType: 'application/json',
+            },
+          ],
         },
-      }),
+      ],
+      generationConfig: {
+        temperature: 0.2,
+        responseMimeType: 'application/json',
+      },
     })
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text()
-      console.error('Gemini error', geminiRes.status, errText)
-      if (geminiRes.status === 429) {
+    if (!geminiResult.ok) {
+      if (geminiResult.status === 429) {
         return json(
           {
             error:
@@ -128,30 +121,22 @@ description, calories, proteinG, carbsG, fatG, ingredients`
           429,
         )
       }
-      if (geminiRes.status === 400 || geminiRes.status === 403 || geminiRes.status === 404) {
-        return json(
-          {
-            error: summarizeGeminiError(geminiRes.status, errText),
-          },
-          502,
-        )
-      }
       return json(
-        { error: summarizeGeminiError(geminiRes.status, errText) },
+        {
+          error: summarizeGeminiError(geminiResult.status, geminiResult.errText),
+        },
         502,
       )
     }
 
-    const geminiJson = await geminiRes.json()
-    const text: string | undefined =
-      geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text
+    const text = candidateText(geminiResult.json)
 
     if (!text) {
-      const blockReason = geminiJson?.promptFeedback?.blockReason
+      const reason = blockReason(geminiResult.json)
       return json(
         {
-          error: blockReason
-            ? `AI blocked the image (${blockReason})`
+          error: reason
+            ? `AI blocked the image (${reason})`
             : 'AI returned an empty response',
         },
         502,
@@ -173,27 +158,6 @@ description, calories, proteinG, carbsG, fatG, ingredients`
     )
   }
 })
-
-function summarizeGeminiError(status: number, errText: string): string {
-  let message = ''
-  try {
-    const parsed = JSON.parse(errText)
-    message = parsed?.error?.message || errText
-  } catch {
-    message = errText
-  }
-  const short = String(message).slice(0, 220)
-  if (status === 400 && /API key|api key|INVALID_ARGUMENT/i.test(short)) {
-    return `Gemini rejected the request (check API key). ${short}`
-  }
-  if (status === 403) {
-    return `Gemini access denied (API key or API not enabled). ${short}`
-  }
-  if (status === 404) {
-    return `Gemini model not found. ${short}`
-  }
-  return `AI estimate failed (${status}): ${short}`
-}
 
 function parseEstimate(text: string): PlateEstimate {
   const cleaned = text.replace(/```json|```/g, '').trim()

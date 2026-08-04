@@ -14,7 +14,7 @@ A personal PWA to log meals (initially manual, later via photo), see daily calor
 - **Sync:** Cloud via Supabase (Postgres + Auth + RLS)
 - **Meal shape:** Meal container with optional plate `description` / `photo_url`, JSON `items`, and macro totals (calories, protein, carbs, fat)
 - **Photos:** Compressed client-side (~1280px JPEG), stored in private Supabase Storage bucket `meal-photos` (path `{user_id}/{uuid}.jpg`)
-- **AI estimate:** Gemini Flash via Supabase Edge Function `estimate-meal` (whole-plate totals; user always edits before save)
+- **AI estimate:** Gemini Flash via Supabase Edge Function `estimate-meal` (whole-plate totals; user always edits before save). Retries + fallback models on Gemini 503 overload.
 - **Settings:** Theme + dual calorie goals (lower/upper) + macro goals in localStorage
 - **Data entry:** Manual confirm with ability to edit before saving
 - **Health:** Weight (manual + Apple Health) and daily steps via Shortcuts automation → Edge Function `sync-health` + personal sync token; Health tab (ex-Weight); steps snapshot on Diary/History (not a live progress bar)

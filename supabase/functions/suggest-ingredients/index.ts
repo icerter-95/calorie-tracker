@@ -2,6 +2,11 @@
 // Deploy: npx supabase functions deploy suggest-ingredients
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+import {
+  candidateText,
+  generateContentWithFallback,
+  summarizeGeminiError,
+} from '../_shared/gemini.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,8 +16,6 @@ const corsHeaders = {
 type Body = {
   text?: string
 }
-
-const MODEL = Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash-lite'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -65,26 +68,16 @@ Rules:
 5. Singular forms when possible.
 6. If nothing edible is clear, return { "ingredients": [] }.`
 
-    const geminiUrl =
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent` +
-      `?key=${encodeURIComponent(geminiKey)}`
-
-    const geminiRes = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.1,
-          responseMimeType: 'application/json',
-        },
-      }),
+    const geminiResult = await generateContentWithFallback(geminiKey, {
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.1,
+        responseMimeType: 'application/json',
+      },
     })
 
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text()
-      console.error('Gemini error', geminiRes.status, errText)
-      if (geminiRes.status === 429) {
+    if (!geminiResult.ok) {
+      if (geminiResult.status === 429) {
         return json(
           {
             error:
@@ -93,12 +86,13 @@ Rules:
           429,
         )
       }
-      return json({ error: `AI tag suggestion failed (${geminiRes.status})` }, 502)
+      return json(
+        { error: summarizeGeminiError(geminiResult.status, geminiResult.errText) },
+        502,
+      )
     }
 
-    const geminiJson = await geminiRes.json()
-    const raw: string | undefined =
-      geminiJson?.candidates?.[0]?.content?.parts?.[0]?.text
+    const raw = candidateText(geminiResult.json)
 
     if (!raw) {
       return json({ error: 'AI returned an empty response' }, 502)
