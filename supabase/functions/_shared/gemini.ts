@@ -3,8 +3,16 @@
 export const PRIMARY_MODEL =
   Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash-lite'
 
-/** Older Flash models tend to have more spare capacity when a new model is overloaded. */
-const DEFAULT_FALLBACKS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash']
+/**
+ * Prefer other current 3.x Flash models over 2.5.
+ * 2.5 has had intermittent "model not available" / 404s on free-tier keys,
+ * and is scheduled for shutdown Oct 2026.
+ */
+const DEFAULT_FALLBACKS = [
+  'gemini-3.1-flash-lite',
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
+]
 
 export function modelChain(): string[] {
   const fromEnv = (Deno.env.get('GEMINI_FALLBACK_MODELS') || '')
@@ -47,9 +55,16 @@ function isTransientStatus(status: number): boolean {
   return status === 503 || status === 500 || status === 408
 }
 
+function looksLikeMissingModel(status: number, errText: string): boolean {
+  if (status === 404) return true
+  return /model.*(not found|not available|does not exist|is not supported)|NOT_FOUND/i.test(
+    errText,
+  )
+}
+
 /**
  * Call generateContent, retrying transient overload errors and falling back
- * across model IDs when the primary model is capacity-constrained.
+ * across model IDs when the primary model is capacity-constrained or missing.
  */
 export async function generateContentWithFallback(
   geminiKey: string,
@@ -102,13 +117,19 @@ export async function generateContentWithFallback(
         model,
       }
 
-      // Don't burn retries/fallbacks on auth / bad-request / not-found.
-      if (
-        geminiRes.status === 400 ||
-        geminiRes.status === 401 ||
-        geminiRes.status === 403 ||
-        geminiRes.status === 404
-      ) {
+      // Auth / key problems affect every model — stop.
+      if (geminiRes.status === 401 || geminiRes.status === 403) {
+        return lastFail
+      }
+
+      // Bad request that is clearly "this model ID is gone" → try next model.
+      if (looksLikeMissingModel(geminiRes.status, errText)) {
+        console.warn(`Skipping unavailable Gemini model ${model}`)
+        break
+      }
+
+      // Other 400s (bad image/payload) usually fail on every model — stop.
+      if (geminiRes.status === 400) {
         return lastFail
       }
 
@@ -126,8 +147,8 @@ export async function generateContentWithFallback(
         continue
       }
 
-      // Unknown non-transient error — stop.
-      return lastFail
+      // Unknown non-transient error — try next model rather than giving up early.
+      break
     }
   }
 
@@ -156,8 +177,8 @@ export function summarizeGeminiError(status: number, errText: string): string {
   if (status === 403) {
     return `Gemini access denied (API key or API not enabled). ${short}`
   }
-  if (status === 404) {
-    return `Gemini model not found. ${short}`
+  if (looksLikeMissingModel(status, short)) {
+    return `No working Gemini model available for this API key. ${short}`
   }
   if (status === 503 || /high demand|UNAVAILABLE|overloaded/i.test(short)) {
     return 'AI is busy right now (tried backup models too). Wait a minute and try again, or fill in values manually.'
