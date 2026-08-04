@@ -459,6 +459,16 @@ export default function MealForm({
               </div>
             )}
             {photoStatus}
+            {pendingPhoto && formError && !estimating && !pickingPhoto && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void runEstimate(pendingPhoto)}
+                className="text-xs font-medium text-teal-700 hover:text-teal-800 disabled:opacity-60 dark:text-teal-400"
+              >
+                Retry estimate
+              </button>
+            )}
             {(hasPhoto || estimating) && detailsFields()}
           </div>
         )}

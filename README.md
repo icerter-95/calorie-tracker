@@ -37,9 +37,12 @@ npx supabase login
 npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase secrets set GEMINI_API_KEY=your_gemini_key
 npx supabase functions deploy estimate-meal
+npx supabase functions deploy suggest-ingredients
 ```
 
 `YOUR_PROJECT_REF` is the subdomain in your project URL (`https://YOUR_PROJECT_REF.supabase.co`).
+
+The edge functions call `gemini-3.5-flash-lite` first, then automatically retry and fall back to `gemini-2.5-flash-lite` / `gemini-2.5-flash` when Google returns temporary overload (503). Optional secrets: `GEMINI_MODEL`, `GEMINI_FALLBACK_MODELS` (comma-separated).
 
 ## Run locally
 
