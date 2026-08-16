@@ -26,7 +26,7 @@ const SECTIONS = [
   {
     to: 'connections',
     title: 'Connections',
-    description: 'Apple Health and other sync',
+    description: 'Apple Health sync',
   },
   {
     to: 'data',
