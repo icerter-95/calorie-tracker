@@ -8,7 +8,10 @@ import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './auth/AuthProvider'
 import { SettingsProvider } from './hooks/useSettings'
 import App from './App'
+import { watchAppUpdates } from './lib/appUpdate'
 import './index.css'
+
+watchAppUpdates()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
