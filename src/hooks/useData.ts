@@ -12,7 +12,6 @@ import {
   fetchLoggedDates,
   fetchMealById,
   fetchMealsForDate,
-  fetchStepsForDate,
 } from '../db'
 import { useAuth } from '../auth/AuthProvider'
 import {
@@ -371,38 +370,4 @@ export function useAllSteps() {
   }, [user?.id, version, resolvePending])
 
   return { steps, error, reload }
-}
-
-/** Steps for one yyyy-MM-dd (Diary snapshot). */
-export function useStepsForDate(dateKey: string) {
-  const { user } = useAuth()
-  const [entry, setEntry] = useState<StepsEntry | null | undefined>(undefined)
-  const [error, setError] = useState<string | null>(null)
-  const [version, setVersion] = useState(0)
-  const { armReload, resolvePending } = useReloadGate()
-
-  const reload = useCallback(() => armReload(() => setVersion((v) => v + 1)), [armReload])
-
-  useEffect(() => {
-    let cancelled = false
-    setError(null)
-
-    const load = user ? fetchStepsForDate(dateKey) : Promise.resolve(null)
-    load
-      .then((result) => {
-        if (!cancelled) setEntry(result)
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load steps')
-      })
-      .finally(() => {
-        if (!cancelled) resolvePending()
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [user?.id, dateKey, version, resolvePending])
-
-  return { entry, error, reload }
 }

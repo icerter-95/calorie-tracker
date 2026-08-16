@@ -8,9 +8,8 @@ import DaySummaryCard from '../components/DaySummaryCard'
 import DiaryLoggingBar from '../components/DiaryLoggingBar'
 import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
-import StepsSnapshot from '../components/StepsSnapshot'
 import WeekCalendar from '../components/WeekCalendar'
-import { useLoggedDates, useMealsForDate, useStepsForDate, useWeekCalorieSummaries } from '../hooks/useData'
+import { useLoggedDates, useMealsForDate, useWeekCalorieSummaries } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import { useSettings } from '../hooks/useSettings'
 import { todayKey } from '../lib/dates'
@@ -34,7 +33,6 @@ export default function DiaryPage() {
   // Selected day + meals for that day; week summaries feed the calendar dots.
   const [selectedDate, setSelectedDate] = useState(todayKey)
   const { meals, error, reload } = useMealsForDate(selectedDate)
-  const { entry: stepsEntry, reload: reloadSteps } = useStepsForDate(selectedDate)
   const {
     caloriesByDate,
     hasEntriesByDate,
@@ -47,12 +45,11 @@ export default function DiaryPage() {
     void reload()
     void reloadWeek()
     void reloadLoggedDates()
-    void reloadSteps()
   }
 
   const pullToRefresh = useCallback(async () => {
-    await Promise.all([reload(), reloadWeek(), reloadLoggedDates(), reloadSteps()])
-  }, [reload, reloadWeek, reloadLoggedDates, reloadSteps])
+    await Promise.all([reload(), reloadWeek(), reloadLoggedDates()])
+  }, [reload, reloadWeek, reloadLoggedDates])
 
   useRegisterPullToRefresh(pullToRefresh)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
@@ -264,8 +261,6 @@ export default function DiaryPage() {
         carbsGoal={settings.carbsGoal}
         fatGoal={settings.fatGoal}
       />
-
-      <StepsSnapshot entry={stepsEntry} isToday={selectedDate === todayKey()} />
 
       {adding ? (
         <MealForm
