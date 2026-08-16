@@ -166,7 +166,7 @@ export default function Layout() {
   return (
     <div
       ref={shellRef}
-      className="mx-auto flex min-h-screen max-w-lg flex-col bg-stone-100 dark:bg-stone-950"
+      className="mx-auto flex min-h-dvh w-full max-w-lg flex-col overflow-x-hidden bg-stone-100 dark:bg-stone-950"
     >
       {/* Sticky top bar: greeting + avatar, or back + section title */}
       <header

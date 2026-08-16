@@ -2,6 +2,7 @@
  * Convert snake_case Supabase rows into the camelCase types the UI uses.
  * Also coerces numeric columns (Postgres can return them as strings).
  */
+import { normalizeDateKey } from '../lib/dates'
 import type {
   HealthDataSource,
   MealEntry,
@@ -59,7 +60,7 @@ function num(value: number | string | null | undefined): number {
 export function mapMealRow(row: MealRow): MealEntry {
   return {
     id: row.id,
-    date: row.date,
+    date: normalizeDateKey(row.date),
     mealType: row.meal_type as MealType,
     description: row.description ?? undefined,
     photoUrl: row.photo_url ?? undefined,
@@ -81,7 +82,7 @@ function mapSource(value: string | null | undefined): HealthDataSource {
 export function mapWeightRow(row: WeightRow): WeightEntry {
   return {
     id: row.id,
-    date: row.date,
+    date: normalizeDateKey(row.date),
     weightKg: num(row.weight_kg),
     source: mapSource(row.source),
     syncedAt: row.synced_at ? new Date(row.synced_at).getTime() : undefined,
@@ -93,7 +94,7 @@ export function mapWeightRow(row: WeightRow): WeightEntry {
 export function mapStepsRow(row: StepsRow): StepsEntry {
   return {
     id: row.id,
-    date: row.date,
+    date: normalizeDateKey(row.date),
     steps: Math.round(num(row.steps)),
     source: mapSource(row.source),
     syncedAt: row.synced_at ? new Date(row.synced_at).getTime() : undefined,

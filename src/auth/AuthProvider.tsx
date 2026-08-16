@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
+import { clearAuthCallbackParams, getAuthRedirectUrl, readAuthCallbackNotice, type AuthCallbackNotice } from '../lib/authRedirect'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { blobToBase64 } from '../lib/compressImage'
 import { compressAvatar } from '../lib/compressAvatar'
@@ -20,6 +21,7 @@ import {
   setStoredAvatarUrl,
 } from '../lib/profileAvatar'
 import {
+  claimSignupUsername,
   clearLoginUsername,
   fetchLoginUsername,
   normalizeUsername,
@@ -27,6 +29,30 @@ import {
   saveLoginUsername,
   validateUsername,
 } from '../lib/loginProfile'
+
+export class AuthEmailNotConfirmedError extends Error {
+  readonly email: string
+  constructor(email: string) {
+    super('Please confirm your email. Check your inbox for the link.')
+    this.name = 'AuthEmailNotConfirmedError'
+    this.email = email
+  }
+}
+
+function isEmailNotConfirmed(error: { code?: string; message?: string }): boolean {
+  return (
+    error.code === 'email_not_confirmed' ||
+    (error.message ?? '').toLowerCase().includes('email not confirmed')
+  )
+}
+
+async function tryClaimSignupUsername(user: User) {
+  try {
+    await claimSignupUsername(user)
+  } catch {
+    // Don't block sign-in if the username is taken or invalid — set it later in Account.
+  }
+}
 import {
   clearSavedAccounts,
   getSavedAccount,
@@ -65,11 +91,19 @@ type AuthContextValue = {
   savedAccounts: SavedAccountSummary[]
   /** Account to restore when cancelling "add another account". */
   returnAccount: SavedAccountSummary | null
+  /** One-time message from an email confirmation (or expired-link) redirect. */
+  emailAuthNotice: AuthCallbackNotice | null
   signIn: (email: string, password: string) => Promise<void>
   /** Sign in with quick-login username + account password (passcode). */
   signInWithUsername: (username: string, passcode: string) => Promise<void>
   /** Creates account; username is both display name and quick-login id. */
-  signUp: (email: string, password: string, username: string) => Promise<void>
+  signUp: (
+    email: string,
+    password: string,
+    username: string,
+  ) => Promise<{ needsEmailConfirmation: boolean }>
+  /** Resend the signup confirmation email (rate-limited by Supabase). */
+  resendSignupConfirmation: (email: string) => Promise<void>
   updatePassword: (currentPassword: string, newPassword: string) => Promise<void>
   getLoginUsername: () => Promise<string | null>
   /** Sets username for login and as the display name (same value). */
@@ -102,6 +136,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [returnAccountId, setReturnAccountId] = useState<string | null>(() =>
     readReturnAccountId(),
   )
+  const [emailAuthNotice] = useState<AuthCallbackNotice | null>(() =>
+    readAuthCallbackNotice(),
+  )
 
   const refreshSavedAccounts = useCallback(() => {
     setSavedAccounts(listSavedAccountSummaries())
@@ -126,9 +163,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.session) {
         upsertSavedAccountFromSession(data.session)
         refreshSavedAccounts()
+        void tryClaimSignupUsername(data.session.user)
       }
       setSession(data.session)
       setLoading(false)
+      clearAuthCallbackParams()
     })
 
     const {
@@ -151,6 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === 'SIGNED_IN') {
           writeReturnAccountId(null)
           setReturnAccountId(null)
+          void tryClaimSignupUsername(nextSession.user)
         }
       }
     })
@@ -165,7 +205,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) throw new Error('Supabase is not configured.')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
+    if (error) {
+      if (isEmailNotConfirmed(error)) throw new AuthEmailNotConfirmedError(email)
+      throw error
+    }
   }, [])
 
   const signInWithUsername = useCallback(async (username: string, passcode: string) => {
@@ -214,20 +257,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
         options: {
+          emailRedirectTo: getAuthRedirectUrl(),
           data: {
             display_name: username,
           },
         },
       })
       if (error) throw error
+      if (data.user?.identities && data.user.identities.length === 0) {
+        throw new Error('An account with this email already exists. Sign in instead.')
+      }
 
       // If email confirmation is off, session is available immediately — claim the username.
       if (data.user && data.session) {
         await saveLoginUsername(data.user.id, username)
+        return { needsEmailConfirmation: false }
       }
+
+      return { needsEmailConfirmation: true }
     },
     [],
   )
+
+  const resendSignupConfirmation = useCallback(async (email: string) => {
+    if (!supabase) throw new Error('Supabase is not configured.')
+    const trimmed = email.trim()
+    if (!trimmed) throw new Error('Enter the email you signed up with.')
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: trimmed,
+      options: { emailRedirectTo: getAuthRedirectUrl() },
+    })
+    if (error) throw error
+  }, [])
 
   // Change password (re-checks the current one first).
   const updatePassword = useCallback(
@@ -426,9 +488,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       savedAccounts,
       returnAccount,
+      emailAuthNotice,
       signIn,
       signInWithUsername,
       signUp,
+      resendSignupConfirmation,
       updatePassword,
       getLoginUsername,
       setLoginUsername,
@@ -447,9 +511,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       savedAccounts,
       returnAccount,
+      emailAuthNotice,
       signIn,
       signInWithUsername,
       signUp,
+      resendSignupConfirmation,
       updatePassword,
       getLoginUsername,
       setLoginUsername,

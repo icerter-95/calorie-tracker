@@ -3,7 +3,7 @@
  * accounts already saved on this device for one-tap switch.
  */
 import { useState } from 'react'
-import { useAuth } from '../auth/AuthProvider'
+import { AuthEmailNotConfirmedError, useAuth } from '../auth/AuthProvider'
 import UserAvatar from '../components/UserAvatar'
 
 type SignInMethod = 'email' | 'username'
@@ -14,7 +14,9 @@ export default function LoginPage() {
     signIn,
     signInWithUsername,
     signUp,
+    resendSignupConfirmation,
     savedAccounts,
+    emailAuthNotice,
     switchAccount,
     removeSavedAccountFromDevice,
   } = useAuth()
@@ -23,15 +25,21 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [info, setInfo] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(
+    emailAuthNotice?.kind === 'error' ? emailAuthNotice.message : null,
+  )
+  const [info, setInfo] = useState<string | null>(
+    emailAuthNotice?.kind === 'confirmed' ? emailAuthNotice.message : null,
+  )
   const [busy, setBusy] = useState(false)
   const [switchingId, setSwitchingId] = useState<string | null>(null)
+  const [pendingConfirmEmail, setPendingConfirmEmail] = useState<string | null>(null)
+  const [resendBusy, setResendBusy] = useState(false)
 
   // Shown when .env.local is missing Supabase keys.
   if (!configured) {
     return (
-      <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4">
+      <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-4">
         <div className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
           <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Setup required</h1>
           <p className="text-sm text-stone-600 dark:text-stone-300">
@@ -69,17 +77,47 @@ export default function LoginPage() {
           setError('Please enter a username.')
           return
         }
-        await signUp(email.trim(), password, username)
-        setInfo(
-          'Account created. If email confirmation is enabled in Supabase, check your inbox before signing in.',
-        )
-        setMode('signin')
-        setSignInMethod('username')
+        const result = await signUp(email.trim(), password, username)
+        if (result.needsEmailConfirmation) {
+          setPendingConfirmEmail(email.trim())
+          setInfo(`Check ${email.trim()} and click the confirmation link, then sign in.`)
+          setMode('signin')
+          setSignInMethod('email')
+        }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed')
+      if (err instanceof AuthEmailNotConfirmedError) {
+        setPendingConfirmEmail(err.email)
+        setError(err.message)
+        setSignInMethod('email')
+      } else {
+        setError(err instanceof Error ? err.message : 'Authentication failed')
+      }
     } finally {
       setBusy(false)
+    }
+  }
+
+  async function handleResendConfirmation() {
+    const target = pendingConfirmEmail || email.trim()
+    if (!target) {
+      setError('Enter the email you signed up with.')
+      return
+    }
+    setError(null)
+    setResendBusy(true)
+    try {
+      await resendSignupConfirmation(target)
+      setPendingConfirmEmail(target)
+      setInfo(`Confirmation email sent to ${target}.`)
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Could not resend. Wait a few minutes and try again (Supabase allows 2 emails per hour).',
+      )
+    } finally {
+      setResendBusy(false)
     }
   }
 
@@ -101,7 +139,7 @@ export default function LoginPage() {
   const backLabel = backAccount?.displayName || backAccount?.email || 'previous account'
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4 py-8">
+    <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-4 py-8">
       {/* If we left an account to add another, offer to go back */}
       {backAccount && (
         <div className="mb-4">
@@ -249,10 +287,18 @@ export default function LoginPage() {
               type="email"
               required
               autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
             />
+            {mode === 'signup' && (
+              <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">
+                We will send a confirmation link to this address. Each email must be unique.
+              </span>
+            )}
           </label>
         )}
 
@@ -278,6 +324,16 @@ export default function LoginPage() {
 
         {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
         {info && <p className="text-sm text-teal-700 dark:text-teal-400">{info}</p>}
+        {pendingConfirmEmail && (
+          <button
+            type="button"
+            disabled={busy || resendBusy || Boolean(switchingId)}
+            onClick={() => void handleResendConfirmation()}
+            className="w-full text-sm text-teal-800 hover:text-teal-950 disabled:opacity-60 dark:text-teal-400 dark:hover:text-teal-200"
+          >
+            {resendBusy ? 'Sending…' : 'Resend confirmation email'}
+          </button>
+        )}
 
         <button
           type="submit"
@@ -294,6 +350,7 @@ export default function LoginPage() {
             setMode((m) => (m === 'signin' ? 'signup' : 'signin'))
             setError(null)
             setInfo(null)
+            setPendingConfirmEmail(null)
           }}
           className="w-full text-sm text-stone-600 hover:text-stone-900 disabled:opacity-60 dark:text-stone-400 dark:hover:text-stone-200"
         >

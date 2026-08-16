@@ -373,7 +373,7 @@ export function useAllSteps() {
   return { steps, error, reload }
 }
 
-/** Steps for one day (unused on Diary currently; kept for snapshots). */
+/** Steps for one yyyy-MM-dd (Diary snapshot). */
 export function useStepsForDate(dateKey: string) {
   const { user } = useAuth()
   const [entry, setEntry] = useState<StepsEntry | null | undefined>(undefined)

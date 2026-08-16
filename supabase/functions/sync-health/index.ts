@@ -14,6 +14,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, PUT, PATCH, OPTIONS',
   'Access-Control-Allow-Headers':
     'authorization, x-client-info, apikey, content-type, x-health-sync-token',
 }
@@ -34,12 +35,22 @@ type SyncBody = {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  const method = req.method.toUpperCase()
+
+  if (method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
-  if (req.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, 405)
+  // Shortcuts sometimes sends GET (or mixed-case POST) even when Method is POST.
+  const contentType = req.headers.get('content-type') ?? ''
+  const hasJsonBody = contentType.toLowerCase().includes('application/json')
+  const allowed =
+    method === 'POST' ||
+    method === 'PUT' ||
+    method === 'PATCH' ||
+    (method === 'GET' && hasJsonBody)
+  if (!allowed) {
+    return json({ error: 'Method not allowed', method: req.method }, 405)
   }
 
   try {
@@ -165,9 +176,9 @@ function normalizeWeightDays(body: SyncBody): { date: string; weight_kg: number 
 
   if (Array.isArray(body.weight_days)) {
     for (const item of body.weight_days) {
-      const date = String(item?.date ?? '')
+      const date = toDateKey(String(item?.date ?? ''))
       const weightKg = round1(Number(item?.weight_kg))
-      if (!isDateKey(date) || !Number.isFinite(weightKg) || weightKg <= 0) continue
+      if (!date || !Number.isFinite(weightKg) || weightKg <= 0) continue
       if (seen.has(date)) continue
       seen.add(date)
       out.push({ date, weight_kg: weightKg })
@@ -175,9 +186,9 @@ function normalizeWeightDays(body: SyncBody): { date: string; weight_kg: number 
   }
 
   if (body.weight_kg != null && body.weight_date) {
-    const date = String(body.weight_date)
+    const date = toDateKey(String(body.weight_date))
     const weightKg = round1(Number(body.weight_kg))
-    if (isDateKey(date) && Number.isFinite(weightKg) && weightKg > 0 && !seen.has(date)) {
+    if (date && Number.isFinite(weightKg) && weightKg > 0 && !seen.has(date)) {
       out.push({ date, weight_kg: weightKg })
     }
   }
@@ -191,9 +202,9 @@ function normalizeStepsDays(body: SyncBody): { date: string; steps: number }[] {
 
   if (Array.isArray(body.steps_days)) {
     for (const item of body.steps_days) {
-      const date = String(item?.date ?? '')
+      const date = toDateKey(String(item?.date ?? ''))
       const steps = Math.round(Number(item?.steps))
-      if (!isDateKey(date) || !Number.isFinite(steps) || steps < 0) continue
+      if (!date || !Number.isFinite(steps) || steps < 0) continue
       if (seen.has(date)) continue
       seen.add(date)
       out.push({ date, steps })
@@ -201,9 +212,9 @@ function normalizeStepsDays(body: SyncBody): { date: string; steps: number }[] {
   }
 
   if (body.steps != null && body.steps_date) {
-    const date = String(body.steps_date)
+    const date = toDateKey(String(body.steps_date))
     const steps = Math.round(Number(body.steps))
-    if (isDateKey(date) && Number.isFinite(steps) && steps >= 0 && !seen.has(date)) {
+    if (date && Number.isFinite(steps) && steps >= 0 && !seen.has(date)) {
       out.push({ date, steps })
     }
   }
@@ -218,8 +229,10 @@ function json(body: unknown, status = 200) {
   })
 }
 
-function isDateKey(value: string) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+function toDateKey(value: string): string | null {
+  const raw = String(value).trim()
+  const match = raw.match(/^(\d{4}-\d{2}-\d{2})/)
+  return match?.[1] ?? null
 }
 
 function round1(n: number) {

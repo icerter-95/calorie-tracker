@@ -13,6 +13,29 @@ import './index.css'
 
 watchAppUpdates()
 
+// iOS still allows pinch-zoom in some PWA contexts even with a locked viewport.
+document.addEventListener(
+  'gesturestart',
+  (event) => {
+    event.preventDefault()
+  },
+  { passive: false },
+)
+document.addEventListener(
+  'gesturechange',
+  (event) => {
+    event.preventDefault()
+  },
+  { passive: false },
+)
+document.addEventListener(
+  'gestureend',
+  (event) => {
+    event.preventDefault()
+  },
+  { passive: false },
+)
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>

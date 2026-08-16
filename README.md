@@ -17,12 +17,15 @@ Personal meal and weight tracker with **cloud sync** (Supabase), email/password 
 4. Open **Project Settings → API Keys** and copy:
    - Project URL (often under **Data API** / **Connect**)
    - **Publishable** key (`sb_publishable_…`) — or legacy `anon` key
-5. Auth settings (recommended for personal use):
+5. Auth settings:
    - **Authentication → Providers → Email** enabled
-   - **Confirm email**: turn **off** so signup works immediately
-6. Optional: **Authentication → URL Configuration** — add:
+   - Run [`supabase/confirm_existing_emails.sql`](./supabase/confirm_existing_emails.sql) in the SQL Editor **before** turning confirmation on (keeps current accounts signed in; does not touch meals or passwords)
+   - **Confirm email**: turn **on** so new signups must verify the inbox
+6. **Authentication → URL Configuration** — add:
    - `http://localhost:5173/calorie-tracker/`
    - `https://icerter-95.github.io/calorie-tracker/`
+
+The built-in confirmation mailer allows **2 emails per hour**. That is enough for personal use; add custom SMTP later if you need more.
 
 ## AI plate estimate (optional but recommended)
 
@@ -56,7 +59,7 @@ npm run dev
 
 Open the **Local** URL from the terminal (include `/calorie-tracker/`).
 
-1. **Sign up** with name, email, and password  
+1. **Sign up** with username, email, and password — confirm the email, then sign in  
 2. **Add meal** → optional plate photo → **Estimate from photo** → edit totals → save  
 3. Use **User** for theme, calorie goal, sample/clear data, or sign out  
 
@@ -74,7 +77,7 @@ Gemini key stays in Supabase secrets (never in GitHub/Vite env).
 
 ## What works
 
-- **Login** — email + password; display name at signup (editable in User)
+- **Login** — email + password (email confirmation required for new accounts); username at signup (editable in User)
 - **Diary** — weekly calendar (Mon–Sun), day meals with photo / macros; dual calorie goals + macro targets; AI plate estimate
 - **History** — weekly/monthly calorie charts + weight overlay
 - **Weight** — log/edit/delete weight entries

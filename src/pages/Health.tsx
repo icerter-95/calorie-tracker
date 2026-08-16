@@ -1,9 +1,8 @@
 /**
- * Health. Latest weight + trend line, plus a 7-day steps chart (Apple Health
+ * Health. Latest weight + trend line, plus a 30-day steps chart (Apple Health
  * sync is batch, not live). Full weight history is a nested page.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { eachDayOfInterval, parseISO, subDays } from 'date-fns'
 import { useNavigate } from 'react-router-dom'
 import {
   Bar,
@@ -20,7 +19,7 @@ import {
 import { addWeight, updateWeight } from '../db'
 import { useAllSteps, useAllWeights } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
-import { formatShortDate, todayKey, toDateKey } from '../lib/dates'
+import { formatDisplayDate, formatShortDate, getLastDaysRange, todayKey } from '../lib/dates'
 import type { WeightEntry } from '../types'
 
 /** Default daily steps target used for histogram coloring. */
@@ -69,13 +68,8 @@ export default function HealthPage() {
     [weights],
   )
 
-  // Last 7 calendar days of steps for the bar chart.
-
-  const last7Keys = useMemo(() => {
-    const end = parseISO(todayKey())
-    const start = subDays(end, 6)
-    return eachDayOfInterval({ start, end }).map(toDateKey)
-  }, [])
+  const last7Keys = useMemo(() => getLastDaysRange(7), [])
+  const last30Keys = useMemo(() => getLastDaysRange(30), [])
 
   const stepsByDate = useMemo(() => {
     const map = new Map<string, number>()
@@ -85,9 +79,14 @@ export default function HealthPage() {
     return map
   }, [steps])
 
+  const latestSteps = useMemo(() => {
+    if (!steps?.length) return null
+    return steps[steps.length - 1] ?? null
+  }, [steps])
+
   const stepsChartData = useMemo(
     () =>
-      last7Keys.map((dateKey) => {
+      last30Keys.map((dateKey) => {
         const value = stepsByDate.get(dateKey) ?? 0
         return {
           date: dateKey,
@@ -96,7 +95,7 @@ export default function HealthPage() {
           metGoal: value >= STEP_GOAL,
         }
       }),
-    [last7Keys, stepsByDate],
+    [last30Keys, stepsByDate],
   )
 
   const stepsAvg7 = useMemo(() => {
@@ -321,20 +320,36 @@ export default function HealthPage() {
           Steps
         </p>
         <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
-          {stepsAvg7 != null ? stepsAvg7.toLocaleString() : '—'}
+          {steps === undefined
+            ? '…'
+            : stepsAvg7 != null
+              ? stepsAvg7.toLocaleString()
+              : '—'}
         </p>
         <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-          {stepsAvg7 != null
-            ? `Daily average · last 7 days · goal ${STEP_GOAL.toLocaleString()}`
-            : 'No steps synced yet'}
+          {steps === undefined
+            ? 'Loading steps…'
+            : stepsAvg7 != null
+              ? `Daily average · last 7 days · goal ${STEP_GOAL.toLocaleString()}`
+              : latestSteps
+                ? `Last sync ${formatDisplayDate(latestSteps.date)} · ${latestSteps.steps.toLocaleString()} steps (outside last 7 days)`
+                : 'No steps synced yet'}
         </p>
 
         <div className="mt-3">
-          {stepsChartData.some((d) => d.steps > 0) ? (
-            <ResponsiveContainer width="100%" height={160}>
+          {steps === undefined ? (
+            <p className="rounded-xl bg-stone-50 px-3 py-8 text-center text-sm text-stone-500 dark:bg-stone-800/50 dark:text-stone-400">
+              Loading steps…
+            </p>
+          ) : stepsChartData.some((d) => d.steps > 0) ? (
+            <ResponsiveContainer width="100%" height={180}>
               <BarChart data={stepsChartData} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#78716c' }} />
+                <XAxis
+                  dataKey="label"
+                  interval={4}
+                  tick={{ fontSize: 10, fill: '#78716c' }}
+                />
                 <YAxis
                   tick={{ fontSize: 11, fill: '#78716c' }}
                   width={40}
@@ -363,13 +378,15 @@ export default function HealthPage() {
             </ResponsiveContainer>
           ) : (
             <p className="rounded-xl bg-stone-50 px-3 py-8 text-center text-sm text-stone-500 dark:bg-stone-800/50 dark:text-stone-400">
-              Connect Apple Health in Profile → Connections to sync steps.
+              {latestSteps
+                ? 'No steps in the last 30 days. Run a last-30-days Health sync, then pull to refresh.'
+                : 'Connect Apple Health in Profile → Connections to sync steps.'}
             </p>
           )}
         </div>
 
         <p className="mt-2 text-xs text-stone-400 dark:text-stone-500">
-          iPhone sync · not live during the day
+          Last 30 days · iPhone sync · not live during the day
         </p>
       </section>
     </div>

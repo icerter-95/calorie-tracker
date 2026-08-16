@@ -27,6 +27,13 @@ export function toDateKey(date: Date): string {
   return format(date, 'yyyy-MM-dd')
 }
 
+/** Coerce Postgres dates / ISO timestamps to the yyyy-MM-dd keys the UI uses. */
+export function normalizeDateKey(value: string | null | undefined): string {
+  const s = String(value ?? '').trim()
+  const match = s.match(/^(\d{4}-\d{2}-\d{2})/)
+  return match?.[1] ?? s
+}
+
 export function parseDateKey(dateKey: string): Date {
   return parseISO(dateKey)
 }

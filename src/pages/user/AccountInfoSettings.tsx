@@ -207,7 +207,10 @@ export default function AccountInfoSettings() {
                 </span>
               )}
             </h2>
-            <p className="truncate text-xs text-stone-500 dark:text-stone-400">{user?.email}</p>
+            <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+              {user?.email}
+              {user?.email_confirmed_at ? ' · Verified' : ''}
+            </p>
           </div>
         </div>
       </section>

@@ -21,7 +21,7 @@ export default function DataSettings() {
   async function loadSampleData() {
     if (
       !window.confirm(
-        'Replace ALL meals and weight entries for THIS account with sample data?\n\nUse this only on a demo account — not your real tracking account.',
+        'Replace ALL meals, weight, and steps for THIS account with sample data?\n\nUse this only on a demo account — not your real tracking account. Steps from Apple Health will be deleted.',
       )
     ) {
       return
@@ -64,7 +64,7 @@ export default function DataSettings() {
   async function clearCloudData() {
     if (
       !window.confirm(
-        'Delete all meals and weight entries for your account in the cloud? This cannot be undone.',
+        'Delete all meals, weight, and steps for your account in the cloud? This cannot be undone.',
       )
     ) {
       return

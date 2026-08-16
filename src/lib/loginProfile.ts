@@ -2,6 +2,7 @@
  * Quick-login usernames stored in the `login_profiles` table. Used to sign in
  * with username + passcode instead of email.
  */
+import type { User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 
 const USERNAME_RE = /^[a-z][a-z0-9_]{2,19}$/
@@ -58,6 +59,18 @@ export async function clearLoginUsername(userId: string): Promise<void> {
   if (!supabase) throw new Error('Supabase is not configured.')
   const { error } = await supabase.from('login_profiles').delete().eq('user_id', userId)
   if (error) throw error
+}
+
+/**
+ * After email confirmation, claim the signup username if this user has none yet.
+ * Never overwrites an existing username (so current accounts are unchanged).
+ */
+export async function claimSignupUsername(user: User): Promise<void> {
+  const raw = user.user_metadata?.display_name
+  if (typeof raw !== 'string' || !raw.trim()) return
+  const existing = await fetchLoginUsername(user.id)
+  if (existing) return
+  await saveLoginUsername(user.id, raw)
 }
 
 /** RPC: username → email, so sign-in can use password against that email. */

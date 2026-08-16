@@ -182,7 +182,8 @@ export default function AppleHealthSetup() {
           <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed">
             <li>
               <strong>Steps:</strong> today’s cumulative step total from Apple Health (upserts the
-              same day — later runs overwrite with a higher count)
+              same day — later runs overwrite with a higher count). History is not sent unless you
+              run a last-30-days sync.
             </li>
             <li>
               <strong>Weight (optional):</strong> latest Body Mass + that sample’s own date
@@ -196,7 +197,14 @@ export default function AppleHealthSetup() {
           <p className="text-xs font-medium text-stone-800 dark:text-stone-100">JSON body shape</p>
           <code className="block whitespace-pre-wrap break-all rounded-lg bg-stone-100 px-2 py-1.5 text-[10px] text-stone-700 dark:bg-stone-800 dark:text-stone-200">{`{
   "steps": 8421,
-  "steps_date": "2026-08-02"
+  "steps_date": "YYYY-MM-DD"
+}`}</code>
+          <p className="text-xs font-medium text-stone-800 dark:text-stone-100">
+            Success looks like this (from Get Contents of URL, not the Text JSON)
+          </p>
+          <code className="block whitespace-pre-wrap break-all rounded-lg bg-stone-100 px-2 py-1.5 text-[10px] text-stone-700 dark:bg-stone-800 dark:text-stone-200">{`{
+  "ok": true,
+  "steps": [{ "date": "YYYY-MM-DD", "steps": 8421 }]
 }`}</code>
 
           <CopyRow
