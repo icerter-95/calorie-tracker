@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global look: stone palette, dark mode, and pull-to-refresh overscroll. */
 @layer base {
   html {
     /* Prefer our intentional pull-to-refresh over browser overscroll refresh */
@@ -14,6 +15,7 @@
   }
 }
 
+/* Spinner used by the pull-to-refresh indicator */
 @keyframes ptr-spin {
   to {
     transform: rotate(360deg);
@@ -24,6 +26,7 @@
   animation: ptr-spin 0.7s linear infinite;
 }
 
+/* Shared form/card classes (optional helpers; most components use Tailwind inline). */
 @layer components {
   .field-input {
     @apply rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50;

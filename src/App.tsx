@@ -1,3 +1,7 @@
+/**
+ * Route table. Shows Login until Supabase is configured and a session exists;
+ * otherwise renders the signed-in pages inside Layout.
+ */
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/AuthProvider'
 import Layout from './components/Layout'
@@ -18,6 +22,8 @@ import UserHub from './pages/user/UserHub'
 export default function App() {
   const { configured, loading, session } = useAuth()
 
+  // Gate: wait for session restore, then login vs. the main app.
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-stone-100 text-sm text-stone-500 dark:bg-stone-950 dark:text-stone-400">
@@ -30,6 +36,7 @@ export default function App() {
     return <LoginPage />
   }
 
+  // Signed-in routes. Nested under Layout (header, tab bar, pull-to-refresh).
   return (
     <Routes>
       <Route element={<Layout />}>

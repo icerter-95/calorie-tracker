@@ -3,6 +3,7 @@
  * used by Diary, Progress, and Insights.
  */
 import {
+  addDays,
   addWeeks,
   eachDayOfInterval,
   endOfMonth,
@@ -55,6 +56,11 @@ export function getWeekRange(reference: Date | string = new Date()) {
 
 export function shiftWeek(dateKey: string, weeks: number): string {
   return toDateKey(addWeeks(parseISO(dateKey), weeks))
+}
+
+/** Shift a yyyy-MM-dd key by a number of calendar days (negative = back). */
+export function shiftDateKey(dateKey: string, days: number): string {
+  return toDateKey(addDays(parseISO(dateKey), days))
 }
 
 /** Mon–Sun of the previous, current, and next weeks (what the Diary strip shows). */

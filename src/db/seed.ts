@@ -1,3 +1,7 @@
+/**
+ * Demo data for a throwaway account. Replaces that user's meals and weights
+ * with about a week of sample logs (used from Profile → Data).
+ */
 import { subDays } from 'date-fns'
 import { toDateKey } from '../lib/dates'
 import { normalizeIngredientTags } from '../lib/ingredients'
@@ -5,6 +9,8 @@ import type { MealInput, MealItem, WeightInput } from '../types'
 import { clearAllUserData, addMeal, addWeight } from './index'
 
 type Totals = { calories: number; proteinG: number; carbsG: number; fatG: number }
+
+// Helpers that build MealInput / WeightInput relative to today.
 
 /**
  * Preferred logging shape: description + whole-meal totals + ingredient tags.

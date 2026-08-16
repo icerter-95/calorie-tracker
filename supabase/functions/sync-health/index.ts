@@ -1,12 +1,15 @@
-// Supabase Edge Function — Apple Shortcuts → upsert weight + steps
-// Deploy: npx supabase functions deploy sync-health
-//
-// Body options (any combination):
-//   { "weight_kg", "weight_date" }
-//   { "weight_days": [ { "date", "weight_kg" }, ... ] }
-//   { "steps", "steps_date" }
-//   { "steps_days": [ { "date", "steps" }, ... ] }
-
+/**
+ * Edge Function: Apple Shortcuts → upsert weight and/or steps for the user
+ * identified by the Health sync token header.
+ *
+ * Deploy: npx supabase functions deploy sync-health
+ *
+ * Body options (any combination):
+ *   { "weight_kg", "weight_date" }
+ *   { "weight_days": [ { "date", "weight_kg" }, ... ] }
+ *   { "steps", "steps_date" }
+ *   { "steps_days": [ { "date", "steps" }, ... ] }
+ */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 
 const corsHeaders = {
@@ -52,6 +55,7 @@ Deno.serve(async (req) => {
       return json({ error: 'Missing x-health-sync-token header' }, 401)
     }
 
+    // Look up the user from the hashed token (never store the plaintext).
     const tokenHash = await sha256Hex(syncToken)
     const admin = createClient(supabaseUrl, serviceRoleKey)
 
@@ -90,6 +94,7 @@ Deno.serve(async (req) => {
       steps?: { date: string; steps: number }[]
     } = {}
 
+    // Upsert Apple Health weight rows (one per date, source = apple-health).
     if (hasWeight) {
       for (const day of weightDays) {
         const { data: existing } = await admin
@@ -123,6 +128,7 @@ Deno.serve(async (req) => {
       result.weight = weightDays
     }
 
+    // Upsert daily step totals (later Shortcut runs overwrite the same date).
     if (hasSteps) {
       const rows = stepsDays.map((day) => ({
         user_id: userId,
@@ -152,6 +158,7 @@ Deno.serve(async (req) => {
   }
 })
 
+/** Flatten single-day and multi-day payload shapes into a date+value list. */
 function normalizeWeightDays(body: SyncBody): { date: string; weight_kg: number }[] {
   const out: { date: string; weight_kg: number }[] = []
   const seen = new Set<string>()

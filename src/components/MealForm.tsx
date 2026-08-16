@@ -1,3 +1,8 @@
+/**
+ * Add / edit meal form. Create flow: Photo (AI estimate) or Manual. Edit flow
+ * is a compact inline editor with optional retake. Saves description, plate
+ * totals, ingredient tags, and an optional photo.
+ */
 import { useEffect, useRef, useState } from 'react'
 import { compressImage } from '../lib/compressImage'
 import { estimatePlateFromPhoto, suggestIngredientsFromText } from '../lib/estimateMeal'
@@ -60,6 +65,7 @@ export default function MealForm({
   const [pendingPhoto, setPendingPhoto] = useState<Blob | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
 
+  // Keep fields in sync when switching which meal is being edited.
   useEffect(() => {
     if (!initial) return
     setCreateMethod(null)
@@ -77,6 +83,11 @@ export default function MealForm({
     setPendingPhoto(null)
     setFormError(null)
   }, [initial])
+
+  useEffect(() => {
+    if (initial || !defaultMealType) return
+    setMealType(defaultMealType)
+  }, [defaultMealType, initial])
 
   useEffect(() => {
     let cancelled = false
@@ -126,6 +137,7 @@ export default function MealForm({
     photoInputRef.current?.click()
   }
 
+  // Compress the photo, then call the estimate-meal Edge Function.
   async function runEstimate(blob: Blob) {
     setEstimating(true)
     setFormError(null)
@@ -192,6 +204,7 @@ export default function MealForm({
     setStoredPhotoPath(initial?.photoUrl ?? null)
   }
 
+  // Ask Gemini for tags from the description / note.
   async function handleSuggestTags() {
     setFormError(null)
     setSuggestingTags(true)
@@ -214,6 +227,7 @@ export default function MealForm({
     }
   }
 
+  // Upload a new photo if needed, then pass the payload to the parent page.
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setFormError(null)
@@ -284,6 +298,7 @@ export default function MealForm({
     </span>
   )
 
+  // Shared bits used by both create and edit layouts.
   const slotPicker = (
     <div className="grid grid-cols-4 gap-1" role="group" aria-label="Meal slot">
       {MEAL_TYPE_ORDER.map((slot) => {
@@ -575,6 +590,7 @@ export default function MealForm({
   )
 }
 
+/** Number input used for kcal / P / C / F. */
 function NumberField({
   label,
   value,

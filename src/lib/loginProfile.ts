@@ -1,3 +1,7 @@
+/**
+ * Quick-login usernames stored in the `login_profiles` table. Used to sign in
+ * with username + passcode instead of email.
+ */
 import { supabase } from './supabase'
 
 const USERNAME_RE = /^[a-z][a-z0-9_]{2,19}$/
@@ -15,6 +19,7 @@ export function validateUsername(value: string): string | null {
   return null
 }
 
+/** Read, save, or delete the username row for this user. */
 export async function fetchLoginUsername(userId: string): Promise<string | null> {
   if (!supabase) throw new Error('Supabase is not configured.')
   const { data, error } = await supabase
@@ -55,6 +60,7 @@ export async function clearLoginUsername(userId: string): Promise<void> {
   if (error) throw error
 }
 
+/** RPC: username → email, so sign-in can use password against that email. */
 export async function resolveUsernameToEmail(usernameRaw: string): Promise<string> {
   if (!supabase) throw new Error('Supabase is not configured.')
   const username = normalizeUsername(usernameRaw)

@@ -94,6 +94,20 @@ export async function fetchCalorieSummariesForRange(
   return summaries
 }
 
+/** Distinct yyyy-MM-dd keys that have at least one meal (for the logging streak). */
+export async function fetchLoggedDates(): Promise<string[]> {
+  const client = requireClient()
+  const { data, error } = await client.from('meals').select('date')
+
+  if (error) throw error
+
+  const dates = new Set<string>()
+  for (const row of data ?? []) {
+    dates.add(row.date as string)
+  }
+  return [...dates]
+}
+
 export async function fetchMealById(id: string): Promise<MealEntry | null> {
   const client = requireClient()
   const { data, error } = await client.from('meals').select('*').eq('id', id).maybeSingle()

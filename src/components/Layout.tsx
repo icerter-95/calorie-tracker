@@ -1,3 +1,8 @@
+/**
+ * App chrome: sticky header, pull-to-refresh, tab bar, and nested page outlet.
+ * Stack pages (profile, meal detail, weight history) hide the tab bar and
+ * show a back button; iOS edge-swipe also goes back.
+ */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthProvider'
@@ -16,6 +21,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
       : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200'
   }`
 
+// Titles used in the header / back button depending on the current route.
 const PAGE_LABELS: Record<string, string> = {
   '/': 'Diary',
   '/progress': 'Progress',
@@ -100,6 +106,7 @@ export default function Layout() {
     navigate('/user', { state: { from: location.pathname } })
   }
 
+  // Prefer browser history; fall back to a sensible parent route.
   const goBack = useCallback(() => {
     // Prefer real history so iOS edge-swipe / browser back match the ← button
     if (window.history.length > 1) {
@@ -161,6 +168,7 @@ export default function Layout() {
       ref={shellRef}
       className="mx-auto flex min-h-screen max-w-lg flex-col bg-stone-100 dark:bg-stone-950"
     >
+      {/* Sticky top bar: greeting + avatar, or back + section title */}
       <header
         ref={headerRef}
         className="sticky top-0 z-20 border-b border-stone-200 bg-white/90 px-4 py-2 backdrop-blur dark:border-stone-800 dark:bg-stone-950/90"
@@ -214,6 +222,7 @@ export default function Layout() {
 
       {!hidesTabBar && (
         <nav className="fixed bottom-0 left-0 right-0 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom,0px)] dark:border-stone-800 dark:bg-stone-950">
+          {/* Diary / Progress / Health — Insights tab is temporarily hidden */}
           <div className="mx-auto flex max-w-lg items-center">
             <NavLink to="/" end className={linkClass}>
               <DiaryIcon />

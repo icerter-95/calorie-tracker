@@ -1,3 +1,7 @@
+/**
+ * Spinner that sits above page content and tracks the rubber-band pull.
+ * Progress rings while dragging; full spin while refreshing.
+ */
 type PullToRefreshIndicatorProps = {
   pullDistance: number
   refreshing: boolean

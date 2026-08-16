@@ -1,3 +1,6 @@
+/**
+ * Profile header that opens a menu to switch saved accounts or add another.
+ */
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import { getAvatarUrl, getDisplayName } from '../lib/userProfile'
@@ -20,6 +23,7 @@ export default function AccountSwitcher() {
   const avatarUrl = getAvatarUrl(user)
   const otherAccounts = savedAccounts.filter((a) => a.userId !== user?.id)
 
+  // Close the menu when tapping outside.
   useEffect(() => {
     if (!open) return
     function handlePointerDown(event: MouseEvent) {
@@ -35,6 +39,7 @@ export default function AccountSwitcher() {
     setError(null)
     setBusy(true)
     try {
+      // Reload the app after switching so all data hooks pick up the new user.
       await switchAccount(userId)
       window.location.assign(`${import.meta.env.BASE_URL}`)
     } catch (err) {
@@ -85,6 +90,7 @@ export default function AccountSwitcher() {
           role="menu"
           className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-xl bg-white py-1 shadow-lg ring-1 ring-stone-200 dark:bg-stone-800 dark:ring-stone-600"
         >
+          {/* Current account, other saved accounts, then "Add another" */}
           <div className="px-3 pb-1 pt-1.5">
             <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">
               Current

@@ -1,3 +1,6 @@
+/**
+ * Suggest breakfast / lunch / dinner / snack from the current local hour.
+ */
 import type { MealType } from '../types'
 
 /** Suggest a meal slot from local time of day. */

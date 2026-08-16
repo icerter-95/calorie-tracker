@@ -1,3 +1,7 @@
+/**
+ * Progress. Charts calories (and optional weight) over a date range, then
+ * lets you tap a day to see and edit that day's meals.
+ */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import CalorieChart from '../components/CalorieChart'
 import MealCard from '../components/MealCard'
@@ -29,6 +33,7 @@ const RANGE_LABELS: Record<Range, string> = {
 }
 
 export default function HistoryPage() {
+  // Range picker, selected chart day, and add/edit meal state.
   const initialCustom = defaultCustomRange()
   const [range, setRange] = useState<Range>('week')
   const [customStart, setCustomStart] = useState(initialCustom.start)
@@ -49,6 +54,7 @@ export default function HistoryPage() {
 
   useRegisterPullToRefresh(pullToRefresh)
 
+  // Date keys for the chosen range (7 days, 30 days, or custom).
   const dateKeys = useMemo(() => {
     if (range === 'week') return getLastDaysRange(7)
     if (range === 'month') return getLastDaysRange(30)
@@ -75,6 +81,8 @@ export default function HistoryPage() {
     () => buildDailySummaries(meals ?? [], dateKeys),
     [meals, dateKeys],
   )
+
+  // Meals for the day tapped on the chart.
 
   const selectedDayMeals = useMemo(() => {
     if (!selectedDate || !meals) return []
@@ -180,6 +188,7 @@ export default function HistoryPage() {
 
   return (
     <div className="space-y-4">
+      {/* Range buttons + optional custom from/to dates */}
       <section className="space-y-2">
         <div className="flex gap-2">
           {(['week', 'month', 'custom'] as Range[]).map((r) => (
@@ -261,6 +270,7 @@ export default function HistoryPage() {
 
       {selectedDate && (
         <section className="space-y-3">
+          {/* Meals for the day selected on the chart */}
           <div className="flex items-baseline justify-between px-1">
             <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-100">
               {formatDisplayDate(selectedDate)}

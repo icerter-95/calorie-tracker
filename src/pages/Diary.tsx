@@ -5,15 +5,17 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { addMeal, deleteMeal, updateMeal } from '../db'
 import DaySummaryCard from '../components/DaySummaryCard'
+import DiaryLoggingBar from '../components/DiaryLoggingBar'
 import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
 import WeekCalendar from '../components/WeekCalendar'
-import { useMealsForDate, useWeekCalorieSummaries } from '../hooks/useData'
+import { useLoggedDates, useMealsForDate, useWeekCalorieSummaries } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import { useSettings } from '../hooks/useSettings'
 import { todayKey } from '../lib/dates'
 import { defaultMealTypeForNow } from '../lib/mealTypeDefaults'
-import type { MealEntry, MealInput, MealType } from '../types'
+import { currentLoggingStreak } from '../lib/streak'
+import type { MainMealSlot, MealEntry, MealInput, MealType } from '../types'
 import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
 
 type ScrollAnchor =
@@ -36,16 +38,18 @@ export default function DiaryPage() {
     hasEntriesByDate,
     reload: reloadWeek,
   } = useWeekCalorieSummaries(selectedDate)
+  const { dates: loggedDates, reload: reloadLoggedDates } = useLoggedDates()
   const { settings } = useSettings()
 
   function reloadDayAndWeek() {
     void reload()
     void reloadWeek()
+    void reloadLoggedDates()
   }
 
   const pullToRefresh = useCallback(async () => {
-    await Promise.all([reload(), reloadWeek()])
-  }, [reload, reloadWeek])
+    await Promise.all([reload(), reloadWeek(), reloadLoggedDates()])
+  }, [reload, reloadWeek, reloadLoggedDates])
 
   useRegisterPullToRefresh(pullToRefresh)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
@@ -74,6 +78,36 @@ export default function DiaryPage() {
     }
     return map
   }, [meals])
+
+  const loggedSlots = useMemo(
+    (): Record<MainMealSlot, boolean> => ({
+      breakfast: bySlot.breakfast.length > 0,
+      lunch: bySlot.lunch.length > 0,
+      dinner: bySlot.dinner.length > 0,
+    }),
+    [bySlot],
+  )
+
+  const loggedDateSet = useMemo(() => {
+    const set = new Set(loggedDates ?? [])
+    if (loggedDates === undefined) {
+      for (const [date, has] of Object.entries(hasEntriesByDate)) {
+        if (has) set.add(date)
+      }
+    }
+    if (
+      meals !== undefined &&
+      meals.length > 0 &&
+      meals.every((meal) => meal.date === selectedDate)
+    ) {
+      set.add(selectedDate)
+    }
+    return set
+  }, [hasEntriesByDate, loggedDates, meals, selectedDate])
+
+  const streakReady =
+    loggedDates !== undefined || Object.keys(hasEntriesByDate).length > 0
+  const streak = streakReady ? currentLoggingStreak(loggedDateSet) : null
 
   // Keep the same meal slot in view when switching days (avoids a jump to the top).
   function captureScrollAnchor(): ScrollAnchor {
@@ -163,10 +197,21 @@ export default function DiaryPage() {
     }
   }
 
-  function startAdd() {
+  function startAdd(mealType?: MealType) {
     setEditingMeal(null)
-    setDefaultMealType(defaultMealTypeForNow())
+    setDefaultMealType(mealType ?? defaultMealTypeForNow())
     setAdding(true)
+  }
+
+  function focusSlot(slot: MealType) {
+    if (bySlot[slot].length > 0) {
+      const el = sectionRefs.current[slot]
+      if (!el) return
+      const y = el.getBoundingClientRect().top + window.scrollY - headerBottom() - 8
+      window.scrollTo({ top: y, behavior: 'smooth' })
+      return
+    }
+    startAdd(slot)
   }
 
   function startEdit(meal: MealEntry) {
@@ -188,15 +233,22 @@ export default function DiaryPage() {
 
   return (
     <div className="space-y-4">
-      {/* Week strip + calorie/macro summary for the selected day */}
-      <WeekCalendar
-        selectedDate={selectedDate}
-        onSelectDate={selectDate}
-        caloriesByDate={caloriesByDate}
-        hasEntriesByDate={hasEntriesByDate}
-        calorieGoalLower={settings.calorieGoalLower}
-        calorieGoalUpper={settings.calorieGoalUpper}
-      />
+      {/* Week strip + logging streak / meal checklist + calorie summary */}
+      <div className="space-y-2">
+        <WeekCalendar
+          selectedDate={selectedDate}
+          onSelectDate={selectDate}
+          caloriesByDate={caloriesByDate}
+          hasEntriesByDate={hasEntriesByDate}
+          calorieGoalLower={settings.calorieGoalLower}
+          calorieGoalUpper={settings.calorieGoalUpper}
+        />
+        <DiaryLoggingBar
+          streak={streak}
+          loggedSlots={loggedSlots}
+          onSelectSlot={focusSlot}
+        />
+      </div>
 
       <DaySummaryCard
         totalCalories={totalCalories}
@@ -220,7 +272,7 @@ export default function DiaryPage() {
       ) : (
         <button
           type="button"
-          onClick={startAdd}
+          onClick={() => startAdd()}
           className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
         >
           + Add meal

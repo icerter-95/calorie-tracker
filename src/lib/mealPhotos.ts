@@ -1,3 +1,7 @@
+/**
+ * Meal photos in the `meal-photos` Storage bucket. We store a path like
+ * `{userId}/{id}.jpg` and mint a signed URL when displaying.
+ */
 import { supabase } from './supabase'
 
 const BUCKET = 'meal-photos'
@@ -45,6 +49,7 @@ export async function resolvePhotoUrl(photoUrl: string | undefined | null): Prom
   return data.signedUrl
 }
 
+/** Upload a JPEG blob; returns the storage path to save on the meal row. */
 export async function uploadMealPhoto(blob: Blob): Promise<string> {
   const client = requireClient()
   const { data: userData, error: userError } = await client.auth.getUser()

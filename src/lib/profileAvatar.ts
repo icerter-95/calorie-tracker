@@ -1,3 +1,6 @@
+/**
+ * Profile photos live in localStorage as JPEG data URLs (one key per user).
+ */
 const STORAGE_PREFIX = 'calorie-tracker.avatar.'
 
 export function getStoredAvatarUrl(userId: string | null | undefined): string | null {

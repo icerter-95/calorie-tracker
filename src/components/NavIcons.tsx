@@ -1,4 +1,7 @@
-/** Bottom-nav icons — stroke logos that inherit `currentColor`. */
+/**
+ * Stroke icons for the bottom tab bar (Diary, Progress, Health).
+ * Color comes from the parent via `currentColor`.
+ */
 
 const iconProps = {
   width: 20,

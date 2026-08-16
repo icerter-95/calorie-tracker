@@ -1,3 +1,6 @@
+/**
+ * Display name and avatar URL for a Supabase user (metadata + local photo).
+ */
 import type { User } from '@supabase/supabase-js'
 import { getStoredAvatarUrl } from './profileAvatar'
 

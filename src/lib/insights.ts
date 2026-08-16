@@ -1,9 +1,11 @@
+/**
+ * Stats derived from meal logs for the Insights page: skipped slots, averages,
+ * calorie extremes, and ingredient-tag frequencies.
+ */
 import type { MealEntry, MealType } from '../types'
-import { MEAL_TYPE_ORDER } from '../types'
+import { MAIN_MEAL_SLOTS, MEAL_TYPE_ORDER } from '../types'
 import { normalizeIngredientTag } from './ingredients'
 import { sumCaloriesForDate } from './dates'
-
-const MAIN_SLOTS: MealType[] = ['breakfast', 'lunch', 'dinner']
 
 export type SlotSkipStats = Record<MealType, { skipped: number; logged: number }>
 
@@ -13,6 +15,7 @@ export function activeDatesInRange(meals: MealEntry[], dateKeys: string[]): stri
   return dateKeys.filter((d) => logged.has(d))
 }
 
+/** Breakfast/lunch/dinner missing on days that already have at least one meal. */
 export function countSkippedSlots(
   meals: MealEntry[],
   dateKeys: string[],
@@ -35,7 +38,7 @@ export function countSkippedSlots(
 
   for (const date of active) {
     const slots = byDate.get(date) ?? new Set()
-    for (const slot of MAIN_SLOTS) {
+    for (const slot of MAIN_MEAL_SLOTS) {
       if (slots.has(slot)) stats[slot].logged += 1
       else stats[slot].skipped += 1
     }
@@ -65,6 +68,7 @@ export function averageCaloriesForSlot(
   return { average, entryCount, dayCount: dayTotals.length }
 }
 
+/** Days (and meal count) whose tags match a search string. */
 export function daysWithIngredient(
   meals: MealEntry[],
   dateKeys: string[],
@@ -117,6 +121,7 @@ export function extremeCalorieDays(
   return { largest, smallest }
 }
 
+/** Ingredient tags ranked by how many days they appear. */
 export function topIngredients(
   meals: MealEntry[],
   dateKeys: string[],

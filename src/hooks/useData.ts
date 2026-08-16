@@ -9,6 +9,7 @@ import {
   fetchAllSteps,
   fetchAllWeights,
   fetchCalorieSummariesForRange,
+  fetchLoggedDates,
   fetchMealById,
   fetchMealsForDate,
   fetchStepsForDate,
@@ -240,6 +241,68 @@ export function useWeekCalorieSummaries(selectedDate: string) {
   }, [summaries])
 
   return { caloriesByDate, hasEntriesByDate, error, reload }
+}
+
+function loggedDatesFromSummaries(summaries: Record<string, CachedDaySummary>): string[] {
+  return Object.entries(summaries)
+    .filter(([, summary]) => summary.hasEntries)
+    .map(([date]) => date)
+}
+
+/** Distinct days with at least one meal. Cache paints first, then a full refresh. */
+export function useLoggedDates() {
+  const { user } = useAuth()
+  const userId = user?.id
+  const userIdRef = useRef(userId)
+  const [dates, setDates] = useState<string[] | undefined>(() => {
+    if (!userId) return undefined
+    const fromCache = loggedDatesFromSummaries(readCachedSummaries(userId))
+    return fromCache.length > 0 ? fromCache : undefined
+  })
+  const [error, setError] = useState<string | null>(null)
+  const [version, setVersion] = useState(0)
+  const { armReload, resolvePending } = useReloadGate()
+
+  const reload = useCallback(() => armReload(() => setVersion((v) => v + 1)), [armReload])
+
+  useEffect(() => {
+    let cancelled = false
+    setError(null)
+
+    if (!userId) {
+      userIdRef.current = undefined
+      setDates([])
+      resolvePending()
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const fromCache = loggedDatesFromSummaries(readCachedSummaries(userId))
+    if (fromCache.length > 0) {
+      setDates(fromCache)
+    } else if (userIdRef.current !== userId) {
+      setDates(undefined)
+    }
+    userIdRef.current = userId
+
+    fetchLoggedDates()
+      .then((result) => {
+        if (!cancelled) setDates(result)
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load streak')
+      })
+      .finally(() => {
+        if (!cancelled) resolvePending()
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId, version, resolvePending])
+
+  return { dates, error, reload }
 }
 
 /** All weight logs (Health + Progress overlay). */

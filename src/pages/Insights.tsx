@@ -1,3 +1,7 @@
+/**
+ * Insights. Derived stats from logged meals: skipped slots, avg calories by
+ * meal type, calorie extremes, and ingredient-tag search. Tab is hidden for now.
+ */
 import { useCallback, useMemo, useState } from 'react'
 import { useAllMeals } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
@@ -33,6 +37,8 @@ export default function InsightsPage() {
     () => (range === 'week' ? getWeekRange() : getMonthRange()),
     [range],
   )
+
+  // Precompute each insight block for the selected week/month.
 
   const skips = useMemo(
     () => countSkippedSlots(meals ?? [], dateKeys),
@@ -102,6 +108,7 @@ export default function InsightsPage() {
         <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
       ) : (
         <>
+          {/* How often breakfast / lunch / dinner was missing on logged days */}
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
               Skipped main meals
@@ -156,6 +163,7 @@ export default function InsightsPage() {
             </div>
           </section>
 
+          {/* Highest / lowest calorie days in the range */}
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
               Calorie extremes
@@ -166,6 +174,7 @@ export default function InsightsPage() {
             </div>
           </section>
 
+          {/* Search meals by ingredient tag, plus a top-tags list */}
           <section className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
               Days with a food
@@ -252,6 +261,7 @@ export default function InsightsPage() {
   )
 }
 
+/** Small card for the largest or smallest calorie day. */
 function ExtremeCard({
   label,
   day,

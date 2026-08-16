@@ -1,3 +1,7 @@
+/**
+ * Theme, calorie/macro goals, and health-connection flags. Reads/writes
+ * localStorage and applies the dark class on <html>.
+ */
 import {
   createContext,
   useContext,
@@ -44,6 +48,7 @@ function readInitialSettings(): AppSettings {
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(readInitialSettings)
 
+  // Persist + apply theme whenever settings change.
   useEffect(() => {
     saveSettings(settings)
     applyThemeClass(resolveTheme(settings.theme))
@@ -58,6 +63,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return () => media.removeEventListener('change', onChange)
   }, [settings.theme])
 
+  // Mutators: theme, calorie/macro goals, health-connection toggles.
   function setTheme(theme: ThemePreference) {
     applyThemeClass(resolveTheme(theme))
     setSettings((prev) => ({ ...prev, theme }))

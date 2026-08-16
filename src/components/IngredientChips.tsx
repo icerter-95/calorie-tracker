@@ -1,3 +1,6 @@
+/**
+ * Ingredient tag editor: chips, add/remove, optional AI "Suggest" button.
+ */
 import { useState } from 'react'
 import { normalizeIngredientTag, normalizeIngredientTags } from '../lib/ingredients'
 
@@ -21,6 +24,7 @@ export default function IngredientChips({
 }: IngredientChipsProps) {
   const [draft, setDraft] = useState('')
 
+  // Normalize + dedupe tags as the user adds them.
   function addTag(raw: string) {
     const tag = normalizeIngredientTag(raw)
     if (!tag) return

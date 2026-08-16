@@ -1,3 +1,8 @@
+/**
+ * Shared data shapes used across the app (meals, weight, steps, health sync).
+ * These are the in-app types — database rows are mapped in src/db/mappers.ts.
+ */
+
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 
 export interface MealItem {
@@ -8,6 +13,7 @@ export interface MealItem {
   fatG?: number
 }
 
+// One logged meal as the UI sees it (camelCase, dates as timestamps).
 export interface MealEntry {
   id: string
   date: string
@@ -25,6 +31,7 @@ export interface MealEntry {
   createdAt: number
 }
 
+// Weight / steps can be typed by hand or synced from Apple Health.
 export type HealthDataSource = 'manual' | 'apple-health'
 
 export interface WeightEntry {
@@ -46,6 +53,7 @@ export interface StepsEntry {
   createdAt: number
 }
 
+// Public info about the Apple Health Shortcut token (never the full secret).
 export interface HealthSyncTokenInfo {
   tokenPrefix: string
   createdAt: number
@@ -57,6 +65,7 @@ export interface DailyCalorieSummary {
   totalCalories: number
 }
 
+// Labels, slot order, and payloads used when creating/updating meals or weight.
 export const MEAL_TYPE_LABELS: Record<MealType, string> = {
   breakfast: 'Breakfast',
   lunch: 'Lunch',
@@ -79,6 +88,10 @@ export type MealInput = {
 }
 
 export const MEAL_TYPE_ORDER: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack']
+
+/** Main meals used for the Diary logging checklist (snack is optional). */
+export const MAIN_MEAL_SLOTS = ['breakfast', 'lunch', 'dinner'] as const
+export type MainMealSlot = (typeof MAIN_MEAL_SLOTS)[number]
 
 export type WeightInput = {
   date: string

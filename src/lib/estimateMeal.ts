@@ -1,3 +1,7 @@
+/**
+ * Call the estimate-meal and suggest-ingredients Edge Functions (Gemini).
+ * Used by MealForm (photo estimate + tag suggest) and the ingredients backfill.
+ */
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { blobToBase64 } from './compressImage'
@@ -12,6 +16,7 @@ export type PlateEstimate = {
   ingredients: string[]
 }
 
+/** Photo → Gemini estimate (description, kcal, macros, tags). */
 export async function estimatePlateFromPhoto(blob: Blob): Promise<PlateEstimate> {
   if (!supabase) {
     throw new Error('Supabase is not configured.')
@@ -61,6 +66,7 @@ export async function estimatePlateFromPhoto(blob: Blob): Promise<PlateEstimate>
   }
 }
 
+/** Description text → ingredient tags (MealForm Suggest + Data backfill). */
 export async function suggestIngredientsFromText(text: string): Promise<string[]> {
   if (!supabase) {
     throw new Error('Supabase is not configured.')
@@ -98,6 +104,7 @@ export async function suggestIngredientsFromText(text: string): Promise<string[]
   )
 }
 
+/** Pull a readable error string out of a failed Edge Function response. */
 async function readFunctionError(
   error: Error,
   data: { error?: string } | null,

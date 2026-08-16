@@ -1,3 +1,7 @@
+/**
+ * Login / sign-up screen. Username+passcode or email+password, plus a list of
+ * accounts already saved on this device for one-tap switch.
+ */
 import { useState } from 'react'
 import { useAuth } from '../auth/AuthProvider'
 import UserAvatar from '../components/UserAvatar'
@@ -24,6 +28,7 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false)
   const [switchingId, setSwitchingId] = useState<string | null>(null)
 
+  // Shown when .env.local is missing Supabase keys.
   if (!configured) {
     return (
       <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4">
@@ -46,6 +51,7 @@ export default function LoginPage() {
     )
   }
 
+  // Sign in (username or email) or create an account.
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -96,6 +102,7 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4 py-8">
+      {/* If we left an account to add another, offer to go back */}
       {backAccount && (
         <div className="mb-4">
           <button
@@ -114,6 +121,7 @@ export default function LoginPage() {
 
       {savedAccounts.length > 0 && (
         <section className="mb-4 space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+          {/* One-tap switch using tokens saved on this device */}
           <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-50">
             Continue as
           </h2>
@@ -160,6 +168,7 @@ export default function LoginPage() {
         </section>
       )}
 
+      {/* Email or username form for a new / restored session */}
       <form
         onSubmit={handleSubmit}
         className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"

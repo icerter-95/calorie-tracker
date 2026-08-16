@@ -1,3 +1,6 @@
+/**
+ * Three-stat row on Progress: days logged, avg calories, avg steps.
+ */
 interface PeriodStatsProps {
   daysLogged: number
   avgCalories: number

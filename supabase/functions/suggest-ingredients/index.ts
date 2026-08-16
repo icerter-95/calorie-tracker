@@ -1,6 +1,9 @@
-// Supabase Edge Function — meal description text → ingredient tags via Gemini Flash
-// Deploy: npx supabase functions deploy suggest-ingredients
-
+/**
+ * Edge Function: meal description text → ingredient tags via Gemini Flash.
+ * Called from MealForm "Suggest" and from the Data settings backfill.
+ *
+ * Deploy: npx supabase functions deploy suggest-ingredients
+ */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import {
   candidateText,
@@ -39,6 +42,7 @@ Deno.serve(async (req) => {
       return json({ error: 'GEMINI_API_KEY secret is not set' }, 500)
     }
 
+    // Same JWT as the website; then send the meal text to Gemini.
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     })

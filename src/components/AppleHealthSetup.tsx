@@ -1,3 +1,7 @@
+/**
+ * Apple Health connection card. Creates a one-time sync token and shows the
+ * Shortcut URL / anon key / JSON shape to paste into iOS Shortcuts.
+ */
 import { useCallback, useEffect, useState } from 'react'
 import {
   deleteHealthSyncToken,
@@ -104,6 +108,7 @@ export default function AppleHealthSetup() {
 
   return (
     <li className="space-y-3 rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      {/* Status + Connect / Disconnect */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-medium text-stone-900 dark:text-stone-50">Apple Health</p>
@@ -153,6 +158,7 @@ export default function AppleHealthSetup() {
 
       {plaintextToken && (
         <div className="space-y-2 rounded-xl bg-amber-50 px-3 py-2 dark:bg-amber-950/30">
+          {/* Shown once after generate — copy into the Shortcut */}
           <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
             Copy this token now — it won’t be shown again
           </p>
@@ -171,6 +177,7 @@ export default function AppleHealthSetup() {
 
       {showGuide && endpoint && anonKey && (
         <div className="space-y-3 border-t border-stone-200 pt-3 text-sm text-stone-600 dark:border-stone-700 dark:text-stone-300">
+          {/* JSON shape + copyable URL / anon key for the Shortcut */}
           <p className="font-medium text-stone-800 dark:text-stone-100">What the Shortcut sends</p>
           <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed">
             <li>
@@ -218,6 +225,7 @@ export default function AppleHealthSetup() {
   )
 }
 
+/** Copyable URL / key row used in the Shortcut setup guide. */
 function CopyRow({
   label,
   value,

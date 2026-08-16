@@ -1,3 +1,7 @@
+/**
+ * Lets a page register its reload function with Layout's pull-to-refresh.
+ * Unmounting clears the handler so stack/settings pages disable the gesture.
+ */
 import { useEffect } from 'react'
 import { useOutletContext } from 'react-router-dom'
 

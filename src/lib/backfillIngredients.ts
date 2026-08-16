@@ -1,3 +1,7 @@
+/**
+ * Walk meals that have no tags, call suggest-ingredients, and save the result.
+ * Used from Profile → Data. Rate-limited to avoid Gemini free-tier 429s.
+ */
 import { fetchAllMeals, updateMealIngredients } from '../db'
 import { suggestIngredientsFromText } from './estimateMeal'
 import { mealTextForTagSuggestion, normalizeIngredientTags } from './ingredients'

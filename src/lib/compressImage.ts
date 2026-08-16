@@ -1,3 +1,7 @@
+/**
+ * Resize + JPEG-compress a photo for storage and AI.
+ * Typical phone shot → ~100–250 KB while keeping food detail readable.
+ */
 const MAX_EDGE = 1280
 const JPEG_QUALITY = 0.72
 
@@ -37,6 +41,7 @@ export async function compressImage(file: File | Blob): Promise<Blob> {
   }
 }
 
+/** Encode a blob as base64 (no data: prefix) for Edge Function payloads. */
 export async function blobToBase64(blob: Blob): Promise<string> {
   const buffer = await blob.arrayBuffer()
   const bytes = new Uint8Array(buffer)

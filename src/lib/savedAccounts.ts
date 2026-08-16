@@ -1,3 +1,7 @@
+/**
+ * Device-local list of signed-in accounts (tokens + display info) so you can
+ * switch without typing a password again.
+ */
 import type { Session } from '@supabase/supabase-js'
 import { getStoredAvatarUrl } from './profileAvatar'
 import { getDisplayName } from './userProfile'
@@ -59,6 +63,7 @@ export function getSavedAccount(userId: string): SavedAccount | null {
   return readAll().find((a) => a.userId === userId) ?? null
 }
 
+/** Save / refresh tokens for the current session (newest account first). */
 export function upsertSavedAccountFromSession(session: Session): SavedAccount[] {
   const user = session.user
   const next: SavedAccount = {

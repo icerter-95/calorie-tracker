@@ -1,3 +1,7 @@
+/**
+ * Renders a meal photo. Turns a storage path into a signed URL (legacy full
+ * URLs are used as-is).
+ */
 import { useEffect, useState } from 'react'
 import { resolvePhotoUrl } from '../lib/mealPhotos'
 

@@ -1,3 +1,7 @@
+/**
+ * Convert snake_case Supabase rows into the camelCase types the UI uses.
+ * Also coerces numeric columns (Postgres can return them as strings).
+ */
 import type {
   HealthDataSource,
   MealEntry,
@@ -7,6 +11,7 @@ import type {
   WeightEntry,
 } from '../types'
 
+// Raw table shapes as returned by .select('*').
 export type MealRow = {
   id: string
   user_id: string
@@ -45,10 +50,12 @@ export type StepsRow = {
   created_at: string
 }
 
+// Postgres numeric columns can arrive as strings — coerce to a number.
 function num(value: number | string | null | undefined): number {
   return Number(value) || 0
 }
 
+// Row → UI object for meals, weights, and steps.
 export function mapMealRow(row: MealRow): MealEntry {
   return {
     id: row.id,

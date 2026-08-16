@@ -1,3 +1,7 @@
+/**
+ * Connections settings. Apple Health Shortcut setup, plus a placeholder for
+ * Android Health Connect (not built yet).
+ */
 import AppleHealthSetup from '../../components/AppleHealthSetup'
 
 export default function ConnectionsSettings() {

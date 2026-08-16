@@ -1,3 +1,7 @@
+/**
+ * Single meal view. Shows photo, calories, macros, tags; Edit opens MealForm.
+ * Back goes to Diary or Progress depending on how you arrived.
+ */
 import { useCallback, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import MealForm from '../components/MealForm'
@@ -29,6 +33,7 @@ export default function MealDetailPage() {
 
   useRegisterPullToRefresh(pullToRefresh)
 
+  // Persist edits, or delete and return to the page we came from.
   async function handleSave(data: MealInput) {
     if (!meal) return
     setActionError(null)
@@ -96,6 +101,7 @@ export default function MealDetailPage() {
 
   const hasMacros = meal.proteinG > 0 || meal.carbsG > 0 || meal.fatG > 0
 
+  // Read-only meal card (photo, totals, tags, optional item list).
   return (
     <div className="space-y-4">
       {(error || actionError) && (

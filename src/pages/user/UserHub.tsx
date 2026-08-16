@@ -1,3 +1,6 @@
+/**
+ * Profile hub. Account switcher, links to settings pages, and sign-out.
+ */
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthProvider'
@@ -7,6 +10,7 @@ type UserLocationState = {
   from?: string
 }
 
+// Links shown on the profile hub (each opens a nested settings page).
 const SECTIONS = [
   {
     to: 'account',
@@ -63,6 +67,7 @@ export default function UserHub() {
     <div className="space-y-6">
       <AccountSwitcher />
 
+      {/* Settings list */}
       <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
         {SECTIONS.map((section, index) => (
           <div key={section.to}>
@@ -90,6 +95,7 @@ export default function UserHub() {
         ))}
       </section>
 
+      {/* Sign out this account, or every account saved on this phone */}
       <section className="space-y-2">
         <button
           type="button"

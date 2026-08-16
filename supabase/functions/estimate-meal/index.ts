@@ -1,7 +1,10 @@
-// Supabase Edge Function — plate photo → nutrition + ingredient tags via Gemini Flash
-// Deploy: npx supabase functions deploy estimate-meal
-// Secret: npx supabase secrets set GEMINI_API_KEY=your_key
-
+/**
+ * Edge Function: meal photo → description, calories, macros, ingredient tags
+ * via Gemini Flash. Called from MealForm after the user picks a photo.
+ *
+ * Deploy: npx supabase functions deploy estimate-meal
+ * Secret: npx supabase secrets set GEMINI_API_KEY=your_key
+ */
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
 import {
   blockReason,
@@ -51,6 +54,7 @@ Deno.serve(async (req) => {
       return json({ error: 'GEMINI_API_KEY secret is not set' }, 500)
     }
 
+    // Require a signed-in user (same JWT the website sends).
     const userClient = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     })
@@ -70,6 +74,7 @@ Deno.serve(async (req) => {
       return json({ error: 'imageBase64 is required' }, 400)
     }
 
+    // Prompt Gemini for whole-plate totals + a few main ingredient tags.
     const prompt = `You are estimating nutrition for a personal calorie tracker.
 Analyze this whole-plate meal photo.
 
@@ -159,6 +164,7 @@ description, calories, proteinG, carbsG, fatG, ingredients`
   }
 })
 
+/** Coerce Gemini JSON into the plate-estimate shape the client expects. */
 function parseEstimate(text: string): PlateEstimate {
   const cleaned = text.replace(/```json|```/g, '').trim()
   const data = JSON.parse(cleaned) as Partial<PlateEstimate>

@@ -1,3 +1,7 @@
+/**
+ * Compact meal row used in Diary and Progress. Tap opens Meal Detail; Edit
+ * stays on the list and opens MealForm.
+ */
 import { useNavigate } from 'react-router-dom'
 import type { MealEntry } from '../types'
 import { MEAL_TYPE_LABELS } from '../types'
@@ -32,7 +36,7 @@ export default function MealCard({ meal, onEdit, hideMealType, from = '/' }: Mea
           openDetail()
         }
       }}
-      className="flex cursor-pointer gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-stone-200 transition hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-700 dark:hover:bg-stone-800/80"
+      className="flex items-start gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-stone-200 transition hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-700 dark:hover:bg-stone-800/80"
     >
       {meal.photoUrl ? (
         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-stone-100 dark:bg-stone-800">
@@ -51,26 +55,17 @@ export default function MealCard({ meal, onEdit, hideMealType, from = '/' }: Mea
         </div>
       )}
 
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             {!hideMealType && (
               <p className="text-[11px] font-medium uppercase tracking-wide text-teal-700 dark:text-teal-400">
                 {MEAL_TYPE_LABELS[meal.mealType]}
               </p>
             )}
-            <p className="truncate text-sm font-medium text-stone-800 dark:text-stone-100">
+            <p className="line-clamp-2 text-sm font-medium leading-snug text-stone-800 dark:text-stone-100">
               {meal.description || 'Meal'}
             </p>
-            <p className="text-base font-semibold text-stone-900 dark:text-stone-50">
-              {meal.totalCalories} kcal
-            </p>
-            {hasMacros && (
-              <p className="text-xs text-stone-500 dark:text-stone-400">
-                P {roundMacro(meal.proteinG)}g · C {roundMacro(meal.carbsG)}g · F{' '}
-                {roundMacro(meal.fatG)}g
-              </p>
-            )}
           </div>
           <button
             type="button"
@@ -83,6 +78,15 @@ export default function MealCard({ meal, onEdit, hideMealType, from = '/' }: Mea
             Edit
           </button>
         </div>
+        <p className="mt-0.5 text-sm font-semibold text-stone-900 dark:text-stone-50">
+          {meal.totalCalories} kcal
+        </p>
+        {hasMacros && (
+          <p className="text-xs text-stone-500 dark:text-stone-400">
+            P {roundMacro(meal.proteinG)}g · C {roundMacro(meal.carbsG)}g · F{' '}
+            {roundMacro(meal.fatG)}g
+          </p>
+        )}
       </div>
     </article>
   )

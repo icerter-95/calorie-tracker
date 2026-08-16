@@ -1,3 +1,6 @@
+/**
+ * Appearance settings. Light, dark, or follow the device theme.
+ */
 import { useSettings } from '../../hooks/useSettings'
 import type { ThemePreference } from '../../types/settings'
 

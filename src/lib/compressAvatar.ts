@@ -1,3 +1,7 @@
+/**
+ * Center-crop to a square and compress for profile avatars.
+ * Keeps the result small enough for localStorage (~3–8 KB).
+ */
 const AVATAR_EDGE = 192
 const JPEG_QUALITY = 0.72
 

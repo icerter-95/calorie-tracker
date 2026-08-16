@@ -1,3 +1,6 @@
+/**
+ * Macro helpers: sum itemized foods, round grams to one decimal.
+ */
 import type { MealItem } from '../types'
 
 export function sumItemMacros(items: MealItem[]) {

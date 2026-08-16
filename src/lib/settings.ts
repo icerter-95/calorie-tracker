@@ -1,3 +1,7 @@
+/**
+ * Load/save AppSettings in localStorage, migrate the old single calorie goal,
+ * and apply light/dark to <html> (including Safari color-scheme).
+ */
 import { DEFAULT_SETTINGS, type AppSettings } from '../types/settings'
 
 const STORAGE_KEY = 'calorie-tracker-settings'
@@ -32,6 +36,7 @@ function migrateSettings(parsed: StoredSettings): AppSettings {
   }
 }
 
+/** Read settings from localStorage (or defaults if missing / corrupt). */
 export function loadSettings(): AppSettings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -48,6 +53,7 @@ export function saveSettings(settings: AppSettings) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
 }
 
+/** Map 'system' to the current OS light/dark preference. */
 export function resolveTheme(preference: AppSettings['theme']): 'light' | 'dark' {
   if (preference === 'light' || preference === 'dark') return preference
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'

@@ -1,3 +1,7 @@
+/**
+ * Teal summary card on Diary: calories vs lower/upper goals, plus protein /
+ * carbs / fat progress bars.
+ */
 import { roundMacro } from '../lib/macros'
 
 /** Map calories onto a bar where lower sits at 70% and higher at 90%. */
@@ -21,6 +25,7 @@ interface MacroRowProps {
   unit?: string
 }
 
+/** One macro (P/C/F) with a mini progress bar. */
 function MacroRow({ label, current, goal, unit = 'g' }: MacroRowProps) {
   const pct = goal > 0 ? Math.min(100, (current / goal) * 100) : 0
   return (
@@ -80,6 +85,7 @@ export default function DaySummaryCard({
         </span>
       </p>
 
+      {/* Calorie bar with lower (70%) and upper (90%) goal markers */}
       <div className="relative mt-4 pb-5">
         <div className="h-2 overflow-hidden rounded-full bg-teal-900/40">
           <div

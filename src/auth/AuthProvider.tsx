@@ -1,3 +1,7 @@
+/**
+ * Auth for the whole app: session, sign-in/up, avatars, and multi-account
+ * switching. Wrap the tree with AuthProvider; pages call useAuth().
+ */
 import {
   createContext,
   useCallback,
@@ -32,6 +36,7 @@ import {
   type SavedAccountSummary,
 } from '../lib/savedAccounts'
 
+// Remember which account to restore if the user cancels "add another account".
 const RETURN_ACCOUNT_KEY = 'calorie-tracker.return-account-id'
 
 function readReturnAccountId(): string | null {
@@ -51,6 +56,7 @@ function writeReturnAccountId(userId: string | null) {
   }
 }
 
+// Everything pages can read/call from useAuth().
 type AuthContextValue = {
   configured: boolean
   loading: boolean
@@ -87,6 +93,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  // Session + the list of accounts saved on this device for quick switch.
   const [loading, setLoading] = useState(true)
   const [session, setSession] = useState<Session | null>(null)
   const [savedAccounts, setSavedAccounts] = useState<SavedAccountSummary[]>(() =>
@@ -105,6 +112,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setReturnAccountId(null)
   }, [])
 
+  // Restore the current session and keep it in sync with Supabase auth events.
   useEffect(() => {
     if (!supabase) {
       setLoading(false)
@@ -153,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [refreshSavedAccounts])
 
+  // Email/password and username/passcode sign-in, plus new-account signup.
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) throw new Error('Supabase is not configured.')
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -220,6 +229,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   )
 
+  // Change password (re-checks the current one first).
   const updatePassword = useCallback(
     async (currentPassword: string, newPassword: string) => {
       if (!supabase) throw new Error('Supabase is not configured.')
@@ -242,6 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [session?.user.email, applyUpdatedUser],
   )
 
+  // Quick-login username (also used as the display name in the app).
   const getLoginUsername = useCallback(async () => {
     const userId = session?.user.id
     if (!userId) throw new Error('You must be signed in.')
@@ -280,6 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshSavedAccounts()
   }, [refreshSavedAccounts])
 
+  // Profile photo is stored locally (compressed JPEG data URL), not in Supabase.
   const updateAvatar = useCallback(async (file: File) => {
     const userId = session?.user.id
     if (!userId) throw new Error('You must be signed in.')
@@ -300,6 +312,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     touchSessionForAvatar()
   }, [session?.user.id, touchSessionForAvatar])
 
+  // Sign out this account, or all accounts on this device.
   const signOut = useCallback(async () => {
     if (!supabase) throw new Error('Supabase is not configured.')
     const currentId = session?.user.id
@@ -321,6 +334,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshSavedAccounts()
   }, [refreshSavedAccounts])
 
+  // Swap sessions using saved tokens, or leave the current session to add another.
   const switchAccount = useCallback(
     async (userId: string) => {
       if (!supabase) throw new Error('Supabase is not configured.')
@@ -403,6 +417,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null
   }, [returnAccountId, savedAccounts, session])
 
+  // Bundle auth state + actions for consumers.
   const value = useMemo<AuthContextValue>(
     () => ({
       configured: isSupabaseConfigured,
@@ -453,6 +468,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
+/** Read auth from any component under AuthProvider. */
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')

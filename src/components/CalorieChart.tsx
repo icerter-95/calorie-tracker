@@ -1,3 +1,7 @@
+/**
+ * Progress chart: daily calorie bars, optional weight line, tap a bar to
+ * select that day.
+ */
 import {
   Bar,
   CartesianGrid,

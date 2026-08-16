@@ -1,4 +1,7 @@
-/** Shared Gemini generateContent helpers for Edge Functions. */
+/**
+ * Shared Gemini generateContent helpers for Edge Functions: model fallback
+ * chain, retries on overload, and parsing of the JSON response.
+ */
 
 export const PRIMARY_MODEL =
   Deno.env.get('GEMINI_MODEL') || 'gemini-3.5-flash-lite'
@@ -162,6 +165,7 @@ export async function generateContentWithFallback(
   )
 }
 
+/** Turn a Gemini HTTP error into a short message the app can show. */
 export function summarizeGeminiError(status: number, errText: string): string {
   let message = ''
   try {
@@ -189,6 +193,7 @@ export function summarizeGeminiError(status: number, errText: string): string {
   return `AI request failed (${status}): ${short}`
 }
 
+/** First candidate's text from a generateContent JSON body. */
 export function candidateText(geminiJson: Record<string, unknown>): string | undefined {
   const candidates = geminiJson?.candidates as
     | Array<{ content?: { parts?: Array<{ text?: string }> } }>

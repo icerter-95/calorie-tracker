@@ -1,3 +1,7 @@
+/**
+ * Data settings. Backfill missing ingredient tags with AI, load demo meals,
+ * or wipe this account's cloud data.
+ */
 import { useState } from 'react'
 import { clearAllUserData } from '../../db'
 import { seedSampleData } from '../../db/seed'
@@ -13,6 +17,7 @@ export default function DataSettings() {
   const [backfillProgress, setBackfillProgress] = useState<BackfillProgress | null>(null)
   const [backfillMessage, setBackfillMessage] = useState<string | null>(null)
 
+  // Destructive cloud actions — each confirms first.
   async function loadSampleData() {
     if (
       !window.confirm(
@@ -83,6 +88,7 @@ export default function DataSettings() {
         </p>
       )}
       <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+        {/* Backfill tags, load demo data, or wipe the account */}
         <button
           type="button"
           disabled={dataBusy || backfillBusy}

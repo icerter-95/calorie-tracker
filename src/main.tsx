@@ -1,3 +1,7 @@
+/**
+ * App entry point. Mounts React, wraps the tree with auth + settings, and
+ * starts the router (base path `/calorie-tracker` for GitHub Pages).
+ */
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'

@@ -1,3 +1,8 @@
+/**
+ * Local app settings: theme, calorie/macro goals, and health-connection flags.
+ * Stored in localStorage via src/lib/settings.ts — not synced to the cloud.
+ */
+
 export type ThemePreference = 'light' | 'dark' | 'system'
 
 export type HealthConnectionId = 'apple-health' | 'google-fit'
@@ -8,6 +13,7 @@ export interface HealthConnection {
   lastSyncAt?: number
 }
 
+// Preferences the user can change in Profile → Appearance / Goals / Connections.
 export interface AppSettings {
   theme: ThemePreference
   /** Intended daily calories for weight loss (lower milestone). */

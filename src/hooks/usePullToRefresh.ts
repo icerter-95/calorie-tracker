@@ -1,3 +1,7 @@
+/**
+ * Document-scroll pull-to-refresh: rubber-band the content when already at the
+ * top, commit only after an intentional vertical pull past the threshold.
+ */
 import { useEffect, useRef, useState, type RefObject } from 'react'
 
 /** Visual pull distance that commits a refresh — requires a deliberate drag. */
@@ -101,6 +105,7 @@ export function usePullToRefresh({
       }
     }
 
+    // Touch listeners: start at scroll-top, lock vertical, then rubber-band.
     function onTouchStart(event: TouchEvent) {
       if (refreshingRef.current) return
       if (event.touches.length !== 1) return

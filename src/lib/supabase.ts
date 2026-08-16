@@ -1,3 +1,7 @@
+/**
+ * Supabase browser client. Null when VITE_SUPABASE_URL / ANON_KEY are missing
+ * (Login then shows the setup instructions).
+ */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined

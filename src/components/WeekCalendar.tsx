@@ -1,3 +1,7 @@
+/**
+ * Swipeable week strip for the Diary. Colored dots show calorie status vs
+ * goals. Prev/next week via arrows or horizontal swipe.
+ */
 import { format, parseISO } from 'date-fns'
 import {
   useEffect,
@@ -30,6 +34,7 @@ interface WeekCalendarProps {
   calorieGoalUpper: number
 }
 
+/** One row of Mon–Sun buttons with a calorie-status dot under each day. */
 function WeekStrip({
   weekDays,
   selectedDate,
@@ -111,6 +116,7 @@ export default function WeekCalendar({
   calorieGoalLower,
   calorieGoalUpper,
 }: WeekCalendarProps) {
+  // Pointer-swipe state for sliding between prev / current / next week.
   const viewportRef = useRef<HTMLDivElement>(null)
   const offsetRef = useRef(0)
   const draggingRef = useRef(false)
@@ -217,6 +223,7 @@ export default function WeekCalendar({
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
+  // Horizontal drag: lock axis, then snap to prev/next week or bounce back.
   function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (snapping) return
     event.currentTarget.setPointerCapture(event.pointerId)
@@ -262,6 +269,7 @@ export default function WeekCalendar({
 
   return (
     <div className="space-y-3">
+      {/* Heading + Today / prev / next week */}
       <div className="flex items-center justify-between gap-2">
         <h2 className="min-w-0 truncate text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
           {heading}
@@ -295,6 +303,7 @@ export default function WeekCalendar({
         </div>
       </div>
 
+      {/* Three weeks side by side; swipe translates this track */}
       <div
         ref={viewportRef}
         className="overflow-hidden touch-pan-y"

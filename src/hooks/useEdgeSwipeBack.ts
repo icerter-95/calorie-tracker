@@ -1,3 +1,7 @@
+/**
+ * iOS-style interactive edge swipe: start near the left screen edge and drag
+ * right to go back. Applies translateX on `targetRef` while dragging.
+ */
 import { useEffect, useRef, type RefObject } from 'react'
 
 type UseEdgeSwipeBackOptions = {
@@ -59,6 +63,7 @@ export function useEdgeSwipeBack(
       }, 200)
     }
 
+    // Left-edge start → drag right → commit back or snap back.
     function onTouchStart(event: TouchEvent) {
       if (event.touches.length !== 1) return
       const touch = event.touches[0]

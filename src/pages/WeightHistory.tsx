@@ -1,3 +1,7 @@
+/**
+ * Full list of weight entries (from Health → Weight history). Edit, delete,
+ * or add a manual log. Apple Health rows show a sync timestamp.
+ */
 import { useCallback, useState } from 'react'
 import { addWeight, deleteWeight, updateWeight } from '../db'
 import { useAllWeights } from '../hooks/useData'
@@ -29,6 +33,7 @@ export default function WeightHistoryPage() {
   const [weightKg, setWeightKg] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
 
+  // Open the inline form prefilled, or save/delete a row.
   function openEditForm(entry: WeightEntry) {
     setEditing(entry)
     setDate(entry.date)

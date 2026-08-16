@@ -1,3 +1,7 @@
+/**
+ * Account info settings. Change profile photo, username (also used to sign in),
+ * and password / passcode.
+ */
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../auth/AuthProvider'
 import UserAvatar from '../../components/UserAvatar'
@@ -93,6 +97,7 @@ export default function AccountInfoSettings() {
     setOpenEditor(editor)
   }
 
+  // Photo, username, and password save handlers.
   async function handleAvatarChange(file: File | undefined) {
     if (!file) return
     setAvatarError(null)
@@ -169,6 +174,7 @@ export default function AccountInfoSettings() {
 
   return (
     <div className="space-y-4">
+      {/* Header: avatar + display name + email */}
       <section className="rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
         <div className="flex items-center gap-3 px-4 py-3">
           <div className="relative shrink-0">
@@ -206,6 +212,7 @@ export default function AccountInfoSettings() {
         </div>
       </section>
 
+      {/* Expandable username and password editors */}
       <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
         <button
           type="button"

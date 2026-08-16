@@ -1,3 +1,6 @@
+/**
+ * Vite env types for the two Supabase keys the client needs.
+ */
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {

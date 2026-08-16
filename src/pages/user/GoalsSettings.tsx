@@ -1,3 +1,7 @@
+/**
+ * Goals settings. Daily calorie band (lower / upper) and protein / carbs / fat
+ * targets. These drive diary dots and the day-summary bars.
+ */
 import { useState } from 'react'
 import { useSettings } from '../../hooks/useSettings'
 
@@ -31,6 +35,7 @@ export default function GoalsSettings() {
     setEditingGoals(false)
   }
 
+  // Validate ranges, swap lower/upper if needed, then persist locally.
   function handleGoalsSave() {
     const lower = Math.round(Number(calorieLowerDraft))
     const upper = Math.round(Number(calorieUpperDraft))
@@ -100,6 +105,7 @@ export default function GoalsSettings() {
 
         {editingGoals ? (
           <>
+            {/* Edit: calorie band + macros */}
             <div className="grid grid-cols-2 gap-2">
               <label className="block text-sm">
                 <span className="mb-0.5 block text-xs text-stone-600 dark:text-stone-300">
@@ -241,6 +247,7 @@ export default function GoalsSettings() {
           </>
         ) : (
           <>
+            {/* Read-only summary until Edit is tapped */}
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <p className="text-xs text-stone-600 dark:text-stone-300">Lower goal</p>

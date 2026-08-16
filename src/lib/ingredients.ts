@@ -1,4 +1,7 @@
-/** Normalize free-form AI / user ingredient tags into stable lowercase tags. */
+/**
+ * Normalize free-form AI / user ingredient tags into stable lowercase tags.
+ * Synonyms collapse (e.g. "grilled chicken" → "chicken"); seasonings are dropped.
+ */
 
 const SYNONYMS: Record<string, string> = {
   // chicken

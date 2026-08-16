@@ -1,3 +1,6 @@
+/**
+ * Circular avatar: photo if one exists, otherwise initials on a colored disk.
+ */
 import { getInitials } from '../lib/userProfile'
 
 type UserAvatarProps = {

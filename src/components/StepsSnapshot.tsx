@@ -1,3 +1,7 @@
+/**
+ * Small steps readout for a single day. Not a live progress bar — Health sync
+ * is a batch snapshot, not continuous.
+ */
 import type { StepsEntry } from '../types'
 
 function formatSyncLabel(ts?: number) {

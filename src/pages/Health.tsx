@@ -1,3 +1,7 @@
+/**
+ * Health. Latest weight + trend line, plus a 7-day steps chart (Apple Health
+ * sync is batch, not live). Full weight history is a nested page.
+ */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { eachDayOfInterval, parseISO, subDays } from 'date-fns'
 import { useNavigate } from 'react-router-dom'
@@ -64,6 +68,8 @@ export default function HealthPage() {
       })),
     [weights],
   )
+
+  // Last 7 calendar days of steps for the bar chart.
 
   const last7Keys = useMemo(() => {
     const end = parseISO(todayKey())
@@ -155,7 +161,7 @@ export default function HealthPage() {
         </p>
       )}
 
-      {/* Weight card */}
+      {/* Weight card: latest value, log form, trend line */}
       <section className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
         <div className="flex items-start justify-between gap-3">
           <p className="text-xs font-medium uppercase tracking-wide text-amber-800/80 dark:text-amber-400/90">
@@ -309,7 +315,7 @@ export default function HealthPage() {
         </div>
       </section>
 
-      {/* Steps card */}
+      {/* Steps card: 7-day average + bars colored by 10k goal */}
       <section className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
         <p className="text-xs font-medium uppercase tracking-wide text-teal-800/80 dark:text-teal-400/90">
           Steps
