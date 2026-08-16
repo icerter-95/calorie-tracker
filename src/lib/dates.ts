@@ -1,3 +1,7 @@
+/**
+ * Date helpers: yyyy-MM-dd keys, week/month ranges, and daily calorie summaries
+ * used by Diary, Progress, and Insights.
+ */
 import {
   addWeeks,
   eachDayOfInterval,
@@ -13,6 +17,7 @@ import {
   subDays,
 } from 'date-fns'
 
+// Keys and display labels (yyyy-MM-dd throughout the app).
 export function todayKey(): string {
   return format(new Date(), 'yyyy-MM-dd')
 }
@@ -40,6 +45,7 @@ export function formatDayHeading(dateKey: string): string {
   return format(date, 'MMMM d')
 }
 
+// Week / month / rolling / custom date-key ranges.
 export function getWeekRange(reference: Date | string = new Date()) {
   const ref = typeof reference === 'string' ? parseISO(reference) : reference
   const start = startOfWeek(ref, { weekStartsOn: 1 })
@@ -49,6 +55,15 @@ export function getWeekRange(reference: Date | string = new Date()) {
 
 export function shiftWeek(dateKey: string, weeks: number): string {
   return toDateKey(addWeeks(parseISO(dateKey), weeks))
+}
+
+/** Mon–Sun of the previous, current, and next weeks (what the Diary strip shows). */
+export function getSurroundingWeeksRange(dateKey: string) {
+  const prevWeek = getWeekRange(shiftWeek(dateKey, -1))
+  const nextWeek = getWeekRange(shiftWeek(dateKey, 1))
+  const start = prevWeek[0] ?? dateKey
+  const end = nextWeek[nextWeek.length - 1] ?? dateKey
+  return { start, end }
 }
 
 export function isSameDateKey(a: string, b: string): boolean {
@@ -85,6 +100,7 @@ export function defaultCustomRange(reference = new Date()) {
   }
 }
 
+// Sum calories per day for Progress charts.
 export function sumCaloriesForDate(
   meals: { date: string; totalCalories: number }[],
   dateKey: string,

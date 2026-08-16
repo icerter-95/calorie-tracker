@@ -1,10 +1,14 @@
+/**
+ * Diary (home). Pick a day on the week calendar, see totals, and add/edit meals
+ * grouped by breakfast / lunch / dinner / snack.
+ */
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { addMeal, deleteMeal, updateMeal } from '../db'
 import DaySummaryCard from '../components/DaySummaryCard'
 import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
 import WeekCalendar from '../components/WeekCalendar'
-import { useAllMeals, useMealsForDate } from '../hooks/useData'
+import { useMealsForDate, useWeekCalorieSummaries } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import { useSettings } from '../hooks/useSettings'
 import { todayKey } from '../lib/dates'
@@ -24,19 +28,24 @@ function headerBottom() {
 }
 
 export default function DiaryPage() {
+  // Selected day + meals for that day; week summaries feed the calendar dots.
   const [selectedDate, setSelectedDate] = useState(todayKey)
   const { meals, error, reload } = useMealsForDate(selectedDate)
-  const { meals: allMeals, reload: reloadAllMeals } = useAllMeals()
+  const {
+    caloriesByDate,
+    hasEntriesByDate,
+    reload: reloadWeek,
+  } = useWeekCalorieSummaries(selectedDate)
   const { settings } = useSettings()
 
   function reloadDayAndWeek() {
     void reload()
-    void reloadAllMeals()
+    void reloadWeek()
   }
 
   const pullToRefresh = useCallback(async () => {
-    await Promise.all([reload(), reloadAllMeals()])
-  }, [reload, reloadAllMeals])
+    await Promise.all([reload(), reloadWeek()])
+  }, [reload, reloadWeek])
 
   useRegisterPullToRefresh(pullToRefresh)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
@@ -49,20 +58,11 @@ export default function DiaryPage() {
   const pendingScrollDate = useRef<string | null>(null)
   const mealsAtSelectRef = useRef<MealEntry[] | undefined>(undefined)
 
+  // Day totals for the summary card; calendar dots come from the week query.
   const totalCalories = (meals ?? []).reduce((sum, m) => sum + m.totalCalories, 0)
   const totalProtein = (meals ?? []).reduce((sum, m) => sum + m.proteinG, 0)
   const totalCarbs = (meals ?? []).reduce((sum, m) => sum + m.carbsG, 0)
   const totalFat = (meals ?? []).reduce((sum, m) => sum + m.fatG, 0)
-
-  const { caloriesByDate, hasEntriesByDate } = useMemo(() => {
-    const calories: Record<string, number> = {}
-    const hasEntries: Record<string, boolean> = {}
-    for (const meal of allMeals ?? []) {
-      calories[meal.date] = (calories[meal.date] ?? 0) + meal.totalCalories
-      hasEntries[meal.date] = true
-    }
-    return { caloriesByDate: calories, hasEntriesByDate: hasEntries }
-  }, [allMeals])
 
   const bySlot = useMemo(() => {
     const map = Object.fromEntries(MEAL_TYPE_ORDER.map((t) => [t, [] as MealEntry[]])) as Record<
@@ -75,6 +75,7 @@ export default function DiaryPage() {
     return map
   }, [meals])
 
+  // Keep the same meal slot in view when switching days (avoids a jump to the top).
   function captureScrollAnchor(): ScrollAnchor {
     const anchorY = headerBottom()
     const first = sectionRefs.current[MEAL_TYPE_ORDER[0]]
@@ -146,6 +147,7 @@ export default function DiaryPage() {
     setAdding(false)
   }
 
+  // Add / edit / delete meals for the selected day.
   async function handleSave(data: MealInput) {
     setActionError(null)
     try {
@@ -186,6 +188,7 @@ export default function DiaryPage() {
 
   return (
     <div className="space-y-4">
+      {/* Week strip + calorie/macro summary for the selected day */}
       <WeekCalendar
         selectedDate={selectedDate}
         onSelectDate={selectDate}
@@ -230,6 +233,7 @@ export default function DiaryPage() {
         </p>
       )}
 
+      {/* Meals grouped by breakfast / lunch / dinner / snack */}
       {meals === undefined ? (
         <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
       ) : (

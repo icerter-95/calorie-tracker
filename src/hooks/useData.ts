@@ -1,13 +1,27 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+/**
+ * React Query-style loaders for meals, weights, and steps. Each hook exposes
+ * `{ data, error, reload }` and waits for reload() so pull-to-refresh can
+ * finish cleanly even if you leave the page mid-fetch.
+ */
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   fetchAllMeals,
   fetchAllSteps,
   fetchAllWeights,
+  fetchCalorieSummariesForRange,
   fetchMealById,
   fetchMealsForDate,
   fetchStepsForDate,
 } from '../db'
 import { useAuth } from '../auth/AuthProvider'
+import {
+  mergeCachedSummaries,
+  readCachedMealsForDate,
+  readCachedSummaries,
+  writeCachedMealsForDate,
+  type CachedDaySummary,
+} from '../lib/diaryCache'
+import { getSurroundingWeeksRange } from '../lib/dates'
 import type { MealEntry, StepsEntry, WeightEntry } from '../types'
 
 /** Collects reload() promises and resolves them when the matching fetch finishes. */
@@ -34,6 +48,7 @@ function useReloadGate() {
   return { armReload, resolvePending }
 }
 
+/** All meals for the signed-in user (calendar dots, Progress, Insights). */
 export function useAllMeals() {
   const { user } = useAuth()
   const [meals, setMeals] = useState<MealEntry[] | undefined>(undefined)
@@ -67,6 +82,7 @@ export function useAllMeals() {
   return { meals, error, reload }
 }
 
+/** One meal by id (Meal Detail page). */
 export function useMeal(id: string | undefined) {
   const { user } = useAuth()
   const [meal, setMeal] = useState<MealEntry | null | undefined>(undefined)
@@ -111,9 +127,14 @@ export function useMeal(id: string | undefined) {
   return { meal, error, reload }
 }
 
+/** Meals for a single yyyy-MM-dd (Diary). Paints cache first, then refreshes. */
 export function useMealsForDate(dateKey: string) {
   const { user } = useAuth()
-  const [meals, setMeals] = useState<MealEntry[] | undefined>(undefined)
+  const userId = user?.id
+  const userIdRef = useRef(userId)
+  const [meals, setMeals] = useState<MealEntry[] | undefined>(() =>
+    userId ? readCachedMealsForDate(userId, dateKey) : undefined,
+  )
   const [error, setError] = useState<string | null>(null)
   const [version, setVersion] = useState(0)
   const { armReload, resolvePending } = useReloadGate()
@@ -124,10 +145,29 @@ export function useMealsForDate(dateKey: string) {
     let cancelled = false
     setError(null)
 
-    const load = user ? fetchMealsForDate(dateKey) : Promise.resolve([] as MealEntry[])
-    load
+    if (!userId) {
+      userIdRef.current = undefined
+      setMeals([])
+      resolvePending()
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const cached = readCachedMealsForDate(userId, dateKey)
+    if (cached !== undefined) {
+      setMeals(cached)
+    } else if (userIdRef.current !== userId) {
+      // Different account with no snapshot — don't flash the previous user's meals.
+      setMeals(undefined)
+    }
+    userIdRef.current = userId
+
+    fetchMealsForDate(dateKey)
       .then((result) => {
-        if (!cancelled) setMeals(result)
+        if (cancelled) return
+        setMeals(result)
+        writeCachedMealsForDate(userId, dateKey, result)
       })
       .catch((err: unknown) => {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load meals')
@@ -139,11 +179,70 @@ export function useMealsForDate(dateKey: string) {
     return () => {
       cancelled = true
     }
-  }, [user?.id, dateKey, version, resolvePending])
+  }, [userId, dateKey, version, resolvePending])
 
   return { meals, error, reload }
 }
 
+/** Lean calorie totals for the visible Diary weeks (prev / current / next). */
+export function useWeekCalorieSummaries(selectedDate: string) {
+  const { user } = useAuth()
+  const userId = user?.id
+  const { start, end } = getSurroundingWeeksRange(selectedDate)
+  const [summaries, setSummaries] = useState<Record<string, CachedDaySummary>>(() =>
+    userId ? readCachedSummaries(userId) : {},
+  )
+  const [error, setError] = useState<string | null>(null)
+  const [version, setVersion] = useState(0)
+  const { armReload, resolvePending } = useReloadGate()
+
+  const reload = useCallback(() => armReload(() => setVersion((v) => v + 1)), [armReload])
+
+  useEffect(() => {
+    let cancelled = false
+    setError(null)
+
+    if (!userId) {
+      setSummaries({})
+      resolvePending()
+      return () => {
+        cancelled = true
+      }
+    }
+
+    setSummaries(readCachedSummaries(userId))
+
+    fetchCalorieSummariesForRange(start, end)
+      .then((range) => {
+        if (cancelled) return
+        setSummaries(mergeCachedSummaries(userId, range))
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Failed to load week totals')
+      })
+      .finally(() => {
+        if (!cancelled) resolvePending()
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId, start, end, version, resolvePending])
+
+  const { caloriesByDate, hasEntriesByDate } = useMemo(() => {
+    const calories: Record<string, number> = {}
+    const hasEntries: Record<string, boolean> = {}
+    for (const [date, summary] of Object.entries(summaries)) {
+      calories[date] = summary.totalCalories
+      hasEntries[date] = summary.hasEntries
+    }
+    return { caloriesByDate: calories, hasEntriesByDate: hasEntries }
+  }, [summaries])
+
+  return { caloriesByDate, hasEntriesByDate, error, reload }
+}
+
+/** All weight logs (Health + Progress overlay). */
 export function useAllWeights() {
   const { user } = useAuth()
   const [weights, setWeights] = useState<WeightEntry[] | undefined>(undefined)
@@ -177,6 +276,7 @@ export function useAllWeights() {
   return { weights, error, reload }
 }
 
+/** All step snapshots (Health + Progress averages). */
 export function useAllSteps() {
   const { user } = useAuth()
   const [steps, setSteps] = useState<StepsEntry[] | undefined>(undefined)
@@ -210,6 +310,7 @@ export function useAllSteps() {
   return { steps, error, reload }
 }
 
+/** Steps for one day (unused on Diary currently; kept for snapshots). */
 export function useStepsForDate(dateKey: string) {
   const { user } = useAuth()
   const [entry, setEntry] = useState<StepsEntry | null | undefined>(undefined)

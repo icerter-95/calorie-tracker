@@ -1,5 +1,12 @@
+/**
+ * Database API: all Supabase reads/writes for meals, weights, steps, and
+ * Apple Health sync tokens. Pages should go through this instead of querying
+ * tables directly. Row → UI mapping lives in mappers.ts.
+ */
 import { supabase } from '../lib/supabase'
 import { deleteAllUserMealPhotos, deleteMealPhoto } from '../lib/mealPhotos'
+import { clearDiaryCache } from '../lib/diaryCache'
+import { getCustomRange } from '../lib/dates'
 import type {
   HealthSyncTokenInfo,
   MealInput,
@@ -17,6 +24,7 @@ import {
   type WeightRow,
 } from './mappers'
 
+// Fail fast if env keys are missing or the user is not signed in.
 function requireClient() {
   if (!supabase) {
     throw new Error('Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.')
@@ -32,6 +40,7 @@ async function requireUserId() {
   return data.user.id
 }
 
+// --- Meals ---
 export async function fetchAllMeals(): Promise<MealEntry[]> {
   const client = requireClient()
   const { data, error } = await client
@@ -47,12 +56,42 @@ export async function fetchMealsForDate(dateKey: string): Promise<MealEntry[]> {
   const client = requireClient()
   const { data, error } = await client
     .from('meals')
-    .select('*')
+    .select(
+      'id, date, meal_type, description, photo_url, items, ingredients, total_calories, protein_g, carbs_g, fat_g, note, created_at',
+    )
     .eq('date', dateKey)
     .order('created_at', { ascending: true })
 
   if (error) throw error
   return (data as MealRow[]).map(mapMealRow)
+}
+
+/** Date + calorie totals only — used for Diary week dots, not the meal list. */
+export async function fetchCalorieSummariesForRange(
+  startDate: string,
+  endDate: string,
+): Promise<Record<string, { totalCalories: number; hasEntries: boolean }>> {
+  const client = requireClient()
+  const { data, error } = await client
+    .from('meals')
+    .select('date, total_calories')
+    .gte('date', startDate)
+    .lte('date', endDate)
+
+  if (error) throw error
+
+  const summaries: Record<string, { totalCalories: number; hasEntries: boolean }> = {}
+  for (const date of getCustomRange(startDate, endDate)) {
+    summaries[date] = { totalCalories: 0, hasEntries: false }
+  }
+  for (const row of data ?? []) {
+    const date = row.date as string
+    const current = summaries[date] ?? { totalCalories: 0, hasEntries: false }
+    current.totalCalories += Number(row.total_calories) || 0
+    current.hasEntries = true
+    summaries[date] = current
+  }
+  return summaries
 }
 
 export async function fetchMealById(id: string): Promise<MealEntry | null> {
@@ -64,6 +103,7 @@ export async function fetchMealById(id: string): Promise<MealEntry | null> {
   return mapMealRow(data as MealRow)
 }
 
+// --- Weights ---
 export async function fetchAllWeights(): Promise<WeightEntry[]> {
   const client = requireClient()
   const { data, error } = await client
@@ -161,6 +201,7 @@ export async function deleteMeal(id: string) {
   }
 }
 
+// --- Steps (synced from Apple Health) ---
 export async function fetchAllSteps(): Promise<StepsEntry[]> {
   const client = requireClient()
   const { data, error } = await client
@@ -227,10 +268,11 @@ export async function updateMealIngredients(id: string, ingredients: string[]) {
   if (error) throw error
 }
 
-/** Delete all meals, weights, and steps for the signed-in user (RLS-scoped). */
+// Wipe this account's meals, weights, steps, and meal photos (Profile → Data).
 export async function clearAllUserData() {
   const client = requireClient()
   const userId = await requireUserId()
+  clearDiaryCache(userId)
 
   try {
     await deleteAllUserMealPhotos()
@@ -248,6 +290,7 @@ export async function clearAllUserData() {
   if (stepsError) throw stepsError
 }
 
+// --- Apple Health Shortcut token (create / inspect / revoke) ---
 export async function fetchHealthSyncTokenInfo(): Promise<HealthSyncTokenInfo | null> {
   const client = requireClient()
   const { data, error } = await client
