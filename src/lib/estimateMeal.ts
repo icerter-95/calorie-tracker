@@ -1,6 +1,7 @@
 /**
  * Call the estimate-meal and suggest-ingredients Edge Functions (Gemini).
- * Used by MealForm (photo estimate + tag suggest) and the ingredients backfill.
+ * estimate-meal accepts a photo, text, and/or a portion comment (userNote).
+ * Used by the add-meal flow, MealForm retake, and the ingredients backfill.
  */
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from './supabase'
@@ -16,10 +17,22 @@ export type PlateEstimate = {
   ingredients: string[]
 }
 
-/** Photo → Gemini estimate (description, kcal, macros, tags). */
-export async function estimatePlateFromPhoto(blob: Blob): Promise<PlateEstimate> {
+export type EstimateMealInput = {
+  image?: Blob
+  text?: string
+  userNote?: string
+}
+
+/** Photo and/or text → Gemini estimate (description, kcal, macros, tags). */
+export async function estimateMeal(input: EstimateMealInput): Promise<PlateEstimate> {
   if (!supabase) {
     throw new Error('Supabase is not configured.')
+  }
+
+  const text = input.text?.trim() || ''
+  const userNote = input.userNote?.trim() || ''
+  if (!input.image && !text) {
+    throw new Error('Add a photo or describe the meal.')
   }
 
   const {
@@ -29,7 +42,19 @@ export async function estimatePlateFromPhoto(blob: Blob): Promise<PlateEstimate>
   if (sessionError) throw sessionError
   if (!session) throw new Error('You must be signed in to estimate a meal.')
 
-  const imageBase64 = await blobToBase64(blob)
+  const body: {
+    imageBase64?: string
+    mimeType?: string
+    text?: string
+    userNote?: string
+  } = {}
+
+  if (input.image) {
+    body.imageBase64 = await blobToBase64(input.image)
+    body.mimeType = 'image/jpeg'
+  }
+  if (text) body.text = text
+  if (userNote) body.userNote = userNote
 
   const { data, error } = await supabase.functions.invoke<{
     description?: string
@@ -39,12 +64,7 @@ export async function estimatePlateFromPhoto(blob: Blob): Promise<PlateEstimate>
     fatG?: number
     ingredients?: string[]
     error?: string
-  }>('estimate-meal', {
-    body: {
-      imageBase64,
-      mimeType: 'image/jpeg',
-    },
-  })
+  }>('estimate-meal', { body })
 
   if (error) {
     const detail = await readFunctionError(error, data)
@@ -64,6 +84,19 @@ export async function estimatePlateFromPhoto(blob: Blob): Promise<PlateEstimate>
       Array.isArray(data.ingredients) ? data.ingredients.map(String) : [],
     ),
   }
+}
+
+/** Photo → Gemini estimate (description, kcal, macros, tags). */
+export async function estimatePlateFromPhoto(
+  blob: Blob,
+  userNote?: string,
+): Promise<PlateEstimate> {
+  return estimateMeal({ image: blob, userNote })
+}
+
+/** Voice/text → Gemini estimate (same plate shape as photo). */
+export async function estimatePlateFromText(text: string): Promise<PlateEstimate> {
+  return estimateMeal({ text })
 }
 
 /** Description text → ingredient tags (MealForm Suggest + Data backfill). */

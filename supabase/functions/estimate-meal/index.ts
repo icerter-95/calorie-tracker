@@ -1,6 +1,6 @@
 /**
- * Edge Function: meal photo → description, calories, macros, ingredient tags
- * via Gemini Flash. Called from MealForm after the user picks a photo.
+ * Edge Function: photo and/or text → description, calories, macros, tags
+ * via Gemini Flash. Optional userNote adjusts portion (e.g. "I ate half").
  *
  * Deploy: npx supabase functions deploy estimate-meal
  * Secret: npx supabase secrets set GEMINI_API_KEY=your_key
@@ -21,6 +21,8 @@ const corsHeaders = {
 type EstimateBody = {
   imageBase64?: string
   mimeType?: string
+  text?: string
+  userNote?: string
 }
 
 type PlateEstimate = {
@@ -67,49 +69,30 @@ Deno.serve(async (req) => {
     }
 
     const body = (await req.json()) as EstimateBody
-    const imageBase64 = body.imageBase64?.replace(/^data:[^;]+;base64,/, '')
+    const imageBase64 = body.imageBase64?.replace(/^data:[^;]+;base64,/, '') || ''
     const mimeType = body.mimeType || 'image/jpeg'
+    const text = body.text?.trim() || ''
+    const userNote = body.userNote?.trim() || ''
+    const hasImage = Boolean(imageBase64)
+    const hasText = Boolean(text)
 
-    if (!imageBase64) {
-      return json({ error: 'imageBase64 is required' }, 400)
+    if (!hasImage && !hasText) {
+      return json({ error: 'imageBase64 or text is required' }, 400)
     }
 
-    // Prompt Gemini for whole-plate totals + a few main ingredient tags.
-    const prompt = `You are estimating nutrition for a personal calorie tracker.
-Analyze this whole-plate meal photo.
-
-Rules:
-1. Estimate the ACTUAL portion visible — not a generic cookbook serving.
-2. Use plate size, utensils, or other scale cues when present.
-3. Prefer whole-plate totals (one meal), not a long itemized recipe.
-4. description: short English name for the plate (e.g. "Grilled chicken with rice and vegetables").
-5. calories: integer kcal for the whole plate.
-6. proteinG, carbsG, fatG: grams for the whole plate (one decimal ok).
-7. ingredients: array of 1–6 MAIN ingredient tags in lowercase English.
-   - Only the primary foods that define the meal (e.g. "chicken", "rice", "broccoli") — NOT cooking aids, seasonings, or pantry staples.
-   - EXCLUDE: oil, olive oil, butter (as cooking fat), salt, pepper, flour, sugar, spices, herbs, garlic, onion (when used as seasoning), vinegar, soy sauce, water, stock, broth, and similar minor ingredients.
-   - Use generic food names only: "chicken", "rice", "egg", "tomato" — NOT preparations like "fried chicken", "scrambled eggs", "basmati rice".
-   - Singular forms when possible.
-   - Do NOT split calories per ingredient.
-8. If the image is not food, return zeros, description "Not a meal", ingredients [].
-
-Return ONLY valid JSON with keys:
-description, calories, proteinG, carbsG, fatG, ingredients`
+    const prompt = buildPrompt({ hasImage, text, userNote })
+    const parts: Array<Record<string, unknown>> = [{ text: prompt }]
+    if (hasImage) {
+      parts.push({
+        inlineData: {
+          mimeType,
+          data: imageBase64,
+        },
+      })
+    }
 
     const geminiResult = await generateContentWithFallback(geminiKey, {
-      contents: [
-        {
-          parts: [
-            { text: prompt },
-            {
-              inlineData: {
-                mimeType,
-                data: imageBase64,
-              },
-            },
-          ],
-        },
-      ],
+      contents: [{ parts }],
       generationConfig: {
         temperature: 0.2,
         responseMimeType: 'application/json',
@@ -134,9 +117,9 @@ description, calories, proteinG, carbsG, fatG, ingredients`
       )
     }
 
-    const text = candidateText(geminiResult.json)
+    const responseText = candidateText(geminiResult.json)
 
-    if (!text) {
+    if (!responseText) {
       const reason = blockReason(geminiResult.json)
       return json(
         {
@@ -149,10 +132,10 @@ description, calories, proteinG, carbsG, fatG, ingredients`
     }
 
     try {
-      const parsed = parseEstimate(text)
+      const parsed = parseEstimate(responseText)
       return json(parsed)
     } catch {
-      console.error('Parse failed', text)
+      console.error('Parse failed', responseText)
       return json({ error: 'AI returned invalid JSON — try another photo' }, 502)
     }
   } catch (err) {
@@ -163,6 +146,54 @@ description, calories, proteinG, carbsG, fatG, ingredients`
     )
   }
 })
+
+function buildPrompt(opts: { hasImage: boolean; text: string; userNote: string }): string {
+  const shared = `Rules:
+1. Prefer whole-plate totals (one meal), not a long itemized recipe.
+2. description: short English name for the plate (e.g. "Grilled chicken with rice and vegetables").
+3. calories: integer kcal for what the user actually ate.
+4. proteinG, carbsG, fatG: grams for what the user ate (one decimal ok).
+5. ingredients: array of 1–6 MAIN ingredient tags in lowercase English.
+   - Only the primary foods that define the meal (e.g. "chicken", "rice", "broccoli") — NOT cooking aids, seasonings, or pantry staples.
+   - EXCLUDE: oil, olive oil, butter (as cooking fat), salt, pepper, flour, sugar, spices, herbs, garlic, onion (when used as seasoning), vinegar, soy sauce, water, stock, broth, and similar minor ingredients.
+   - Use generic food names only: "chicken", "rice", "egg", "tomato" — NOT preparations like "fried chicken", "scrambled eggs", "basmati rice".
+   - Singular forms when possible.
+   - Do NOT split calories per ingredient.
+6. User comments and descriptions may be English or Spanish. Always return the same JSON keys; description in English.
+7. Return ONLY valid JSON with keys: description, calories, proteinG, carbsG, fatG, ingredients`
+
+  if (opts.hasImage) {
+    const noteBlock = opts.userNote
+      ? `User comment about what they ate:\n"""${opts.userNote}"""`
+      : 'The user did not add a comment. Estimate the visible plate as served today.'
+
+    return `You are estimating nutrition for a personal calorie tracker.
+Analyze this whole-plate meal photo.
+
+${shared}
+
+Portion rules:
+- Estimate the ACTUAL portion visible — not a generic cookbook serving.
+- Use plate size, utensils, or other scale cues when present.
+- If the user comment describes a portion of what is visible ("I ate half", "only the salad", "two slices", "me comí la mitad"), estimate THAT amount, not the full plate.
+- If the user comment is missing or empty, estimate the visible plate as served today.
+- If the image is not food, return zeros, description "Not a meal", ingredients [].
+
+${noteBlock}`
+  }
+
+  const extra = opts.userNote ? `\n\nAdditional comment:\n"""${opts.userNote}"""` : ''
+
+  return `You are estimating nutrition for a personal calorie tracker.
+The user described the meal they ate (voice or typed). Treat this description as the meal — including quantities, leftovers, and shared plates.
+
+${shared}
+
+Meal description:
+"""${opts.text}"""${extra}
+
+If the text is not a meal, return zeros, description "Not a meal", ingredients [].`
+}
 
 /** Coerce Gemini JSON into the plate-estimate shape the client expects. */
 function parseEstimate(text: string): PlateEstimate {

@@ -1,9 +1,10 @@
 /**
- * Diary (home). Pick a day on the week calendar, see totals, and add/edit meals
- * grouped by breakfast / lunch / dinner / snack.
+ * Diary (home). Pick a day on the week calendar, see totals, and review meals
+ * grouped by breakfast / lunch / dinner / snack. Adding food uses Camera / Input.
  */
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { addMeal, deleteMeal, updateMeal } from '../db'
+import { deleteMeal, updateMeal } from '../db'
+import AddMealFlow, { type AddMealFlowHandle } from '../components/AddMealFlow'
 import DaySummaryCard from '../components/DaySummaryCard'
 import DiaryLoggingBar from '../components/DiaryLoggingBar'
 import MealCard from '../components/MealCard'
@@ -13,7 +14,6 @@ import { useLoggedDates, useMealsForDate, useWeekCalorieSummaries } from '../hoo
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import { useSettings } from '../hooks/useSettings'
 import { todayKey } from '../lib/dates'
-import { defaultMealTypeForNow } from '../lib/mealTypeDefaults'
 import { currentLoggingStreak } from '../lib/streak'
 import type { MainMealSlot, MealEntry, MealInput, MealType } from '../types'
 import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
@@ -52,9 +52,8 @@ export default function DiaryPage() {
   }, [reload, reloadWeek, reloadLoggedDates])
 
   useRegisterPullToRefresh(pullToRefresh)
+  const addMealRef = useRef<AddMealFlowHandle>(null)
   const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
-  const [adding, setAdding] = useState(false)
-  const [defaultMealType, setDefaultMealType] = useState<MealType>(defaultMealTypeForNow)
   const [actionError, setActionError] = useState<string | null>(null)
 
   const sectionRefs = useRef<Partial<Record<MealType, HTMLElement | null>>>({})
@@ -172,35 +171,24 @@ export default function DiaryPage() {
     mealsAtSelectRef.current = meals
     setSelectedDate(dateKey)
     setEditingMeal(null)
-    setAdding(false)
     setActionError(null)
   }
 
   function closeForm() {
     setEditingMeal(null)
-    setAdding(false)
   }
 
-  // Add / edit / delete meals for the selected day.
+  // Edit / delete meals for the selected day. Creating goes through AddMealFlow.
   async function handleSave(data: MealInput) {
     setActionError(null)
     try {
-      if (editingMeal) {
-        await updateMeal(editingMeal.id, data)
-      } else {
-        await addMeal(data)
-      }
+      if (!editingMeal) return
+      await updateMeal(editingMeal.id, data)
       closeForm()
       reloadDayAndWeek()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not save meal')
     }
-  }
-
-  function startAdd(mealType?: MealType) {
-    setEditingMeal(null)
-    setDefaultMealType(mealType ?? defaultMealTypeForNow())
-    setAdding(true)
   }
 
   function focusSlot(slot: MealType) {
@@ -211,13 +199,12 @@ export default function DiaryPage() {
       window.scrollTo({ top: y, behavior: 'smooth' })
       return
     }
-    startAdd(slot)
+    addMealRef.current?.openCamera(slot)
+    setEditingMeal(null)
   }
 
   function startEdit(meal: MealEntry) {
-    setAdding(false)
     setEditingMeal(meal)
-    setDefaultMealType(meal.mealType)
   }
 
   async function handleDelete(id: string) {
@@ -232,7 +219,7 @@ export default function DiaryPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-28">
       {/* Week strip + logging streak / meal checklist + calorie summary */}
       <div className="space-y-2">
         <WeekCalendar
@@ -261,23 +248,6 @@ export default function DiaryPage() {
         carbsGoal={settings.carbsGoal}
         fatGoal={settings.fatGoal}
       />
-
-      {adding ? (
-        <MealForm
-          defaultDate={selectedDate}
-          defaultMealType={defaultMealType}
-          onSave={handleSave}
-          onCancel={closeForm}
-        />
-      ) : (
-        <button
-          type="button"
-          onClick={() => startAdd()}
-          className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
-        >
-          + Add meal
-        </button>
-      )}
 
       {(error || actionError) && (
         <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
@@ -338,6 +308,8 @@ export default function DiaryPage() {
           })}
         </div>
       )}
+
+      <AddMealFlow ref={addMealRef} date={selectedDate} onSaved={reloadDayAndWeek} />
     </div>
   )
 }

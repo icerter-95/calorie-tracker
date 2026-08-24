@@ -49,6 +49,24 @@ export async function resolvePhotoUrl(photoUrl: string | undefined | null): Prom
   return data.signedUrl
 }
 
+/**
+ * Duplicate a meal photo into a new storage object for this user.
+ * Favorites and later logs keep their own path so deleting one does not
+ * break the other.
+ */
+export async function copyMealPhoto(sourcePath: string): Promise<string> {
+  if (isStoragePath(sourcePath)) {
+    const client = requireClient()
+    const { data, error } = await client.storage.from(BUCKET).download(sourcePath)
+    if (error) throw error
+    return uploadMealPhoto(data)
+  }
+
+  const res = await fetch(sourcePath)
+  if (!res.ok) throw new Error('Could not copy photo')
+  return uploadMealPhoto(await res.blob())
+}
+
 /** Upload a JPEG blob; returns the storage path to save on the meal row. */
 export async function uploadMealPhoto(blob: Blob): Promise<string> {
   const client = requireClient()

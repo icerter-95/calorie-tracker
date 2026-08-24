@@ -1,21 +1,31 @@
 /**
  * Single meal view. Shows photo, calories, macros, tags; Edit opens MealForm.
+ * Heart saves a copy as a favorite (photo is duplicated so logs stay independent).
  * Back goes to Diary or Progress depending on how you arrived.
  */
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { FavoriteHeart } from '../components/FavoriteToggle'
 import MealForm from '../components/MealForm'
 import MealPhoto from '../components/MealPhoto'
-import { deleteMeal, updateMeal } from '../db'
+import { addFavorite, deleteFavorite, deleteMeal, fetchFavorites, updateMeal } from '../db'
 import { useMeal } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import { formatDisplayDate } from '../lib/dates'
 import { roundMacro } from '../lib/macros'
-import type { MealInput } from '../types'
+import { copyMealPhoto } from '../lib/mealPhotos'
+import type { FavoriteMeal, MealEntry, MealInput } from '../types'
 import { MEAL_TYPE_LABELS } from '../types'
 
 type LocationState = {
   from?: string
+}
+
+function matchingFavorite(favorites: FavoriteMeal[], meal: MealEntry): FavoriteMeal | undefined {
+  const name = (meal.description || 'Meal').trim().toLowerCase()
+  return favorites.find(
+    (fav) => fav.name.trim().toLowerCase() === name && fav.totalCalories === meal.totalCalories,
+  )
 }
 
 export default function MealDetailPage() {
@@ -26,6 +36,8 @@ export default function MealDetailPage() {
   const { meal, error, reload } = useMeal(id)
   const [editing, setEditing] = useState(false)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [favorites, setFavorites] = useState<FavoriteMeal[]>([])
+  const [favoriteBusy, setFavoriteBusy] = useState(false)
 
   const pullToRefresh = useCallback(async () => {
     await reload()
@@ -33,7 +45,50 @@ export default function MealDetailPage() {
 
   useRegisterPullToRefresh(pullToRefresh)
 
-  // Persist edits, or delete and return to the page we came from.
+  useEffect(() => {
+    let cancelled = false
+    fetchFavorites()
+      .then((rows) => {
+        if (!cancelled) setFavorites(rows)
+      })
+      .catch(() => {
+        if (!cancelled) setFavorites([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [meal?.id])
+
+  async function handleFavoriteToggle() {
+    if (!meal) return
+    setActionError(null)
+    const existing = matchingFavorite(favorites, meal)
+    setFavoriteBusy(true)
+    try {
+      if (existing) {
+        await deleteFavorite(existing.id)
+        setFavorites((prev) => prev.filter((fav) => fav.id !== existing.id))
+        return
+      }
+      const photoUrl = meal.photoUrl ? await copyMealPhoto(meal.photoUrl) : undefined
+      const saved = await addFavorite({
+        name: meal.description?.trim() || 'Meal',
+        photoUrl,
+        ingredients: meal.ingredients,
+        totalCalories: meal.totalCalories,
+        proteinG: meal.proteinG,
+        carbsG: meal.carbsG,
+        fatG: meal.fatG,
+        note: meal.note,
+      })
+      setFavorites((prev) => [saved, ...prev])
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not update favorite')
+    } finally {
+      setFavoriteBusy(false)
+    }
+  }
+
   async function handleSave(data: MealInput) {
     if (!meal) return
     setActionError(null)
@@ -100,6 +155,7 @@ export default function MealDetailPage() {
   }
 
   const hasMacros = meal.proteinG > 0 || meal.carbsG > 0 || meal.fatG > 0
+  const savedFavorite = matchingFavorite(favorites, meal)
 
   // Read-only meal card (photo, totals, tags, optional item list).
   return (
@@ -141,13 +197,25 @@ export default function MealDetailPage() {
                 </p>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="shrink-0 rounded-lg px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
-            >
-              Edit
-            </button>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <button
+                type="button"
+                onClick={() => void handleFavoriteToggle()}
+                disabled={favoriteBusy}
+                aria-pressed={Boolean(savedFavorite)}
+                aria-label={savedFavorite ? 'Remove from favorites' : 'Save as favorite'}
+                className="rounded-lg p-1.5 text-teal-700 hover:bg-teal-50 disabled:opacity-60 dark:text-teal-400 dark:hover:bg-teal-950/40"
+              >
+                <FavoriteHeart filled={Boolean(savedFavorite)} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditing(true)}
+                className="rounded-lg px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
+              >
+                Edit
+              </button>
+            </div>
           </div>
 
           {meal.ingredients.length > 0 && (
