@@ -221,7 +221,7 @@ export default function Layout() {
       </div>
 
       {!hidesTabBar && (
-        <nav className="fixed bottom-0 left-0 right-0 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom,0px)] dark:border-stone-800 dark:bg-stone-950">
+        <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom,0px)] dark:border-stone-800 dark:bg-stone-950">
           {/* Diary / Progress / Health — Insights tab is temporarily hidden */}
           <div className="mx-auto flex max-w-lg items-center">
             <NavLink to="/" end className={linkClass}>

@@ -98,3 +98,28 @@ export type WeightInput = {
   weightKg: number
   note?: string
 }
+
+/** A per-user saved meal. Logging it copies values onto a new meals row. */
+export interface FavoriteMeal {
+  id: string
+  name: string
+  photoUrl?: string
+  ingredients: string[]
+  totalCalories: number
+  proteinG: number
+  carbsG: number
+  fatG: number
+  note?: string
+  createdAt: number
+}
+
+export type FavoriteMealInput = {
+  name: string
+  photoUrl?: string
+  ingredients: string[]
+  totalCalories: number
+  proteinG: number
+  carbsG: number
+  fatG: number
+  note?: string
+}

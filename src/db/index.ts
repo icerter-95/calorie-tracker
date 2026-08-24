@@ -8,6 +8,8 @@ import { deleteAllUserMealPhotos, deleteMealPhoto } from '../lib/mealPhotos'
 import { clearDiaryCache } from '../lib/diaryCache'
 import { getCustomRange } from '../lib/dates'
 import type {
+  FavoriteMeal,
+  FavoriteMealInput,
   HealthSyncTokenInfo,
   MealInput,
   MealEntry,
@@ -16,9 +18,11 @@ import type {
   WeightInput,
 } from '../types'
 import {
+  mapFavoriteMealRow,
   mapMealRow,
   mapStepsRow,
   mapWeightRow,
+  type FavoriteMealRow,
   type MealRow,
   type StepsRow,
   type WeightRow,
@@ -254,6 +258,65 @@ export async function addWeight(entry: WeightInput) {
   if (error) throw error
 }
 
+// --- Favorites (saved meals; logging copies onto a new meals row) ---
+export async function fetchFavorites(): Promise<FavoriteMeal[]> {
+  const client = requireClient()
+  const { data, error } = await client
+    .from('favorite_meals')
+    .select('*')
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return (data as FavoriteMealRow[]).map(mapFavoriteMealRow)
+}
+
+export async function addFavorite(favorite: FavoriteMealInput): Promise<FavoriteMeal> {
+  const client = requireClient()
+  const userId = await requireUserId()
+
+  const { data, error } = await client
+    .from('favorite_meals')
+    .insert({
+      user_id: userId,
+      name: favorite.name,
+      photo_url: favorite.photoUrl ?? null,
+      ingredients: favorite.ingredients,
+      total_calories: favorite.totalCalories,
+      protein_g: favorite.proteinG,
+      carbs_g: favorite.carbsG,
+      fat_g: favorite.fatG,
+      note: favorite.note ?? null,
+    })
+    .select('*')
+    .single()
+
+  if (error) throw error
+  return mapFavoriteMealRow(data as FavoriteMealRow)
+}
+
+export async function deleteFavorite(id: string) {
+  const client = requireClient()
+
+  const { data: existing, error: fetchError } = await client
+    .from('favorite_meals')
+    .select('photo_url')
+    .eq('id', id)
+    .maybeSingle()
+  if (fetchError) throw fetchError
+
+  const { error } = await client.from('favorite_meals').delete().eq('id', id)
+  if (error) throw error
+
+  const photoUrl = (existing as { photo_url: string | null } | null)?.photo_url
+  if (photoUrl) {
+    try {
+      await deleteMealPhoto(photoUrl)
+    } catch {
+      // Row deleted; ignore storage cleanup failure
+    }
+  }
+}
+
 export async function updateWeight(id: string, entry: WeightInput) {
   const client = requireClient()
 
@@ -282,7 +345,7 @@ export async function updateMealIngredients(id: string, ingredients: string[]) {
   if (error) throw error
 }
 
-// Wipe this account's meals, weights, steps, and meal photos (Profile → Data).
+// Wipe this account's meals, favorites, weights, steps, and meal photos (Profile → Data).
 export async function clearAllUserData() {
   const client = requireClient()
   const userId = await requireUserId()
@@ -296,6 +359,9 @@ export async function clearAllUserData() {
 
   const { error: mealsError } = await client.from('meals').delete().eq('user_id', userId)
   if (mealsError) throw mealsError
+
+  const { error: favoritesError } = await client.from('favorite_meals').delete().eq('user_id', userId)
+  if (favoritesError) throw favoritesError
 
   const { error: weightsError } = await client.from('weights').delete().eq('user_id', userId)
   if (weightsError) throw weightsError
