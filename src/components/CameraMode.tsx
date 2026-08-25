@@ -1,6 +1,8 @@
 /**
- * Primary add-meal path: native camera (or camera roll), optional comment,
- * Estimate, then confirm totals before Save.
+ * Primary add-meal review path after a photo is chosen: preview, optional
+ * comment, Estimate, then confirm totals before Save. Retake / Camera roll
+ * still use the shared file inputs; the floating Camera button opens native
+ * capture directly without landing here first.
  */
 import { useEffect, useRef, useState } from 'react'
 import { useKeyboardInset, useLockBodyScroll } from '../hooks/useOverlay'

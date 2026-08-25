@@ -1,6 +1,10 @@
 /**
  * Diary add-meal orchestrator: floating Camera / Input buttons, native
  * camera vs library file inputs, voice, and favorites. Edit stays on MealForm.
+ *
+ * Floating Camera must open the device camera immediately (capture input via
+ * label). Do not mount CameraMode on that tap — that unmounts the label and
+ * leaves the user on the in-app “Open camera” screen instead.
  */
 import {
   forwardRef,
@@ -79,15 +83,18 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
       setSaveError(null)
     }
 
-    function prepareCamera(slot?: MealType) {
+    /** Reset meal/photo state without opening CameraMode (keeps the floating
+     * camera <label> mounted so htmlFor can open the native capture UI). */
+    function armCamera(slot?: MealType) {
       setMealType(slot ?? defaultMealTypeForNow())
       resetPhoto()
       setSaveError(null)
-      setFlow('camera')
     }
 
+    /** Empty meal-slot path: show CameraMode as fallback, then try capture. */
     function openCamera(slot?: MealType) {
-      prepareCamera(slot)
+      armCamera(slot)
+      setFlow('camera')
       cameraInputRef.current?.click()
     }
 
@@ -99,11 +106,12 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
       setFlow('input')
     }
 
-    async function handleFileChange(e: ChangeEvent<HTMLInputElement>, fromCamera: boolean) {
+    async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
       const file = e.target.files?.[0]
       e.target.value = ''
       if (!file) {
-        if (fromCamera) setFlow('camera')
+        // User dismissed the native picker — stay wherever we already are
+        // (idle after floating Camera, or CameraMode after Retake).
         return
       }
 
@@ -173,7 +181,7 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
     return createPortal(
       <>
         {flow === 'idle' && (
-          <AddMealButtons onCamera={() => prepareCamera()} onInput={openInput} />
+          <AddMealButtons onCamera={() => armCamera()} onInput={openInput} />
         )}
 
         <input
@@ -183,7 +191,7 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
           accept="image/*"
           capture="environment"
           className={hiddenFileInputClass}
-          onChange={(e) => void handleFileChange(e, true)}
+          onChange={(e) => void handleFileChange(e)}
         />
         <input
           id={ADD_MEAL_LIBRARY_INPUT_ID}
@@ -194,7 +202,7 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
           type="file"
           accept={LIBRARY_IMAGE_ACCEPT}
           className={hiddenFileInputClass}
-          onChange={(e) => void handleFileChange(e, false)}
+          onChange={(e) => void handleFileChange(e)}
         />
 
         {flow === 'camera' && (
