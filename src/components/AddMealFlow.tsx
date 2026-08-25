@@ -161,12 +161,16 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
       if (options?.asFavorite) {
         let photoUrl: string | undefined
         if (data.photoUrl) {
-          photoUrl = await copyMealPhoto(data.photoUrl)
+          try {
+            photoUrl = await copyMealPhoto(data.photoUrl)
+          } catch {
+            photoUrl = undefined
+          }
         }
         await addFavorite({
           name: data.description?.trim() || 'Meal',
           photoUrl,
-          ingredients: data.ingredients,
+          ingredients: data.ingredients ?? [],
           totalCalories: data.totalCalories,
           proteinG: data.proteinG,
           carbsG: data.carbsG,

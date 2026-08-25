@@ -57,8 +57,18 @@ export async function resolvePhotoUrl(photoUrl: string | undefined | null): Prom
 export async function copyMealPhoto(sourcePath: string): Promise<string> {
   if (isStoragePath(sourcePath)) {
     const client = requireClient()
+    const { data: userData, error: userError } = await client.auth.getUser()
+    if (userError) throw userError
+    if (!userData.user) throw new Error('You must be signed in.')
+
+    const destPath = `${userData.user.id}/${createId()}.jpg`
+    const { error: copyError } = await client.storage.from(BUCKET).copy(sourcePath, destPath)
+    if (!copyError) return destPath
+
+    // Fallback when server-side copy is unavailable: download + re-upload.
     const { data, error } = await client.storage.from(BUCKET).download(sourcePath)
     if (error) throw error
+    if (!data) throw new Error('Could not copy photo')
     return uploadMealPhoto(data)
   }
 

@@ -27,6 +27,16 @@ Personal meal and weight tracker with **cloud sync** (Supabase), email/password 
 
 The built-in confirmation mailer allows **2 emails per hour**. That is enough for personal use; add custom SMTP later if you need more.
 
+### Existing project? Run new migrations
+
+If you already set up Supabase before a feature shipped, run the matching file in **SQL Editor** (safe to re-run):
+
+| Feature | File |
+| --- | --- |
+| Favorites (heart on meals) | [`supabase/migrations/004_favorite_meals.sql`](./supabase/migrations/004_favorite_meals.sql) |
+
+Without `004`, tapping the heart shows an error and favorites stay empty.
+
 ## AI plate estimate (optional but recommended)
 
 Photos can be attached without AI. To enable **Estimate from photo**:

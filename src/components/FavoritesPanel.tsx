@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react'
 import { fetchFavorites } from '../db'
 import { useKeyboardInset, useLockBodyScroll } from '../hooks/useOverlay'
+import { errorMessage } from '../lib/errors'
 import { copyMealPhoto } from '../lib/mealPhotos'
 import { roundMacro } from '../lib/macros'
 import type { FavoriteMeal, MealInput, MealType } from '../types'
@@ -48,7 +49,7 @@ export default function FavoritesPanel({
       })
       .catch((err: unknown) => {
         if (!cancelled) {
-          setLoadError(err instanceof Error ? err.message : 'Could not load favorites')
+          setLoadError(errorMessage(err, 'Could not load favorites'))
           setFavorites([])
         }
       })
@@ -107,7 +108,7 @@ export default function FavoritesPanel({
         note: selected.note,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save meal')
+      setError(errorMessage(err, 'Could not save meal'))
     } finally {
       setSaving(false)
     }
