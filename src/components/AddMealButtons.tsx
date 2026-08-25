@@ -1,6 +1,10 @@
 /**
  * Viewport-fixed Camera + Input pair above the tab bar. Nudged right of
  * center so the cluster does not sit on meal-card Edit buttons.
+ *
+ * Camera is a <label htmlFor=capture-input> so the tap opens the native
+ * camera directly. onCamera only arms meal state — it must not open
+ * CameraMode or the label unmounts before capture can fire.
  */
 import { ADD_MEAL_CAMERA_INPUT_ID } from '../lib/addMealInputs'
 
