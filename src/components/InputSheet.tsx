@@ -1,5 +1,6 @@
 /**
- * Bottom sheet for the secondary add path: Voice, Favorites, Camera roll.
+ * Bottom sheet for the secondary add path: Voice and Camera roll.
+ * Favorites lives on the floating toggle under Camera.
  */
 import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import { useLockBodyScroll } from '../hooks/useOverlay'
@@ -7,13 +8,11 @@ import { ADD_MEAL_LIBRARY_INPUT_ID } from '../lib/addMealInputs'
 
 interface InputSheetProps {
   onVoice: () => void
-  onFavorites: () => void
   onCancel: () => void
 }
 
 export default function InputSheet({
   onVoice,
-  onFavorites,
   onCancel,
 }: InputSheetProps) {
   useLockBodyScroll()
@@ -76,12 +75,6 @@ export default function InputSheet({
             icon={<MicIcon />}
           />
           <SheetRow
-            title="Favorites"
-            subtitle="Log a saved meal"
-            onClick={onFavorites}
-            icon={<HeartIcon />}
-          />
-          <SheetRow
             title="Camera roll"
             subtitle="Choose an existing photo"
             htmlFor={ADD_MEAL_LIBRARY_INPUT_ID}
@@ -140,19 +133,6 @@ function MicIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
       <rect x="9" y="3.5" width="6" height="11" rx="3" stroke="currentColor" strokeWidth="1.75" />
       <path d="M6.5 11.5a5.5 5.5 0 0 0 11 0M12 17v3.5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function HeartIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path
-        d="M12 19.5s-6.5-4-6.5-8.75A3.9 3.9 0 0 1 12 8.1a3.9 3.9 0 0 1 6.5 2.65c0 4.75-6.5 8.75-6.5 8.75z"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinejoin="round"
-      />
     </svg>
   )
 }
