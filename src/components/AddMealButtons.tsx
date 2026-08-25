@@ -1,44 +1,80 @@
 /**
- * Viewport-fixed Camera + Input pair above the tab bar. Nudged right of
- * center so the cluster does not sit on meal-card Edit buttons.
+ * Viewport-fixed add controls above the tab bar, right-aligned.
+ *
+ * Layout: Input beside Camera; Favorites heart sits only under Camera
+ * and toggles the favorites panel open/closed.
  *
  * Camera is a <label htmlFor=capture-input> so the tap opens the native
  * camera directly. onCamera only arms meal state — it must not open
  * CameraMode or the label unmounts before capture can fire.
  */
 import { ADD_MEAL_CAMERA_INPUT_ID } from '../lib/addMealInputs'
+import { FavoriteHeart } from './FavoriteToggle'
 
 interface AddMealButtonsProps {
   onCamera: () => void
   onInput: () => void
+  onFavoritesToggle: () => void
+  /** When true, only the pressed Favorites control is shown (dismiss toggle). */
+  favoritesOpen?: boolean
 }
 
-export default function AddMealButtons({ onCamera, onInput }: AddMealButtonsProps) {
+export default function AddMealButtons({
+  onCamera,
+  onInput,
+  onFavoritesToggle,
+  favoritesOpen = false,
+}: AddMealButtonsProps) {
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 z-40"
+      className="pointer-events-none fixed inset-x-0 z-[60]"
       style={{ bottom: 'calc(4.25rem + env(safe-area-inset-bottom, 0px))' }}
     >
-      <div className="mx-auto flex w-full max-w-lg justify-center pl-14 pr-10">
-        <div className="pointer-events-auto flex items-end gap-4">
-          <label
-            htmlFor={ADD_MEAL_CAMERA_INPUT_ID}
-            onClick={onCamera}
-            aria-label="Camera"
-            className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-teal-700 text-white shadow-lg shadow-teal-900/25 ring-4 ring-white dark:ring-stone-950"
-          >
-            <CameraIcon />
-          </label>
-
+      <div className="mx-auto flex w-full max-w-lg justify-end px-4">
+        {favoritesOpen ? (
           <button
             type="button"
-            onClick={onInput}
-            aria-label="Input"
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-stone-700 shadow-md ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-200 dark:ring-stone-700"
+            onClick={onFavoritesToggle}
+            aria-pressed
+            aria-label="Close favorites"
+            className="pointer-events-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-700 text-white shadow-lg shadow-teal-900/25 ring-4 ring-white dark:ring-stone-950"
           >
-            <InputIcon />
+            <FavoriteHeart filled size={22} />
           </button>
-        </div>
+        ) : (
+          <div className="pointer-events-auto grid grid-cols-[auto_4rem] items-end gap-x-3 gap-y-3">
+            <button
+              type="button"
+              onClick={onInput}
+              aria-label="Input"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-stone-700 shadow-md ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-200 dark:ring-stone-700"
+            >
+              <InputIcon />
+            </button>
+
+            <label
+              htmlFor={ADD_MEAL_CAMERA_INPUT_ID}
+              onClick={onCamera}
+              aria-label="Camera"
+              className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-teal-700 text-white shadow-lg shadow-teal-900/25 ring-4 ring-white dark:ring-stone-950"
+            >
+              <CameraIcon />
+            </label>
+
+            {/* Empty cell so Favorites sits under Camera only (right column). */}
+            <span aria-hidden className="block" />
+
+            <button
+              type="button"
+              onClick={onFavoritesToggle}
+              aria-pressed={false}
+              aria-label="Favorites"
+              className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-teal-700 shadow-md ring-1 ring-stone-200 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700"
+            >
+              <FavoriteHeart filled={false} size={20} />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
