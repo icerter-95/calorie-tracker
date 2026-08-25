@@ -178,8 +178,17 @@ export default function CameraMode({
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         <div className="mx-auto w-full max-w-lg space-y-3">
           {preview ? (
-            <div className="overflow-hidden rounded-2xl ring-1 ring-stone-200 dark:ring-stone-700">
-              <img src={preview} alt="" className="max-h-64 w-full object-cover" />
+            <div className="space-y-2">
+              <div className="overflow-hidden rounded-2xl ring-1 ring-stone-200 dark:ring-stone-700">
+                <img src={preview} alt="" className="max-h-64 w-full object-cover" />
+              </div>
+              <div className="flex justify-end">
+                <FavoriteToggle
+                  pressed={asFavorite}
+                  onToggle={() => setAsFavorite((v) => !v)}
+                  disabled={busy}
+                />
+              </div>
             </div>
           ) : (
             <label
@@ -260,11 +269,6 @@ export default function CameraMode({
         style={{ paddingBottom: `calc(0.75rem + env(safe-area-inset-bottom, 0px) + ${keyboardInset}px)` }}
       >
         <div className="mx-auto flex w-full max-w-lg items-center gap-2">
-          <FavoriteToggle
-            pressed={asFavorite}
-            onToggle={() => setAsFavorite((v) => !v)}
-            disabled={busy}
-          />
           {estimated ? (
             <>
               <button

@@ -65,7 +65,6 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
     const [transcript, setTranscript] = useState('')
     const [listening, setListening] = useState(false)
     const [saveError, setSaveError] = useState<string | null>(null)
-    const [favoritesReviewing, setFavoritesReviewing] = useState(false)
 
     function resetPhoto() {
       setPhoto(null)
@@ -82,7 +81,6 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
       resetPhoto()
       setTranscript('')
       setSaveError(null)
-      setFavoritesReviewing(false)
     }
 
     /** Reset meal/photo state without opening CameraMode (keeps the floating
@@ -106,16 +104,6 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
       setMealType(defaultMealTypeForNow())
       setSaveError(null)
       setFlow('input')
-    }
-
-    function toggleFavorites() {
-      if (flow === 'favorites') {
-        closeAll()
-        return
-      }
-      setMealType(defaultMealTypeForNow())
-      setSaveError(null)
-      setFlow('favorites')
     }
 
     async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
@@ -192,13 +180,8 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
 
     return createPortal(
       <>
-        {(flow === 'idle' || (flow === 'favorites' && !favoritesReviewing)) && (
-          <AddMealButtons
-            onCamera={() => armCamera()}
-            onInput={openInput}
-            onFavoritesToggle={toggleFavorites}
-            favoritesOpen={flow === 'favorites'}
-          />
+        {flow === 'idle' && (
+          <AddMealButtons onCamera={() => armCamera()} onInput={openInput} />
         )}
 
         <input
@@ -238,6 +221,10 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
         {flow === 'input' && (
           <InputSheet
             onVoice={openVoice}
+            onFavorites={() => {
+              setMealType(defaultMealTypeForNow())
+              setFlow('favorites')
+            }}
             onCancel={closeAll}
           />
         )}
@@ -265,7 +252,6 @@ const AddMealFlow = forwardRef<AddMealFlowHandle, AddMealFlowProps>(
             onMealTypeChange={setMealType}
             onCancel={closeAll}
             onSave={handleSave}
-            onReviewingChange={setFavoritesReviewing}
           />
         )}
       </>,
