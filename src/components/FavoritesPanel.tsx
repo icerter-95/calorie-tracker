@@ -17,8 +17,6 @@ interface FavoritesPanelProps {
   onMealTypeChange: (slot: MealType) => void
   onCancel: () => void
   onSave: (data: MealInput) => Promise<void>
-  /** True while a favorite is open for review (hides the floating dismiss heart). */
-  onReviewingChange?: (reviewing: boolean) => void
 }
 
 export default function FavoritesPanel({
@@ -27,7 +25,6 @@ export default function FavoritesPanel({
   onMealTypeChange,
   onCancel,
   onSave,
-  onReviewingChange,
 }: FavoritesPanelProps) {
   useLockBodyScroll()
   const keyboardInset = useKeyboardInset()
@@ -42,11 +39,6 @@ export default function FavoritesPanel({
   const [ingredients, setIngredients] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    onReviewingChange?.(Boolean(selected))
-    return () => onReviewingChange?.(false)
-  }, [selected, onReviewingChange])
 
   useEffect(() => {
     let cancelled = false
@@ -148,14 +140,7 @@ export default function FavoritesPanel({
         </button>
       </header>
 
-      <div
-        className="min-h-0 flex-1 overflow-y-auto px-4 py-4"
-        style={
-          selected
-            ? undefined
-            : { paddingBottom: 'calc(5.5rem + env(safe-area-inset-bottom, 0px))' }
-        }
-      >
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
         <div className="mx-auto w-full max-w-lg space-y-3">
           {selected ? (
             <>
