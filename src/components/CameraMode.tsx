@@ -91,7 +91,8 @@ export default function CameraMode({
 
   const busy = pickingPhoto || estimating || saving
   const canEstimate = Boolean(photo) && !busy
-  const canSave = estimated && !busy
+  const showReview = estimated || Boolean(processError)
+  const canSave = showReview && !busy
 
   async function handleEstimate() {
     if (!photo) return
@@ -111,6 +112,7 @@ export default function CameraMode({
       setEstimated(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not estimate meal')
+      setEstimated(true)
     } finally {
       setEstimating(false)
     }
@@ -241,7 +243,7 @@ export default function CameraMode({
             />
           </label>
 
-          {estimated && (
+          {showReview && (
             <MealEstimateReview
               description={description}
               onDescriptionChange={setDescription}
@@ -269,7 +271,7 @@ export default function CameraMode({
         style={{ paddingBottom: `calc(0.75rem + env(safe-area-inset-bottom, 0px) + ${keyboardInset}px)` }}
       >
         <div className="mx-auto flex w-full max-w-lg items-center gap-2">
-          {estimated ? (
+          {showReview ? (
             <>
               <button
                 type="button"

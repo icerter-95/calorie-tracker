@@ -74,6 +74,7 @@ export default function VoicePanel({
       setEstimated(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not estimate meal')
+      setEstimated(true)
     } finally {
       setEstimating(false)
     }
