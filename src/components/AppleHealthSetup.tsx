@@ -11,6 +11,7 @@ import {
   rotateHealthSyncToken,
 } from '../db'
 import type { HealthSyncTokenInfo } from '../types'
+import Button from './ui/Button'
 
 function formatSyncTime(ts?: number) {
   if (!ts) return null
@@ -122,18 +123,16 @@ export default function AppleHealthSetup() {
             </p>
           )}
         </div>
-        <button
-          type="button"
+        <Button
+          variant={connected ? 'secondary' : 'primary'}
           disabled={busy}
+          busy={busy}
+          busyLabel="…"
           onClick={() => void (connected ? handleDisconnect() : handleGenerate())}
-          className={`shrink-0 rounded-xl px-3 py-2 text-sm font-medium transition-colors disabled:opacity-60 ${
-            connected
-              ? 'bg-stone-100 text-stone-700 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700'
-              : 'bg-teal-700 text-white hover:bg-teal-800'
-          }`}
+          className="shrink-0"
         >
-          {busy ? '…' : connected ? 'Disconnect' : 'Connect'}
-        </button>
+          {connected ? 'Disconnect' : 'Connect'}
+        </Button>
       </div>
 
       {connected && (

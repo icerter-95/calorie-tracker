@@ -7,7 +7,7 @@ import CalorieChart from '../components/CalorieChart'
 import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
 import PeriodStats from '../components/PeriodStats'
-import { addMeal, deleteMeal, updateMeal } from '../db'
+import { addMeal } from '../db'
 import { useAllMeals, useAllSteps, useAllWeights } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import {
@@ -40,7 +40,6 @@ export default function HistoryPage() {
   const [customEnd, setCustomEnd] = useState(initialCustom.end)
   const [showWeight, setShowWeight] = useState(true)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
   const [adding, setAdding] = useState(false)
   const [defaultMealType, setDefaultMealType] = useState<MealType>(defaultMealTypeForNow)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -64,17 +63,14 @@ export default function HistoryPage() {
   useEffect(() => {
     setSelectedDate(null)
     setAdding(false)
-    setEditingMeal(null)
   }, [range, customStart, customEnd])
 
   useEffect(() => {
     setAdding(false)
-    setEditingMeal(null)
   }, [selectedDate])
 
   function closeForm() {
     setAdding(false)
-    setEditingMeal(null)
   }
 
   const summaries = useMemo(
@@ -148,14 +144,11 @@ export default function HistoryPage() {
 
   const chartHeight = dateKeys.length > 20 ? 320 : 280
 
+  // Editing and deleting live on the meal detail page, reached by tapping a card.
   async function handleSave(data: MealInput) {
     setActionError(null)
     try {
-      if (editingMeal) {
-        await updateMeal(editingMeal.id, data)
-      } else {
-        await addMeal(data)
-      }
+      await addMeal(data)
       closeForm()
       reloadMeals()
     } catch (err) {
@@ -164,26 +157,8 @@ export default function HistoryPage() {
   }
 
   function startAdd(slot?: MealType) {
-    setEditingMeal(null)
     setDefaultMealType(slot ?? defaultMealTypeForNow())
     setAdding(true)
-  }
-
-  function startEdit(meal: MealEntry) {
-    setAdding(false)
-    setEditingMeal(meal)
-    setDefaultMealType(meal.mealType)
-  }
-
-  async function handleDelete(id: string) {
-    setActionError(null)
-    try {
-      if (editingMeal?.id === id) closeForm()
-      await deleteMeal(id)
-      reloadMeals()
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not delete meal')
-    }
   }
 
   return (
@@ -280,22 +255,13 @@ export default function HistoryPage() {
             </span>
           </div>
 
-          {adding ? (
-            <MealForm
-              defaultDate={selectedDate}
-              defaultMealType={defaultMealType}
-              onSave={handleSave}
-              onCancel={closeForm}
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => startAdd()}
-              className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
-            >
-              + Add meal
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => startAdd()}
+            className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
+          >
+            + Add meal
+          </button>
 
           {meals === undefined ? (
             <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
@@ -313,13 +279,7 @@ export default function HistoryPage() {
                     {MEAL_TYPE_LABELS[slot]}
                   </h3>
                   {slotMeals.map((meal) => (
-                    <MealCard
-                      key={meal.id}
-                      meal={meal}
-                      hideMealType
-                      from="/progress"
-                      onEdit={() => startEdit(meal)}
-                    />
+                    <MealCard key={meal.id} meal={meal} hideMealType from="/progress" />
                   ))}
                 </div>
               )
@@ -328,12 +288,12 @@ export default function HistoryPage() {
         </section>
       )}
 
-      {editingMeal && (
+      {adding && selectedDate && (
         <MealForm
-          initial={editingMeal}
+          defaultDate={selectedDate}
+          defaultMealType={defaultMealType}
           onSave={handleSave}
           onCancel={closeForm}
-          onDelete={() => handleDelete(editingMeal.id)}
         />
       )}
     </div>

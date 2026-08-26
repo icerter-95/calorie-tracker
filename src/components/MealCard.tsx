@@ -1,6 +1,6 @@
 /**
- * Compact meal row used in Diary and Progress. Tap opens Meal Detail; Edit
- * stays on the list and opens the edit curtain.
+ * Compact meal row used in Diary and Progress. The whole row opens Meal Detail,
+ * where Edit lives — a browse row carries no second action of its own.
  */
 import { useNavigate } from 'react-router-dom'
 import type { MealEntry } from '../types'
@@ -10,14 +10,13 @@ import MealPhoto from './MealPhoto'
 
 interface MealCardProps {
   meal: MealEntry
-  onEdit: () => void
   /** When true, omit the meal-type label (parent already groups by slot). */
   hideMealType?: boolean
   /** Path to return to from the meal detail page. */
   from?: string
 }
 
-export default function MealCard({ meal, onEdit, hideMealType, from = '/' }: MealCardProps) {
+export default function MealCard({ meal, hideMealType, from = '/' }: MealCardProps) {
   const navigate = useNavigate()
   const hasMacros = meal.proteinG > 0 || meal.carbsG > 0 || meal.fatG > 0
 
@@ -67,16 +66,9 @@ export default function MealCard({ meal, onEdit, hideMealType, from = '/' }: Mea
               {meal.description || 'Meal'}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation()
-              onEdit()
-            }}
-            className="shrink-0 rounded-lg px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
-          >
-            Edit
-          </button>
+          <span aria-hidden className="shrink-0 text-stone-400 dark:text-stone-500">
+            ›
+          </span>
         </div>
         <p className="mt-0.5 text-sm font-semibold text-stone-900 dark:text-stone-50">
           {meal.totalCalories} kcal

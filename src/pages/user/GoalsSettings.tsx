@@ -1,12 +1,19 @@
 /**
  * Goals settings. Daily calorie band (lower / upper) and protein / carbs / fat
- * targets. These drive diary dots and the day-summary bars.
+ * targets. These drive diary dots and the day-summary bars. The page stays a
+ * read-only summary; Edit opens the composer sheet.
  */
-import { useState } from 'react'
+import { useId, useState } from 'react'
+import Button from '../../components/ui/Button'
+import ActionBar from '../../components/ui/ActionBar'
+import Field, { fieldInputClass } from '../../components/ui/Field'
+import Sheet from '../../components/ui/Sheet'
 import { useSettings } from '../../hooks/useSettings'
 
 export default function GoalsSettings() {
   const { settings, updateGoals } = useSettings()
+  const formId = useId()
+  const [editing, setEditing] = useState(false)
   const [calorieLowerDraft, setCalorieLowerDraft] = useState(String(settings.calorieGoalLower))
   const [calorieUpperDraft, setCalorieUpperDraft] = useState(String(settings.calorieGoalUpper))
   const [proteinDraft, setProteinDraft] = useState(String(settings.proteinGoal))
@@ -14,29 +21,20 @@ export default function GoalsSettings() {
   const [fatDraft, setFatDraft] = useState(String(settings.fatGoal))
   const [goalSaved, setGoalSaved] = useState(false)
   const [goalError, setGoalError] = useState<string | null>(null)
-  const [editingGoals, setEditingGoals] = useState(false)
 
-  function resetGoalDrafts() {
+  function startEdit() {
     setCalorieLowerDraft(String(settings.calorieGoalLower))
     setCalorieUpperDraft(String(settings.calorieGoalUpper))
     setProteinDraft(String(settings.proteinGoal))
     setCarbsDraft(String(settings.carbsGoal))
     setFatDraft(String(settings.fatGoal))
     setGoalError(null)
-  }
-
-  function startEditGoals() {
-    resetGoalDrafts()
-    setEditingGoals(true)
-  }
-
-  function cancelEditGoals() {
-    resetGoalDrafts()
-    setEditingGoals(false)
+    setEditing(true)
   }
 
   // Validate ranges, swap lower/upper if needed, then persist locally.
-  function handleGoalsSave() {
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
     const lower = Math.round(Number(calorieLowerDraft))
     const upper = Math.round(Number(calorieUpperDraft))
     const protein = Math.round(Number(proteinDraft))
@@ -62,22 +60,15 @@ export default function GoalsSettings() {
       return
     }
 
-    const calorieLower = Math.min(lower, upper)
-    const calorieUpper = Math.max(lower, upper)
     updateGoals({
-      calorieGoalLower: calorieLower,
-      calorieGoalUpper: calorieUpper,
+      calorieGoalLower: Math.min(lower, upper),
+      calorieGoalUpper: Math.max(lower, upper),
       proteinGoal: protein,
       carbsGoal: carbs,
       fatGoal: fat,
     })
-    setCalorieLowerDraft(String(calorieLower))
-    setCalorieUpperDraft(String(calorieUpper))
-    setProteinDraft(String(protein))
-    setCarbsDraft(String(carbs))
-    setFatDraft(String(fat))
     setGoalError(null)
-    setEditingGoals(false)
+    setEditing(false)
     setGoalSaved(true)
     window.setTimeout(() => setGoalSaved(false), 1500)
   }
@@ -91,27 +82,54 @@ export default function GoalsSettings() {
             {goalSaved && (
               <span className="text-xs font-medium text-teal-700 dark:text-teal-400">Saved</span>
             )}
-            {!editingGoals && (
-              <button
-                type="button"
-                onClick={startEditGoals}
-                className="rounded-lg px-2 py-0.5 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
-              >
-                Edit
-              </button>
-            )}
+            <Button variant="secondary" size="sm" onClick={startEdit}>
+              Edit
+            </Button>
           </div>
         </div>
 
-        {editingGoals ? (
-          <>
-            {/* Edit: calorie band + macros */}
-            <div className="grid grid-cols-2 gap-2">
-              <label className="block text-sm">
-                <span className="mb-0.5 block text-xs text-stone-600 dark:text-stone-300">
-                  Lower goal
-                </span>
-                <div className="flex items-center gap-1.5">
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <ReadOnlyStat label="Lower goal" value={settings.calorieGoalLower.toLocaleString()} unit="kcal" />
+          <ReadOnlyStat label="Higher limit" value={settings.calorieGoalUpper.toLocaleString()} unit="kcal" />
+        </div>
+
+        <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+          Limits set diary dot colors
+        </p>
+
+        <div className="border-t border-stone-200 pt-2 dark:border-stone-700">
+          <p className="mb-1.5 text-sm font-medium text-stone-800 dark:text-stone-100">Macros</p>
+          <div className="grid grid-cols-3 gap-2 text-sm">
+            <ReadOnlyStat label="Protein" value={String(settings.proteinGoal)} unit="g" />
+            <ReadOnlyStat label="Carbs" value={String(settings.carbsGoal)} unit="g" />
+            <ReadOnlyStat label="Fat" value={String(settings.fatGoal)} unit="g" />
+          </div>
+        </div>
+      </div>
+
+      {editing && (
+        <Sheet
+          ariaLabel="Edit goals"
+          title="Edit goals"
+          onClose={() => setEditing(false)}
+          footer={
+            <ActionBar
+              primary={
+                <Button type="submit" form={formId}>
+                  Save
+                </Button>
+              }
+            />
+          }
+        >
+          <form
+            id={formId}
+            onSubmit={handleSubmit}
+            className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+          >
+            <div className="space-y-4 p-4">
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Lower goal" hint="kcal">
                   <input
                     type="number"
                     min={800}
@@ -120,21 +138,10 @@ export default function GoalsSettings() {
                     autoFocus
                     value={calorieLowerDraft}
                     onChange={(e) => setCalorieLowerDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleGoalsSave()
-                      if (e.key === 'Escape') cancelEditGoals()
-                    }}
-                    className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                    className={fieldInputClass}
                   />
-                  <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">kcal</span>
-                </div>
-              </label>
-
-              <label className="block text-sm">
-                <span className="mb-0.5 block text-xs text-stone-600 dark:text-stone-300">
-                  Higher limit
-                </span>
-                <div className="flex items-center gap-1.5">
+                </Field>
+                <Field label="Higher limit" hint="kcal">
                   <input
                     type="number"
                     min={800}
@@ -142,162 +149,67 @@ export default function GoalsSettings() {
                     step={50}
                     value={calorieUpperDraft}
                     onChange={(e) => setCalorieUpperDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleGoalsSave()
-                      if (e.key === 'Escape') cancelEditGoals()
-                    }}
-                    className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                    className={fieldInputClass}
                   />
-                  <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">kcal</span>
-                </div>
-              </label>
-            </div>
-
-            <p className="truncate text-xs text-stone-500 dark:text-stone-400">
-              Limits set diary dot colors
-            </p>
-
-            <div className="border-t border-stone-200 pt-2 dark:border-stone-700">
-              <p className="mb-1.5 text-sm font-medium text-stone-800 dark:text-stone-100">Macros</p>
-              <div className="grid grid-cols-3 gap-2">
-                <label className="block text-sm">
-                  <span className="mb-0.5 block text-xs text-stone-600 dark:text-stone-300">
-                    Protein
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      min={1}
-                      max={1000}
-                      step={5}
-                      value={proteinDraft}
-                      onChange={(e) => setProteinDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleGoalsSave()
-                        if (e.key === 'Escape') cancelEditGoals()
-                      }}
-                      className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-                    />
-                    <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">g</span>
-                  </div>
-                </label>
-                <label className="block text-sm">
-                  <span className="mb-0.5 block text-xs text-stone-600 dark:text-stone-300">
-                    Carbs
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      min={1}
-                      max={1000}
-                      step={5}
-                      value={carbsDraft}
-                      onChange={(e) => setCarbsDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleGoalsSave()
-                        if (e.key === 'Escape') cancelEditGoals()
-                      }}
-                      className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-                    />
-                    <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">g</span>
-                  </div>
-                </label>
-                <label className="block text-sm">
-                  <span className="mb-0.5 block text-xs text-stone-600 dark:text-stone-300">Fat</span>
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="number"
-                      min={1}
-                      max={1000}
-                      step={5}
-                      value={fatDraft}
-                      onChange={(e) => setFatDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') handleGoalsSave()
-                        if (e.key === 'Escape') cancelEditGoals()
-                      }}
-                      className="w-full rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-                    />
-                    <span className="shrink-0 text-xs text-stone-500 dark:text-stone-400">g</span>
-                  </div>
-                </label>
+                </Field>
               </div>
-            </div>
 
-            {goalError && (
-              <p className="text-xs text-red-600 dark:text-red-400">{goalError}</p>
-            )}
+              <p className="text-xs text-stone-500 dark:text-stone-400">
+                Limits set diary dot colors
+              </p>
 
-            <div className="flex justify-end gap-1.5 border-t border-stone-200 pt-2 dark:border-stone-700">
-              <button
-                type="button"
-                onClick={cancelEditGoals}
-                className="rounded-lg px-2.5 py-1.5 text-sm font-medium text-stone-500 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleGoalsSave}
-                className="rounded-lg bg-teal-700 px-2.5 py-1.5 text-sm font-medium text-white hover:bg-teal-800"
-              >
-                Save
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* Read-only summary until Edit is tapped */}
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <p className="text-xs text-stone-600 dark:text-stone-300">Lower goal</p>
-                <p className="font-medium text-stone-900 dark:text-stone-50">
-                  {settings.calorieGoalLower.toLocaleString()}{' '}
-                  <span className="font-normal text-stone-500 dark:text-stone-400">kcal</span>
-                </p>
+              <div className="grid grid-cols-3 gap-2 border-t border-stone-200 pt-3 dark:border-stone-700">
+                <Field label="Protein" hint="g">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    step={5}
+                    value={proteinDraft}
+                    onChange={(e) => setProteinDraft(e.target.value)}
+                    className={`${fieldInputClass} px-2`}
+                  />
+                </Field>
+                <Field label="Carbs" hint="g">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    step={5}
+                    value={carbsDraft}
+                    onChange={(e) => setCarbsDraft(e.target.value)}
+                    className={`${fieldInputClass} px-2`}
+                  />
+                </Field>
+                <Field label="Fat" hint="g">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    step={5}
+                    value={fatDraft}
+                    onChange={(e) => setFatDraft(e.target.value)}
+                    className={`${fieldInputClass} px-2`}
+                  />
+                </Field>
               </div>
-              <div>
-                <p className="text-xs text-stone-600 dark:text-stone-300">Higher limit</p>
-                <p className="font-medium text-stone-900 dark:text-stone-50">
-                  {settings.calorieGoalUpper.toLocaleString()}{' '}
-                  <span className="font-normal text-stone-500 dark:text-stone-400">kcal</span>
-                </p>
-              </div>
-            </div>
 
-            <p className="truncate text-xs text-stone-500 dark:text-stone-400">
-              Limits set diary dot colors
-            </p>
-
-            <div className="border-t border-stone-200 pt-2 dark:border-stone-700">
-              <p className="mb-1.5 text-sm font-medium text-stone-800 dark:text-stone-100">Macros</p>
-              <div className="grid grid-cols-3 gap-2 text-sm">
-                <div>
-                  <p className="text-xs text-stone-600 dark:text-stone-300">Protein</p>
-                  <p className="font-medium text-stone-900 dark:text-stone-50">
-                    {settings.proteinGoal}{' '}
-                    <span className="font-normal text-stone-500 dark:text-stone-400">g</span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-stone-600 dark:text-stone-300">Carbs</p>
-                  <p className="font-medium text-stone-900 dark:text-stone-50">
-                    {settings.carbsGoal}{' '}
-                    <span className="font-normal text-stone-500 dark:text-stone-400">g</span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-stone-600 dark:text-stone-300">Fat</p>
-                  <p className="font-medium text-stone-900 dark:text-stone-50">
-                    {settings.fatGoal}{' '}
-                    <span className="font-normal text-stone-500 dark:text-stone-400">g</span>
-                  </p>
-                </div>
-              </div>
+              {goalError && <p className="text-sm text-red-600 dark:text-red-400">{goalError}</p>}
             </div>
-          </>
-        )}
-      </div>
+          </form>
+        </Sheet>
+      )}
+    </div>
+  )
+}
+
+function ReadOnlyStat({ label, value, unit }: { label: string; value: string; unit: string }) {
+  return (
+    <div>
+      <p className="text-xs text-stone-600 dark:text-stone-300">{label}</p>
+      <p className="font-medium text-stone-900 dark:text-stone-50">
+        {value} <span className="font-normal text-stone-500 dark:text-stone-400">{unit}</span>
+      </p>
     </div>
   )
 }

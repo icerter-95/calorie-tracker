@@ -1,34 +1,45 @@
 /**
- * Scrollable curtain from the bottom. Covers most of the viewport so the
- * page behind stays visible; drag the handle, tap the dimmed area, or
- * press Escape to close.
+ * Composer sheet: a curtain from the bottom for anything that edits data.
+ * `tall` fills most of the viewport and scrolls with a pinned footer; `auto`
+ * hugs its content and is used for short menus.
+ *
+ * Dismiss is chrome-only — drag the handle, tap the dimmer, or press Escape.
+ * Screens should not add their own Cancel button.
  */
 import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { useKeyboardInset, useLockBodyScroll } from '../hooks/useOverlay'
+import { useKeyboardInset, useLockBodyScroll } from '../../hooks/useOverlay'
+import { ActionBarInsetProvider } from './ActionBar'
 
-const HEIGHT_DVH = 85
+const TALL_DVH = 85
+const DRAG_DISMISS_PX = 80
 
-interface BottomSheetProps {
+interface SheetProps {
   ariaLabel: string
   title?: string
   onClose: () => void
   closeDisabled?: boolean
+  /** Pinned under the body. Pass an ActionBar. */
+  footer?: ReactNode
+  size?: 'tall' | 'auto'
   children: ReactNode
 }
 
-export default function BottomSheet({
+export default function Sheet({
   ariaLabel,
   title,
   onClose,
   closeDisabled,
+  footer,
+  size = 'tall',
   children,
-}: BottomSheetProps) {
+}: SheetProps) {
   useLockBodyScroll()
   const keyboardInset = useKeyboardInset()
   const [entered, setEntered] = useState(false)
   const [dragY, setDragY] = useState(0)
   const startY = useRef<number | null>(null)
+  const isTall = size === 'tall'
 
   useEffect(() => {
     const id = requestAnimationFrame(() => setEntered(true))
@@ -53,10 +64,25 @@ export default function BottomSheet({
   }
 
   function onTouchEnd() {
-    if (dragY > 80 && !closeDisabled) onClose()
+    if (dragY > DRAG_DISMISS_PX && !closeDisabled) onClose()
     else setDragY(0)
     startY.current = null
   }
+
+  const dragHandlers = { onTouchStart, onTouchMove, onTouchEnd }
+
+  const grabber = (
+    <div className="flex shrink-0 flex-col">
+      <div className="flex justify-center pt-2">
+        <span className="h-1 w-10 rounded-full bg-stone-300 dark:bg-stone-600" />
+      </div>
+      {title && (
+        <h2 className="px-4 pb-1 pt-2 text-base font-semibold text-stone-900 dark:text-stone-50">
+          {title}
+        </h2>
+      )}
+    </div>
+  )
 
   const sheet = (
     <div className="fixed inset-0 z-50">
@@ -73,31 +99,30 @@ export default function BottomSheet({
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
+        {...(isTall ? {} : dragHandlers)}
         className={`absolute inset-x-0 mx-auto flex w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-xl dark:bg-stone-900 ${
           dragY === 0 ? 'transition-transform duration-200' : ''
         }`}
         style={{
-          height: `min(${HEIGHT_DVH}dvh, calc(100dvh - ${keyboardInset}px))`,
+          height: isTall ? `min(${TALL_DVH}dvh, calc(100dvh - ${keyboardInset}px))` : undefined,
           bottom: keyboardInset,
+          paddingBottom: !isTall && !footer ? 'env(safe-area-inset-bottom, 0px)' : undefined,
           transform: entered ? `translateY(${dragY}px)` : 'translateY(100%)',
         }}
       >
-        <div
-          className="flex shrink-0 touch-none flex-col"
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
-          <div className="flex justify-center pt-2">
-            <span className="h-1 w-10 rounded-full bg-stone-300 dark:bg-stone-600" />
+        {isTall ? (
+          <div className="touch-none" {...dragHandlers}>
+            {grabber}
           </div>
-          {title && (
-            <h2 className="px-4 pb-1 pt-2 text-base font-semibold text-stone-900 dark:text-stone-50">
-              {title}
-            </h2>
-          )}
-        </div>
-        <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+        ) : (
+          grabber
+        )}
+
+        {/* The sheet rides above the keyboard, so the footer needs no inset. */}
+        <ActionBarInsetProvider inset={0}>
+          <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+          {footer}
+        </ActionBarInsetProvider>
       </div>
     </div>
   )

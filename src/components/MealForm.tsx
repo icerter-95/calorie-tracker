@@ -1,18 +1,21 @@
 /**
- * Add / edit meal form. Create flow: Photo (AI estimate) or Manual. Edit
- * opens as a bottom curtain over the page. Saves description, plate totals,
- * ingredient tags, and an optional photo.
+ * Add / edit meal. Always a composer sheet: fields scroll, Save lives in the
+ * ActionBar, and dismissing is the sheet's job (drag, dimmer, Escape).
+ * Create offers Photo (AI estimate) or Manual; edit opens with the meal filled in.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { compressImage } from '../lib/compressImage'
 import { estimatePlateFromPhoto, suggestIngredientsFromText } from '../lib/estimateMeal'
 import { mealTextForTagSuggestion, normalizeIngredientTags } from '../lib/ingredients'
 import { roundMacro } from '../lib/macros'
 import { resolvePhotoUrl, uploadMealPhoto } from '../lib/mealPhotos'
 import type { MealEntry, MealInput, MealType } from '../types'
-import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
-import BottomSheet from './BottomSheet'
 import IngredientChips from './IngredientChips'
+import MealSlotPicker from './MealSlotPicker'
+import ActionBar from './ui/ActionBar'
+import Button from './ui/Button'
+import Field, { fieldInputClass } from './ui/Field'
+import Sheet from './ui/Sheet'
 
 interface MealFormProps {
   initial?: MealEntry
@@ -35,6 +38,7 @@ export default function MealForm({
   onDelete,
 }: MealFormProps) {
   const isEdit = Boolean(initial)
+  const formId = useId()
   const photoInputRef = useRef<HTMLInputElement>(null)
   const previewObjectUrl = useRef<string | null>(null)
 
@@ -133,6 +137,7 @@ export default function MealForm({
 
   const busy = saving || estimating || pickingPhoto || suggestingTags
   const hasPhoto = Boolean(pendingPhoto || storedPhotoPath)
+  const showFields = isEdit || createMethod === 'manual' || hasPhoto || estimating
 
   function openPhotoPicker() {
     photoInputRef.current?.click()
@@ -283,99 +288,20 @@ export default function MealForm({
     }
   }
 
-  const photoInput = (
-    <input
-      ref={photoInputRef}
-      type="file"
-      accept="image/*"
-      className="hidden"
-      onChange={handlePhotoPick}
-    />
-  )
-
   const photoStatus = (pickingPhoto || estimating) && (
     <span className="text-xs text-teal-700 dark:text-teal-400">
       {pickingPhoto ? 'Processing…' : 'Estimating…'}
     </span>
   )
 
-  // Shared bits used by both create and edit layouts.
-  const slotPicker = (
-    <div className="grid grid-cols-4 gap-1" role="group" aria-label="Meal slot">
-      {MEAL_TYPE_ORDER.map((slot) => {
-        const selected = mealType === slot
-        return (
-          <button
-            key={slot}
-            type="button"
-            disabled={busy}
-            onClick={() => setMealType(slot)}
-            className={`rounded-lg px-1 py-1.5 text-center text-xs font-medium transition-colors disabled:opacity-60 ${
-              selected
-                ? 'bg-teal-700 text-white'
-                : 'bg-stone-100 text-stone-400 hover:text-stone-600 dark:bg-stone-800 dark:text-stone-500 dark:hover:text-stone-300'
-            }`}
-          >
-            {MEAL_TYPE_LABELS[slot]}
-          </button>
-        )
-      })}
-    </div>
-  )
-
-  function detailsFields() {
-    return (
-      <>
-        <label className="block text-sm">
-          <span className="mb-1 block text-stone-600 dark:text-stone-300">Description</span>
-          <input
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g. Chicken rice bowl"
-            aria-label="Description"
-            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-          />
-        </label>
-
-        <div className="grid grid-cols-4 gap-1.5">
-          <NumberField label="kcal" value={plateCalories} onChange={setPlateCalories} />
-          <NumberField label="Protein" value={plateProtein} onChange={setPlateProtein} step />
-          <NumberField label="Carbs" value={plateCarbs} onChange={setPlateCarbs} step />
-          <NumberField label="Fat" value={plateFat} onChange={setPlateFat} step />
-        </div>
-
-        <IngredientChips
-          value={ingredients}
-          onChange={setIngredients}
-          onSuggest={handleSuggestTags}
-          suggesting={suggestingTags}
-          disabled={busy}
-        />
-
-        <label className="block text-sm">
-          <span className="mb-1 block text-stone-600 dark:text-stone-300">Note</span>
-          <input
-            type="text"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Optional"
-            aria-label="Note"
-            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-          />
-        </label>
-      </>
-    )
-  }
-
   const methodPicker = (
     <div className="grid grid-cols-2 gap-1" role="group" aria-label="Entry method">
       {(
         [
-          { id: 'photo' as const, label: 'Photo', icon: '📷' },
-          { id: 'manual' as const, label: 'Manual', icon: '✏️' },
+          { id: 'photo' as const, label: 'Photo' },
+          { id: 'manual' as const, label: 'Manual' },
         ] as const
-      ).map(({ id, label, icon }) => {
+      ).map(({ id, label }) => {
         const selected = createMethod === id
         return (
           <button
@@ -389,7 +315,6 @@ export default function MealForm({
                 : 'bg-stone-100 text-stone-400 hover:text-stone-600 dark:bg-stone-800 dark:text-stone-500 dark:hover:text-stone-300'
             }`}
           >
-            <span aria-hidden>{icon}</span>
             {label}
           </button>
         )
@@ -397,184 +322,144 @@ export default function MealForm({
     </div>
   )
 
-  const actionFooter = (
-    <div className="flex items-center justify-between gap-2 border-t border-stone-100 pt-3 dark:border-stone-800">
-      {onDelete ? (
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            if (!window.confirm('Delete this entry?')) return
-            void onDelete()
-          }}
-          className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-950/40"
-        >
-          Delete
-        </button>
+  const photoControls = isEdit ? (
+    <div className="flex items-center justify-between gap-2">
+      {!retaking ? (
+        <Button variant="ghost" size="sm" disabled={busy} onClick={startRetake}>
+          {hasPhoto ? 'Retake' : 'Add photo'}
+        </Button>
       ) : (
-        <span />
+        <Button variant="ghost" size="sm" onClick={cancelRetake}>
+          Keep photo
+        </Button>
       )}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={onCancel}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 disabled:opacity-60 dark:text-stone-300 dark:hover:bg-stone-800"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          disabled={busy}
-          className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
-        >
-          {saving ? 'Saving…' : 'Save'}
-        </button>
-      </div>
+      {photoStatus}
+    </div>
+  ) : (
+    <div className="flex items-center justify-between gap-2">
+      {methodPicker}
+      {photoStatus}
     </div>
   )
 
-  // ——— Create form ———
-  if (!isEdit) {
-    return (
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
-      >
-        <h2 className="text-base font-semibold text-stone-900 dark:text-stone-50">Add entry</h2>
+  const footer = (
+    <ActionBar
+      destructive={
+        onDelete ? (
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={busy}
+            onClick={() => {
+              if (!window.confirm('Delete this entry?')) return
+              void onDelete()
+            }}
+          >
+            Delete
+          </Button>
+        ) : undefined
+      }
+      primary={
+        <Button
+          type="submit"
+          form={formId}
+          disabled={busy || !showFields}
+          busy={saving}
+          busyLabel="Saving…"
+        >
+          Save
+        </Button>
+      }
+    />
+  )
 
-        {slotPicker}
-        {methodPicker}
-
-        {createMethod === 'photo' && (
-          <div className="space-y-3">
-            {photoPreview && (
-              <div className="overflow-hidden rounded-xl ring-1 ring-stone-200 dark:ring-stone-700">
-                <img src={photoPreview} alt="" className="max-h-44 w-full object-cover" />
-              </div>
-            )}
-            {photoStatus}
-            {pendingPhoto && formError && !estimating && !pickingPhoto && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void runEstimate(pendingPhoto)}
-                className="text-xs font-medium text-teal-700 hover:text-teal-800 disabled:opacity-60 dark:text-teal-400"
-              >
-                Retry estimate
-              </button>
-            )}
-            {(hasPhoto || estimating) && detailsFields()}
-          </div>
-        )}
-
-        {createMethod === 'manual' && <div className="space-y-3">{detailsFields()}</div>}
-
-        {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
-
-        {createMethod && actionFooter}
-        {photoInput}
-      </form>
-    )
-  }
-
-  // ——— Edit form (bottom curtain) ———
   return (
-    <BottomSheet
-      ariaLabel="Edit meal entry"
-      title="Edit meal"
+    <Sheet
+      ariaLabel={isEdit ? 'Edit meal entry' : 'Add meal entry'}
+      title={isEdit ? 'Edit meal' : 'Add meal'}
       onClose={onCancel}
       closeDisabled={busy}
+      footer={footer}
     >
-      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          {photoPreview && !retaking && (
-            <img src={photoPreview} alt="" className="max-h-52 w-full object-cover" />
+      <form
+        id={formId}
+        onSubmit={handleSubmit}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+      >
+        {photoPreview && !retaking && (
+          <img src={photoPreview} alt="" className="max-h-52 w-full object-cover" />
+        )}
+
+        <div className="space-y-3 p-4">
+          {photoControls}
+
+          {isEdit && retaking && !pickingPhoto && !estimating && (
+            <Button variant="secondary" size="sm" disabled={busy} onClick={openPhotoPicker}>
+              Choose photo
+            </Button>
           )}
 
-          <div className="space-y-3 p-4">
-            <div className="flex items-center justify-between gap-2">
-              {!retaking ? (
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={startRetake}
-                  className="text-xs font-medium text-teal-700 hover:text-teal-800 disabled:opacity-60 dark:text-teal-400"
-                >
-                  {hasPhoto ? 'Retake' : 'Add photo'}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={cancelRetake}
-                  className="text-xs text-stone-500 hover:text-stone-700 dark:text-stone-400"
-                >
-                  Keep photo
-                </button>
-              )}
-              {photoStatus}
-            </div>
+          {!isEdit && pendingPhoto && formError && !estimating && !pickingPhoto && (
+            <Button variant="ghost" size="sm" disabled={busy} onClick={() => void runEstimate(pendingPhoto)}>
+              Retry estimate
+            </Button>
+          )}
 
-            {retaking && !pickingPhoto && !estimating && (
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={openPhotoPicker}
-                  className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-60 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
-                >
-                  Choose photo
-                </button>
+          <MealSlotPicker value={mealType} onChange={setMealType} disabled={busy} />
+
+          {showFields && (
+            <>
+              <Field label="Description">
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="e.g. Chicken rice bowl"
+                  aria-label="Description"
+                  className={fieldInputClass}
+                />
+              </Field>
+
+              <div className="grid grid-cols-4 gap-1.5">
+                <NumberField label="kcal" value={plateCalories} onChange={setPlateCalories} />
+                <NumberField label="Protein" value={plateProtein} onChange={setPlateProtein} step />
+                <NumberField label="Carbs" value={plateCarbs} onChange={setPlateCarbs} step />
+                <NumberField label="Fat" value={plateFat} onChange={setPlateFat} step />
               </div>
-            )}
 
-            {slotPicker}
-            {detailsFields()}
+              <IngredientChips
+                value={ingredients}
+                onChange={setIngredients}
+                onSuggest={handleSuggestTags}
+                suggesting={suggestingTags}
+                disabled={busy}
+              />
 
-            {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
-          </div>
-        </div>
-
-        <div
-          className="flex shrink-0 items-center justify-between gap-2 border-t border-stone-200 bg-white px-4 pt-3 dark:border-stone-800 dark:bg-stone-900"
-          style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
-        >
-          {onDelete ? (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => {
-                if (!window.confirm('Delete this entry?')) return
-                void onDelete()
-              }}
-              className="rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-950/40"
-            >
-              Delete
-            </button>
-          ) : (
-            <span />
+              <Field label="Note">
+                <input
+                  type="text"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Optional"
+                  aria-label="Note"
+                  className={fieldInputClass}
+                />
+              </Field>
+            </>
           )}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={onCancel}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-stone-600 hover:bg-stone-100 disabled:opacity-60 dark:text-stone-300 dark:hover:bg-stone-800"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={busy}
-              className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
-            >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-          </div>
+
+          {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
         </div>
-        {photoInput}
+
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoPick}
+        />
       </form>
-    </BottomSheet>
+    </Sheet>
   )
 }
 
@@ -591,16 +476,15 @@ function NumberField({
   step?: boolean
 }) {
   return (
-    <label className="block text-sm">
-      <span className="mb-1 block text-stone-600 dark:text-stone-300">{label}</span>
+    <Field label={label}>
       <input
         type="number"
         min={0}
         step={step ? 0.1 : 1}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-stone-300 bg-white px-1.5 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-50"
+        className={`${fieldInputClass} px-1.5`}
       />
-    </label>
+    </Field>
   )
 }

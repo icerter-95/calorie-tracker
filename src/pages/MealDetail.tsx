@@ -9,6 +9,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { FavoriteHeart } from '../components/FavoriteToggle'
 import MealForm from '../components/MealForm'
 import MealPhoto from '../components/MealPhoto'
+import Button from '../components/ui/Button'
 import { addFavorite, deleteFavorite, deleteMeal, fetchFavorites, updateMeal } from '../db'
 import { useMeal } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
@@ -203,13 +204,9 @@ export default function MealDetailPage() {
               >
                 <FavoriteHeart filled={Boolean(savedFavorite)} />
               </button>
-              <button
-                type="button"
-                onClick={() => setEditing(true)}
-                className="rounded-lg px-2 py-1 text-sm text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800"
-              >
+              <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
                 Edit
-              </button>
+              </Button>
             </div>
           </div>
 

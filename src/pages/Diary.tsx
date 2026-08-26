@@ -3,19 +3,17 @@
  * grouped by breakfast / lunch / dinner / snack. Adding food uses Camera / Input.
  */
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { deleteMeal, updateMeal } from '../db'
 import AddMealFlow, { type AddMealFlowHandle } from '../components/AddMealFlow'
 import DaySummaryCard from '../components/DaySummaryCard'
 import DiaryLoggingBar from '../components/DiaryLoggingBar'
 import MealCard from '../components/MealCard'
-import MealForm from '../components/MealForm'
 import WeekCalendar from '../components/WeekCalendar'
 import { useLoggedDates, useMealsForDate, useWeekCalorieSummaries } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import { useSettings } from '../hooks/useSettings'
 import { todayKey } from '../lib/dates'
 import { currentLoggingStreak } from '../lib/streak'
-import type { MainMealSlot, MealEntry, MealInput, MealType } from '../types'
+import type { MainMealSlot, MealEntry, MealType } from '../types'
 import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
 
 type ScrollAnchor =
@@ -53,7 +51,6 @@ export default function DiaryPage() {
 
   useRegisterPullToRefresh(pullToRefresh)
   const addMealRef = useRef<AddMealFlowHandle>(null)
-  const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
   const sectionRefs = useRef<Partial<Record<MealType, HTMLElement | null>>>({})
@@ -170,25 +167,7 @@ export default function DiaryPage() {
     pendingScrollDate.current = dateKey
     mealsAtSelectRef.current = meals
     setSelectedDate(dateKey)
-    setEditingMeal(null)
     setActionError(null)
-  }
-
-  function closeForm() {
-    setEditingMeal(null)
-  }
-
-  // Edit / delete meals for the selected day. Creating goes through AddMealFlow.
-  async function handleSave(data: MealInput) {
-    setActionError(null)
-    try {
-      if (!editingMeal) return
-      await updateMeal(editingMeal.id, data)
-      closeForm()
-      reloadDayAndWeek()
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not save meal')
-    }
   }
 
   function focusSlot(slot: MealType) {
@@ -200,22 +179,6 @@ export default function DiaryPage() {
       return
     }
     addMealRef.current?.openCamera(slot)
-    setEditingMeal(null)
-  }
-
-  function startEdit(meal: MealEntry) {
-    setEditingMeal(meal)
-  }
-
-  async function handleDelete(id: string) {
-    setActionError(null)
-    try {
-      if (editingMeal?.id === id) closeForm()
-      await deleteMeal(id)
-      reloadDayAndWeek()
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not delete meal')
-    }
   }
 
   return (
@@ -284,13 +247,7 @@ export default function DiaryPage() {
                 </div>
 
                 {slotMeals.map((meal) => (
-                  <MealCard
-                    key={meal.id}
-                    meal={meal}
-                    hideMealType
-                    from="/"
-                    onEdit={() => startEdit(meal)}
-                  />
+                  <MealCard key={meal.id} meal={meal} hideMealType from="/" />
                 ))}
               </section>
             )
@@ -299,16 +256,6 @@ export default function DiaryPage() {
       )}
 
       <AddMealFlow ref={addMealRef} date={selectedDate} onSaved={reloadDayAndWeek} />
-
-      {editingMeal && (
-        <MealForm
-          initial={editingMeal}
-          defaultDate={selectedDate}
-          onSave={handleSave}
-          onCancel={closeForm}
-          onDelete={() => handleDelete(editingMeal.id)}
-        />
-      )}
     </div>
   )
 }

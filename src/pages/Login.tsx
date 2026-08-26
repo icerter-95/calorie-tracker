@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { AuthEmailNotConfirmedError, useAuth } from '../auth/AuthProvider'
 import UserAvatar from '../components/UserAvatar'
+import Button from '../components/ui/Button'
 
 type SignInMethod = 'email' | 'username'
 
@@ -335,13 +336,15 @@ export default function LoginPage() {
           </button>
         )}
 
-        <button
+        <Button
           type="submit"
           disabled={busy || Boolean(switchingId)}
-          className="w-full rounded-xl bg-teal-700 py-2.5 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+          busy={busy}
+          busyLabel="Please wait…"
+          className="w-full"
         >
-          {busy ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
-        </button>
+          {mode === 'signin' ? 'Sign in' : 'Create account'}
+        </Button>
 
         <button
           type="button"

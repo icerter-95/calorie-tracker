@@ -16,10 +16,11 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import WeightSheet, { type WeightPayload } from '../components/WeightSheet'
 import { addWeight, updateWeight } from '../db'
 import { useAllSteps, useAllWeights } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
-import { formatDisplayDate, formatShortDate, getLastDaysRange, todayKey } from '../lib/dates'
+import { formatDisplayDate, formatShortDate, getLastDaysRange } from '../lib/dates'
 import type { WeightEntry } from '../types'
 
 /** Default daily steps target used for histogram coloring. */
@@ -43,9 +44,6 @@ export default function HealthPage() {
   useRegisterPullToRefresh(pullToRefresh)
   const [menuOpen, setMenuOpen] = useState(false)
   const [editing, setEditing] = useState<WeightEntry | null>(null)
-  const [date, setDate] = useState(todayKey())
-  const [weightKg, setWeightKg] = useState('')
-  const [actionError, setActionError] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -119,44 +117,29 @@ export default function HealthPage() {
 
   function openNewForm() {
     setEditing(null)
-    setDate(todayKey())
-    setWeightKg('')
     setShowForm(true)
     setMenuOpen(false)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const parsed = Number(weightKg)
-    if (!parsed || parsed <= 0) return
-
-    const payload = {
-      date,
-      weightKg: parsed,
+  // Errors surface inside the sheet, so no page-level action error here.
+  async function handleSave(payload: WeightPayload) {
+    if (editing) {
+      await updateWeight(editing.id, payload)
+    } else {
+      await addWeight(payload)
     }
-
-    setActionError(null)
-    try {
-      if (editing) {
-        await updateWeight(editing.id, payload)
-      } else {
-        await addWeight(payload)
-      }
-      setShowForm(false)
-      setEditing(null)
-      reloadWeights()
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not save weight')
-    }
+    setShowForm(false)
+    setEditing(null)
+    reloadWeights()
   }
 
   const error = weightsError ?? stepsError
 
   return (
     <div className="space-y-3">
-      {(error || actionError) && (
+      {error && (
         <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
-          {actionError ?? error}
+          {error}
         </p>
       )}
 
@@ -230,59 +213,6 @@ export default function HealthPage() {
               }`
             : 'No weight logged yet'}
         </p>
-
-        {showForm && (
-          <form
-            onSubmit={handleSubmit}
-            className="mt-4 space-y-3 rounded-xl bg-stone-50 p-3 ring-1 ring-stone-200 dark:bg-stone-800/50 dark:ring-stone-700"
-          >
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-50">
-                {editing ? 'Edit entry' : 'Log weight'}
-              </h2>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowForm(false)
-                  setEditing(null)
-                }}
-                className="text-sm text-stone-500 dark:text-stone-400"
-              >
-                Cancel
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block text-sm">
-                <span className="mb-1 block text-stone-600 dark:text-stone-300">Date</span>
-                <input
-                  type="date"
-                  required
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="mb-1 block text-stone-600 dark:text-stone-300">Weight (kg)</span>
-                <input
-                  type="number"
-                  required
-                  min={0}
-                  step={0.1}
-                  value={weightKg}
-                  onChange={(e) => setWeightKg(e.target.value)}
-                  className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-                />
-              </label>
-            </div>
-            <button
-              type="submit"
-              className="w-full rounded-xl bg-amber-700 py-2 text-sm font-medium text-white hover:bg-amber-800"
-            >
-              Save
-            </button>
-          </form>
-        )}
 
         <div className="mt-3">
           {chartData.length > 0 ? (
@@ -389,6 +319,17 @@ export default function HealthPage() {
           Last 30 days · iPhone sync · not live during the day
         </p>
       </section>
+
+      {showForm && (
+        <WeightSheet
+          initial={editing}
+          onSave={handleSave}
+          onCancel={() => {
+            setShowForm(false)
+            setEditing(null)
+          }}
+        />
+      )}
     </div>
   )
 }

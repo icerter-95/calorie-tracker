@@ -3,6 +3,7 @@
  * meal type, calorie extremes, and ingredient-tag search. Tab is hidden for now.
  */
 import { useCallback, useMemo, useState } from 'react'
+import Button from '../components/ui/Button'
 import { useAllMeals } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import {
@@ -191,13 +192,7 @@ export default function InsightsPage() {
                   placeholder="e.g. chicken"
                   className="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
                 />
-                <button
-                  type="button"
-                  onClick={() => setSearched(foodQuery)}
-                  className="rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
-                >
-                  Search
-                </button>
+                <Button onClick={() => setSearched(foodQuery)}>Search</Button>
               </div>
               <p className="mt-3 text-sm text-stone-700 dark:text-stone-200">
                 {normalizedSearch ? (
