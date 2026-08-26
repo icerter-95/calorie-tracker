@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react'
 
 export const fieldInputClass =
-  'w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 disabled:opacity-60 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50'
+  'w-full rounded-lg border border-line-strong bg-field px-3 py-2 text-sm text-content disabled:opacity-60'
 
 interface FieldProps {
   label: ReactNode
@@ -17,9 +17,9 @@ interface FieldProps {
 export default function Field({ label, hint, children }: FieldProps) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block text-stone-600 dark:text-stone-300">{label}</span>
+      <span className="mb-1 block text-content-muted">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">{hint}</span>}
+      {hint && <span className="mt-1 block text-xs text-content-subtle">{hint}</span>}
     </label>
   )
 }

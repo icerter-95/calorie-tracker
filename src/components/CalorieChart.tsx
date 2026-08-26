@@ -16,6 +16,7 @@ import {
 } from 'recharts'
 import type { DailyCalorieSummary } from '../types'
 import { formatShortDate } from '../lib/dates'
+import { useChartColors } from '../lib/chartColors'
 
 interface CalorieChartProps {
   data: DailyCalorieSummary[]
@@ -52,6 +53,7 @@ export default function CalorieChart({
   selectedDate = null,
   onDaySelect,
 }: CalorieChartProps) {
+  const colors = useChartColors()
   const weightByDate = Object.fromEntries(weights.map((w) => [w.date, w.weightKg]))
 
   const chartData = data.map((d) => ({
@@ -64,20 +66,20 @@ export default function CalorieChart({
 
   if (chartData.every((d) => d.totalCalories === 0 && d.weightKg == null)) {
     return (
-      <div className="flex h-40 items-center justify-center rounded-2xl bg-white text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
+      <div className="flex h-40 items-center justify-center rounded-2xl bg-raised text-sm text-content-subtle ring-1 ring-line">
         No data for this period yet.
       </div>
     )
   }
 
   return (
-    <div className="rounded-2xl bg-white p-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+    <div className="rounded-2xl bg-raised p-3 ring-1 ring-line">
       <ResponsiveContainer width="100%" height={height}>
         <ComposedChart
           data={chartData}
           margin={{ top: 8, right: showWeight ? 16 : 8, left: 8, bottom: 0 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+          <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
           <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
           <YAxis
             yAxisId="calories"
@@ -112,7 +114,7 @@ export default function CalorieChart({
             yAxisId="calories"
             dataKey="totalCalories"
             name="Calories"
-            fill="#0f766e"
+            fill={colors.accent}
             radius={[4, 4, 0, 0]}
             cursor={onDaySelect ? 'pointer' : undefined}
             onClick={
@@ -127,8 +129,8 @@ export default function CalorieChart({
             {chartData.map((entry) => (
               <Cell
                 key={entry.date}
-                fill={entry.date === selectedDate ? '#115e59' : '#0f766e'}
-                stroke={entry.date === selectedDate ? '#042f2e' : undefined}
+                fill={entry.date === selectedDate ? colors.accentActive : colors.accent}
+                stroke={entry.date === selectedDate ? colors.accentActive : undefined}
                 strokeWidth={entry.date === selectedDate ? 1 : 0}
               />
             ))}
@@ -139,7 +141,7 @@ export default function CalorieChart({
               type="monotone"
               dataKey="weightKg"
               name="Weight"
-              stroke="#b45309"
+              stroke={colors.health}
               strokeWidth={2}
               dot={{ r: 3 }}
               connectNulls

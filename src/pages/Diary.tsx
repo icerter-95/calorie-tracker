@@ -213,14 +213,14 @@ export default function DiaryPage() {
       />
 
       {(error || actionError) && (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-strong">
           {actionError ?? error}
         </p>
       )}
 
       {/* Meals grouped by breakfast / lunch / dinner / snack */}
       {meals === undefined ? (
-        <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
+        <p className="text-sm text-content-subtle">Loading…</p>
       ) : (
         <div className="space-y-4">
           {MEAL_TYPE_ORDER.map((slot) => {
@@ -238,10 +238,10 @@ export default function DiaryPage() {
                 className="space-y-2"
               >
                 <div className="flex items-baseline justify-between px-1">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-content-subtle">
                     {MEAL_TYPE_LABELS[slot]}
                   </h2>
-                  <span className="text-xs font-medium text-stone-500 dark:text-stone-400">
+                  <span className="text-xs font-medium text-content-subtle">
                     {slotKcal} kcal
                   </span>
                 </div>

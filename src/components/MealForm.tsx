@@ -289,7 +289,7 @@ export default function MealForm({
   }
 
   const photoStatus = (pickingPhoto || estimating) && (
-    <span className="text-xs text-teal-700 dark:text-teal-400">
+    <span className="text-xs text-accent-ink">
       {pickingPhoto ? 'Processing…' : 'Estimating…'}
     </span>
   )
@@ -311,8 +311,8 @@ export default function MealForm({
             onClick={() => selectCreateMethod(id)}
             className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-60 ${
               selected
-                ? 'bg-teal-700 text-white'
-                : 'bg-stone-100 text-stone-400 hover:text-stone-600 dark:bg-stone-800 dark:text-stone-500 dark:hover:text-stone-300'
+                ? 'bg-accent text-on-accent'
+                : 'bg-muted text-content-faint hover:text-content-muted'
             }`}
           >
             {label}
@@ -448,7 +448,7 @@ export default function MealForm({
             </>
           )}
 
-          {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+          {formError && <p className="text-sm text-danger">{formError}</p>}
         </div>
 
         <input

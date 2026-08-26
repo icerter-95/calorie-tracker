@@ -129,7 +129,6 @@ export default function FavoritesPanel({
       footer={
         selected ? (
           <ActionBar
-            tone="page"
             primary={
               <Button
                 onClick={() => void handleSave()}
@@ -147,7 +146,7 @@ export default function FavoritesPanel({
       {selected ? (
         <>
           {selected.photoUrl && (
-            <div className="overflow-hidden rounded-2xl ring-1 ring-stone-200 dark:ring-stone-700">
+            <div className="overflow-hidden rounded-2xl ring-1 ring-line">
               <MealPhoto
                 photoUrl={selected.photoUrl}
                 alt={selected.name}
@@ -170,14 +169,14 @@ export default function FavoritesPanel({
             ingredients={ingredients}
             disabled={saving}
           />
-          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
         </>
       ) : favorites === undefined ? (
-        <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
+        <p className="text-sm text-content-subtle">Loading…</p>
       ) : loadError ? (
-        <p className="text-sm text-red-600 dark:text-red-400">{loadError}</p>
+        <p className="text-sm text-danger">{loadError}</p>
       ) : favorites.length === 0 ? (
-        <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
+        <p className="rounded-2xl bg-raised p-4 text-sm text-content-subtle ring-1 ring-line">
           No favorites yet. Open a meal and tap the heart to save one.
         </p>
       ) : (
@@ -187,22 +186,22 @@ export default function FavoritesPanel({
               <button
                 type="button"
                 onClick={() => pickFavorite(fav)}
-                className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-700 dark:hover:bg-stone-800"
+                className="flex w-full items-center gap-3 rounded-2xl bg-raised p-3 text-left shadow-sm ring-1 ring-line hover:bg-hover"
               >
                 {fav.photoUrl ? (
-                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-stone-100 dark:bg-stone-800">
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
                     <MealPhoto photoUrl={fav.photoUrl} alt="" className="h-full w-full object-cover" />
                   </div>
                 ) : (
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-[10px] font-medium text-stone-400 dark:bg-stone-800 dark:text-stone-500">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-muted text-[10px] font-medium text-content-faint">
                     No photo
                   </div>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-stone-800 dark:text-stone-100">
+                  <span className="block truncate text-sm font-medium text-content">
                     {fav.name}
                   </span>
-                  <span className="block text-sm font-semibold text-stone-900 dark:text-stone-50">
+                  <span className="block text-sm font-semibold text-content">
                     {fav.totalCalories} kcal
                   </span>
                 </span>

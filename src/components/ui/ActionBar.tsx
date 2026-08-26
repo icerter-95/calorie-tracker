@@ -30,25 +30,14 @@ interface ActionBarProps {
   tools?: ReactNode
   /** Right. Exactly one primary action. */
   primary: ReactNode
-  /** `sheet` sits on the sheet surface, `page` on the page surface. */
-  tone?: 'sheet' | 'page'
 }
 
-export default function ActionBar({
-  destructive,
-  tools,
-  primary,
-  tone = 'sheet',
-}: ActionBarProps) {
+export default function ActionBar({ destructive, tools, primary }: ActionBarProps) {
   const keyboardInset = useContext(ActionBarInsetContext)
-  const surface =
-    tone === 'sheet'
-      ? 'border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-900'
-      : 'border-stone-200 bg-white dark:border-stone-800 dark:bg-stone-950'
 
   return (
     <div
-      className={`shrink-0 border-t px-4 pt-3 ${surface}`}
+      className="shrink-0 border-t border-edge bg-raised px-4 pt-3"
       style={{
         paddingBottom: `calc(0.75rem + env(safe-area-inset-bottom, 0px) + ${keyboardInset}px)`,
       }}

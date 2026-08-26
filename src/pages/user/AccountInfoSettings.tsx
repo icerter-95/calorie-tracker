@@ -170,11 +170,11 @@ export default function AccountInfoSettings() {
   }
 
   const rowClass =
-    'flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-stone-800 hover:bg-stone-50 disabled:opacity-60 dark:text-stone-100 dark:hover:bg-stone-800'
+    'flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-content hover:bg-hover disabled:opacity-60'
   return (
     <div className="space-y-4">
       {/* Header: avatar + display name + email */}
-      <section className="rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      <section className="rounded-2xl bg-raised shadow-sm ring-1 ring-line">
         <div className="flex items-center gap-3 px-4 py-3">
           <div className="relative shrink-0">
             <button
@@ -182,7 +182,7 @@ export default function AccountInfoSettings() {
               disabled={avatarBusy}
               onClick={() => avatarInputRef.current?.click()}
               aria-label={avatarUrl ? 'Change profile photo' : 'Add profile photo'}
-              className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 disabled:opacity-60"
+              className="group relative rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
             >
               <UserAvatar name={displayName} avatarUrl={avatarUrl} size="md" />
               <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/0 text-[10px] font-medium text-white opacity-0 transition group-hover:bg-black/40 group-hover:opacity-100">
@@ -198,15 +198,15 @@ export default function AccountInfoSettings() {
             />
           </div>
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-base font-semibold text-stone-900 dark:text-stone-50">
+            <h2 className="truncate text-base font-semibold text-content">
               {displayName}
               {(usernameSaved || passwordSaved) && (
-                <span className="ml-2 text-xs font-medium text-teal-700 dark:text-teal-400">
+                <span className="ml-2 text-xs font-medium text-accent-ink">
                   {passwordSaved ? 'Password updated' : 'Saved'}
                 </span>
               )}
             </h2>
-            <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+            <p className="truncate text-xs text-content-subtle">
               {user?.email}
               {user?.email_confirmed_at ? ' · Verified' : ''}
             </p>
@@ -215,7 +215,7 @@ export default function AccountInfoSettings() {
       </section>
 
       {/* Rows open a composer sheet; nothing edits in place. */}
-      <section className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      <section className="overflow-hidden rounded-2xl bg-raised shadow-sm ring-1 ring-line">
         <button
           type="button"
           disabled={usernameBusy}
@@ -223,12 +223,12 @@ export default function AccountInfoSettings() {
           className={rowClass}
         >
           {loginUsername ? 'Edit username' : 'Set username'}
-          <span aria-hidden className="text-stone-400">
+          <span aria-hidden className="text-content-faint">
             ›
           </span>
         </button>
 
-        <div className="border-t border-stone-100 dark:border-stone-800" />
+        <div className="border-t border-divider" />
         <button
           type="button"
           disabled={passwordBusy}
@@ -236,13 +236,13 @@ export default function AccountInfoSettings() {
           className={rowClass}
         >
           Change password
-          <span aria-hidden className="text-stone-400">
+          <span aria-hidden className="text-content-faint">
             ›
           </span>
         </button>
       </section>
 
-      {avatarError && <p className="text-sm text-red-700 dark:text-red-300">{avatarError}</p>}
+      {avatarError && <p className="text-sm text-danger-strong">{avatarError}</p>}
 
       {openEditor === 'username' && (
         <Sheet
@@ -304,7 +304,7 @@ export default function AccountInfoSettings() {
                 />
               </Field>
               {usernameError && (
-                <p className="text-sm text-red-600 dark:text-red-400">{usernameError}</p>
+                <p className="text-sm text-danger">{usernameError}</p>
               )}
             </div>
           </form>
@@ -342,7 +342,7 @@ export default function AccountInfoSettings() {
             className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
           >
             <div className="space-y-3 p-4">
-              <p className="text-xs text-stone-500 dark:text-stone-400">
+              <p className="text-xs text-content-subtle">
                 Used for email login and username passcode (min. 6 characters).
               </p>
               <Field label="Current password">
@@ -376,7 +376,7 @@ export default function AccountInfoSettings() {
                 />
               </Field>
               {passwordError && (
-                <p className="text-sm text-red-600 dark:text-red-400">{passwordError}</p>
+                <p className="text-sm text-danger">{passwordError}</p>
               )}
             </div>
           </form>

@@ -172,8 +172,8 @@ export default function HistoryPage() {
               onClick={() => setRange(r)}
               className={`flex-1 rounded-xl py-2 text-sm font-medium ${
                 range === r
-                  ? 'bg-teal-700 text-white'
-                  : 'bg-white text-stone-600 ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:text-stone-300 dark:ring-stone-700 dark:hover:bg-stone-800'
+                  ? 'bg-accent text-on-accent'
+                  : 'bg-raised text-content-muted ring-1 ring-line hover:bg-hover'
               }`}
             >
               {RANGE_LABELS[r]}
@@ -184,23 +184,23 @@ export default function HistoryPage() {
         {range === 'custom' && (
           <div className="grid grid-cols-2 gap-3">
             <label className="block min-w-0 text-sm">
-              <span className="mb-1 block text-stone-600 dark:text-stone-300">From</span>
+              <span className="mb-1 block text-content-muted">From</span>
               <input
                 type="date"
                 value={customStart}
                 max={customEnd}
                 onChange={(e) => setCustomStart(e.target.value)}
-                className="w-full min-w-0 max-w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                className="w-full min-w-0 max-w-full rounded-lg border border-line-strong bg-field px-2 py-2 text-sm text-content"
               />
             </label>
             <label className="block min-w-0 text-sm">
-              <span className="mb-1 block text-stone-600 dark:text-stone-300">To</span>
+              <span className="mb-1 block text-content-muted">To</span>
               <input
                 type="date"
                 value={customEnd}
                 min={customStart}
                 onChange={(e) => setCustomEnd(e.target.value)}
-                className="w-full min-w-0 max-w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                className="w-full min-w-0 max-w-full rounded-lg border border-line-strong bg-field px-2 py-2 text-sm text-content"
               />
             </label>
           </div>
@@ -214,12 +214,12 @@ export default function HistoryPage() {
         footnote={customFootnote}
       />
 
-      <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
+      <label className="flex items-center gap-2 text-sm text-content-muted">
         <input
           type="checkbox"
           checked={showWeight}
           onChange={(e) => setShowWeight(e.target.checked)}
-          className="rounded border-stone-300 text-teal-700 focus:ring-teal-600"
+          className="rounded border-line-strong text-accent focus:ring-accent"
         />
         Overlay weight (kg)
       </label>
@@ -233,12 +233,12 @@ export default function HistoryPage() {
         onDaySelect={setSelectedDate}
       />
 
-      <p className="text-center text-xs text-stone-500 dark:text-stone-400">
+      <p className="text-center text-xs text-content-subtle">
         {selectedDate ? 'Selected day — tap another bar to switch' : 'Tap a bar to view meals for that day'}
       </p>
 
       {(mealsError || weightsError || stepsError || actionError) && (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-strong">
           {actionError ?? mealsError ?? weightsError ?? stepsError}
         </p>
       )}
@@ -247,10 +247,10 @@ export default function HistoryPage() {
         <section className="space-y-3">
           {/* Meals for the day selected on the chart */}
           <div className="flex items-baseline justify-between px-1">
-            <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-100">
+            <h2 className="text-sm font-semibold text-content">
               {formatDisplayDate(selectedDate)}
             </h2>
-            <span className="text-sm font-medium text-teal-700 dark:text-teal-400">
+            <span className="text-sm font-medium text-accent-ink">
               {selectedDayTotal} kcal
             </span>
           </div>
@@ -258,15 +258,15 @@ export default function HistoryPage() {
           <button
             type="button"
             onClick={() => startAdd()}
-            className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
+            className="w-full rounded-2xl bg-raised py-3 text-sm font-medium text-accent-ink shadow-sm ring-1 ring-line hover:bg-accent-soft"
           >
             + Add meal
           </button>
 
           {meals === undefined ? (
-            <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
+            <p className="text-sm text-content-subtle">Loading…</p>
           ) : selectedDayMeals.length === 0 ? (
-            <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
+            <p className="rounded-2xl bg-raised p-4 text-sm text-content-subtle ring-1 ring-line">
               No entries on this day. Tap “Add meal” to log one.
             </p>
           ) : (
@@ -275,7 +275,7 @@ export default function HistoryPage() {
               if (slotMeals.length === 0) return null
               return (
                 <div key={slot} className="space-y-2">
-                  <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                  <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-content-subtle">
                     {MEAL_TYPE_LABELS[slot]}
                   </h3>
                   {slotMeals.map((meal) => (

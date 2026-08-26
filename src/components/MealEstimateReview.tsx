@@ -34,14 +34,14 @@ export default function MealEstimateReview({
   return (
     <div className="space-y-3">
       <label className="block text-sm">
-        <span className="mb-1 block text-stone-600 dark:text-stone-300">Description</span>
+        <span className="mb-1 block text-content-muted">Description</span>
         <input
           type="text"
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
           disabled={disabled}
           placeholder="e.g. Chicken rice bowl"
-          className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 disabled:opacity-60 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+          className="w-full rounded-lg border border-line-strong bg-field px-3 py-2 text-sm text-content disabled:opacity-60"
         />
       </label>
 
@@ -57,7 +57,7 @@ export default function MealEstimateReview({
           {ingredients.map((tag) => (
             <span
               key={tag}
-              className="rounded-md bg-stone-100 px-1.5 py-0.5 text-[11px] font-medium text-stone-600 dark:bg-stone-800 dark:text-stone-300"
+              className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-content-muted"
             >
               {tag}
             </span>
@@ -83,7 +83,7 @@ function NumberField({
 }) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block text-stone-600 dark:text-stone-300">{label}</span>
+      <span className="mb-1 block text-content-muted">{label}</span>
       <input
         type="number"
         min={0}
@@ -91,7 +91,7 @@ function NumberField({
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-stone-300 bg-white px-1.5 py-2 text-sm text-stone-900 disabled:opacity-60 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-50"
+        className="w-full rounded-lg border border-line-strong bg-raised px-1.5 py-2 text-sm text-content disabled:opacity-60"
       />
     </label>
   )

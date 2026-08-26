@@ -20,18 +20,15 @@ import WeightSheet, { type WeightPayload } from '../components/WeightSheet'
 import { addWeight, updateWeight } from '../db'
 import { useAllSteps, useAllWeights } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
+import { useChartColors } from '../lib/chartColors'
 import { formatDisplayDate, formatShortDate, getLastDaysRange } from '../lib/dates'
 import type { WeightEntry } from '../types'
 
 /** Default daily steps target used for histogram coloring. */
 const STEP_GOAL = 10_000
 
-const WEIGHT_STROKE = '#b45309'
-const STEPS_MET = '#0f766e'
-const STEPS_BELOW = '#a8a29e'
-const GRID_STROKE = '#e7e5e4'
-
 export default function HealthPage() {
+  const colors = useChartColors()
   const navigate = useNavigate()
   const { weights, error: weightsError, reload: reloadWeights } = useAllWeights()
   const { steps, error: stepsError, reload: reloadSteps } = useAllSteps()
@@ -138,15 +135,15 @@ export default function HealthPage() {
   return (
     <div className="space-y-3">
       {error && (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-strong">
           {error}
         </p>
       )}
 
       {/* Weight card: latest value, log form, trend line */}
-      <section className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      <section className="rounded-2xl bg-raised p-3.5 shadow-sm ring-1 ring-line">
         <div className="flex items-start justify-between gap-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-amber-800/80 dark:text-amber-400/90">
+          <p className="text-xs font-medium uppercase tracking-wide text-health-ink/80">
             Weight
           </p>
 
@@ -157,7 +154,7 @@ export default function HealthPage() {
               aria-haspopup="menu"
               aria-expanded={menuOpen}
               onClick={() => setMenuOpen((value) => !value)}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-200"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-content-subtle transition hover:bg-hover hover:text-content-muted"
             >
               <span aria-hidden className="flex items-center gap-[3px]">
                 <span className="block h-[3px] w-[3px] rounded-full bg-current" />
@@ -171,7 +168,7 @@ export default function HealthPage() {
                 type="button"
                 aria-label="Log weight"
                 onClick={openNewForm}
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-amber-700 text-base font-semibold leading-none text-white shadow-sm hover:bg-amber-800"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-health text-base font-semibold leading-none text-white shadow-sm hover:bg-health-hover"
               >
                 <span aria-hidden className="-mt-px">
                   +
@@ -182,7 +179,7 @@ export default function HealthPage() {
             {menuOpen && (
               <div
                 role="menu"
-                className="absolute right-0 top-full z-20 mt-1 min-w-[11rem] overflow-hidden rounded-xl bg-white py-1 shadow-lg ring-1 ring-stone-200 dark:bg-stone-800 dark:ring-stone-600"
+                className="absolute right-0 top-full z-20 mt-1 min-w-[11rem] overflow-hidden rounded-xl bg-field py-1 shadow-lg ring-1 ring-line"
               >
                 <button
                   type="button"
@@ -191,7 +188,7 @@ export default function HealthPage() {
                     setMenuOpen(false)
                     navigate('/health/weight-history')
                   }}
-                  className="block w-full px-3 py-2 text-left text-sm font-medium text-stone-800 hover:bg-stone-50 dark:text-stone-100 dark:hover:bg-stone-700"
+                  className="block w-full px-3 py-2 text-left text-sm font-medium text-content hover:bg-hover"
                 >
                   Weight history
                 </button>
@@ -200,13 +197,13 @@ export default function HealthPage() {
           </div>
         </div>
 
-        <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
+        <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight text-content">
           {latest ? `${latest.weightKg}` : '—'}
           {latest && (
-            <span className="ml-1.5 text-lg font-semibold text-stone-500 dark:text-stone-400">kg</span>
+            <span className="ml-1.5 text-lg font-semibold text-content-subtle">kg</span>
           )}
         </p>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+        <p className="mt-1 text-sm text-content-subtle">
           {latest
             ? `Latest weight — ${formatShortDate(latest.date)}${
                 latest.source === 'apple-health' ? ' · Health' : ''
@@ -218,10 +215,10 @@ export default function HealthPage() {
           {chartData.length > 0 ? (
             <ResponsiveContainer width="100%" height={160}>
               <LineChart data={chartData} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#78716c' }} />
+                <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} />
+                <XAxis dataKey="label" tick={{ fontSize: 11, fill: colors.axis }} />
                 <YAxis
-                  tick={{ fontSize: 11, fill: '#78716c' }}
+                  tick={{ fontSize: 11, fill: colors.axis }}
                   width={36}
                   tickMargin={4}
                   domain={yDomain}
@@ -230,14 +227,14 @@ export default function HealthPage() {
                 <Line
                   type="monotone"
                   dataKey="weightKg"
-                  stroke={WEIGHT_STROKE}
+                  stroke={colors.health}
                   strokeWidth={2}
-                  dot={{ r: 3, fill: WEIGHT_STROKE }}
+                  dot={{ r: 3, fill: colors.health }}
                 />
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <p className="rounded-xl bg-stone-50 px-3 py-8 text-center text-sm text-stone-500 dark:bg-stone-800/50 dark:text-stone-400">
+            <p className="rounded-xl bg-sunken px-3 py-8 text-center text-sm text-content-subtle">
               Log a weight to see your trend.
             </p>
           )}
@@ -245,18 +242,18 @@ export default function HealthPage() {
       </section>
 
       {/* Steps card: 7-day average + bars colored by 10k goal */}
-      <section className="rounded-2xl bg-white p-3.5 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
-        <p className="text-xs font-medium uppercase tracking-wide text-teal-800/80 dark:text-teal-400/90">
+      <section className="rounded-2xl bg-raised p-3.5 shadow-sm ring-1 ring-line">
+        <p className="text-xs font-medium uppercase tracking-wide text-accent-ink/80">
           Steps
         </p>
-        <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
+        <p className="mt-1 text-4xl font-bold tabular-nums tracking-tight text-content">
           {steps === undefined
             ? '…'
             : stepsAvg7 != null
               ? stepsAvg7.toLocaleString()
               : '—'}
         </p>
-        <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+        <p className="mt-1 text-sm text-content-subtle">
           {steps === undefined
             ? 'Loading steps…'
             : stepsAvg7 != null
@@ -268,20 +265,20 @@ export default function HealthPage() {
 
         <div className="mt-3">
           {steps === undefined ? (
-            <p className="rounded-xl bg-stone-50 px-3 py-8 text-center text-sm text-stone-500 dark:bg-stone-800/50 dark:text-stone-400">
+            <p className="rounded-xl bg-sunken px-3 py-8 text-center text-sm text-content-subtle">
               Loading steps…
             </p>
           ) : stepsChartData.some((d) => d.steps > 0) ? (
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={stepsChartData} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} vertical={false} />
                 <XAxis
                   dataKey="label"
                   interval={4}
-                  tick={{ fontSize: 10, fill: '#78716c' }}
+                  tick={{ fontSize: 10, fill: colors.axis }}
                 />
                 <YAxis
-                  tick={{ fontSize: 11, fill: '#78716c' }}
+                  tick={{ fontSize: 11, fill: colors.axis }}
                   width={40}
                   tickMargin={4}
                   tickFormatter={(v: number) =>
@@ -300,14 +297,14 @@ export default function HealthPage() {
                   {stepsChartData.map((entry) => (
                     <Cell
                       key={entry.date}
-                      fill={entry.metGoal ? STEPS_MET : STEPS_BELOW}
+                      fill={entry.metGoal ? colors.accent : colors.faint}
                     />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           ) : (
-            <p className="rounded-xl bg-stone-50 px-3 py-8 text-center text-sm text-stone-500 dark:bg-stone-800/50 dark:text-stone-400">
+            <p className="rounded-xl bg-sunken px-3 py-8 text-center text-sm text-content-subtle">
               {latestSteps
                 ? 'No steps in the last 30 days. Run a last-30-days Health sync, then pull to refresh.'
                 : 'Connect Apple Health in Profile → Connections to sync steps.'}
@@ -315,7 +312,7 @@ export default function HealthPage() {
           )}
         </div>
 
-        <p className="mt-2 text-xs text-stone-400 dark:text-stone-500">
+        <p className="mt-2 text-xs text-content-faint">
           Last 30 days · iPhone sync · not live during the day
         </p>
       </section>

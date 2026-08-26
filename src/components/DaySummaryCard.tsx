@@ -30,17 +30,17 @@ function MacroRow({ label, current, goal, unit = 'g' }: MacroRowProps) {
   const pct = goal > 0 ? Math.min(100, (current / goal) * 100) : 0
   return (
     <div className="min-w-0 flex-1">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-teal-100/80">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-on-accent-muted/80">
         {label}
       </p>
       <p className="mt-0.5 text-sm font-semibold tabular-nums text-white">
         {roundMacro(current)}
-        <span className="font-normal text-teal-100/80">
+        <span className="font-normal text-on-accent-muted/80">
           {' '}
           / {goal} {unit}
         </span>
       </p>
-      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-teal-900/40">
+      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-on-accent-track/40">
         <div
           className="h-full rounded-full bg-white transition-[width] duration-300"
           style={{ width: `${pct}%` }}
@@ -76,10 +76,10 @@ export default function DaySummaryCard({
   const fillPct = calorieFillPct(totalCalories, calorieGoalLower, calorieGoalUpper)
 
   return (
-    <section className="rounded-2xl bg-teal-700 p-5 text-white shadow-sm">
+    <section className="rounded-2xl bg-accent p-5 text-white shadow-sm">
       <p className="text-3xl font-bold tabular-nums tracking-tight">
         {totalCalories.toLocaleString()}
-        <span className="text-lg font-medium text-teal-100">
+        <span className="text-lg font-medium text-on-accent-muted">
           {' '}
           / {calorieGoalLower.toLocaleString()} kcal
         </span>
@@ -87,7 +87,7 @@ export default function DaySummaryCard({
 
       {/* Calorie bar with lower (70%) and upper (90%) goal markers */}
       <div className="relative mt-4 pb-5">
-        <div className="h-2 overflow-hidden rounded-full bg-teal-900/40">
+        <div className="h-2 overflow-hidden rounded-full bg-on-accent-track/40">
           <div
             className="h-full rounded-full bg-white transition-[width] duration-300"
             style={{ width: `${fillPct}%` }}
@@ -96,22 +96,22 @@ export default function DaySummaryCard({
 
         {/* Lower milestone — fixed at 70% */}
         <div className="absolute top-0 left-[70%] -translate-x-1/2">
-          <div className="mx-auto h-2 w-px bg-teal-100/70" />
-          <p className="mt-1.5 whitespace-nowrap text-center text-[10px] tabular-nums text-teal-100">
+          <div className="mx-auto h-2 w-px bg-on-accent-muted/70" />
+          <p className="mt-1.5 whitespace-nowrap text-center text-[10px] tabular-nums text-on-accent-muted">
             {calorieGoalLower.toLocaleString()}
           </p>
         </div>
 
         {/* Higher milestone — fixed at 90% */}
         <div className="absolute top-0 left-[90%] -translate-x-1/2">
-          <div className="mx-auto h-2 w-px bg-teal-100/70" />
-          <p className="mt-1.5 whitespace-nowrap text-center text-[10px] tabular-nums text-teal-100">
+          <div className="mx-auto h-2 w-px bg-on-accent-muted/70" />
+          <p className="mt-1.5 whitespace-nowrap text-center text-[10px] tabular-nums text-on-accent-muted">
             {calorieGoalUpper.toLocaleString()}
           </p>
         </div>
       </div>
 
-      <div className="mt-1 flex gap-4 border-t border-teal-600/80 pt-4">
+      <div className="mt-1 flex gap-4 border-t border-on-accent-track/80 pt-4">
         <MacroRow label="Protein" current={totalProtein} goal={proteinGoal} />
         <MacroRow label="Carbs" current={totalCarbs} goal={carbsGoal} />
         <MacroRow label="Fats" current={totalFat} goal={fatGoal} />

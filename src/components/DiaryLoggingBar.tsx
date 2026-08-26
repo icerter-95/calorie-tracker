@@ -36,7 +36,7 @@ function FlameIcon({ lit }: { lit: boolean }) {
 function SlotMark({ logged }: { logged: boolean }) {
   if (logged) {
     return (
-      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-teal-700 text-white dark:bg-teal-500">
+      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-accent text-on-accent">
         <svg width="9" height="9" viewBox="0 0 16 16" fill="none" aria-hidden>
           <path
             d="M3.5 8.2 6.4 11l6.1-7"
@@ -51,7 +51,7 @@ function SlotMark({ logged }: { logged: boolean }) {
   }
 
   return (
-    <span className="h-4 w-4 rounded-full ring-1 ring-inset ring-stone-300 dark:ring-stone-600" />
+    <span className="h-4 w-4 rounded-full ring-1 ring-inset ring-line-strong" />
   )
 }
 
@@ -76,18 +76,18 @@ export default function DiaryLoggingBar({
       <p
         className={`flex min-w-0 items-center gap-1.5 whitespace-nowrap text-base tabular-nums ${
           streakActive
-            ? 'font-semibold text-stone-800 dark:text-stone-100'
-            : 'text-stone-400 dark:text-stone-500'
+            ? 'font-semibold text-content'
+            : 'text-content-faint'
         }`}
         aria-label={streakLabel}
       >
         <FlameIcon lit={streakActive} />
         {streak == null ? (
-          <span className="inline-block h-3.5 w-12 rounded bg-stone-200/80 dark:bg-stone-800" />
+          <span className="inline-block h-3.5 w-12 rounded bg-line/80" />
         ) : (
           <span>
             {streak}
-            <span className="ml-1 text-sm font-normal text-stone-400 dark:text-stone-500">
+            <span className="ml-1 text-sm font-normal text-content-faint">
               {streak === 1 ? 'day' : 'days'}
             </span>
           </span>
@@ -104,10 +104,10 @@ export default function DiaryLoggingBar({
               type="button"
               onClick={() => onSelectSlot(slot)}
               aria-label={logged ? `${label} logged` : `Add ${label.toLowerCase()}`}
-              className={`flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-xs font-medium tracking-wide transition-colors hover:bg-stone-200/70 dark:hover:bg-stone-800 ${
+              className={`flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-xs font-medium tracking-wide transition-colors hover:bg-hover/70 ${
                 logged
-                  ? 'text-stone-700 dark:text-stone-200'
-                  : 'text-stone-400 dark:text-stone-500'
+                  ? 'text-content-muted'
+                  : 'text-content-faint'
               }`}
             >
               <SlotMark logged={logged} />

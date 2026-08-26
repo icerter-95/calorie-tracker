@@ -166,7 +166,6 @@ export default function CameraMode({
 
   const footer = (
     <ActionBar
-      tone="page"
       tools={
         showReview ? (
           <Button
@@ -208,7 +207,7 @@ export default function CameraMode({
     <Takeover title="Camera" onClose={onCancel} closeDisabled={saving} footer={footer}>
       {preview ? (
         <div className="space-y-2">
-          <div className="overflow-hidden rounded-2xl ring-1 ring-stone-200 dark:ring-stone-700">
+          <div className="overflow-hidden rounded-2xl ring-1 ring-line">
             <img src={preview} alt="" className="max-h-64 w-full object-cover" />
           </div>
           <div className="flex justify-end">
@@ -222,7 +221,7 @@ export default function CameraMode({
       ) : (
         <label
           htmlFor={ADD_MEAL_CAMERA_INPUT_ID}
-          className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-8 text-sm text-stone-500 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-400 ${
+          className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-line-strong bg-raised px-4 py-8 text-sm text-content-subtle ${
             busy ? 'pointer-events-none opacity-60' : 'cursor-pointer'
           }`}
         >
@@ -252,7 +251,7 @@ export default function CameraMode({
           Camera roll
         </label>
         {(pickingPhoto || estimating) && (
-          <span className="text-xs text-teal-700 dark:text-teal-400">
+          <span className="text-xs text-accent-ink">
             {pickingPhoto ? 'Processing…' : 'Estimating…'}
           </span>
         )}
@@ -263,7 +262,7 @@ export default function CameraMode({
       <Field
         label={
           <>
-            Comment <span className="font-normal text-stone-400">(optional)</span>
+            Comment <span className="font-normal text-content-faint">(optional)</span>
           </>
         }
       >
@@ -295,7 +294,7 @@ export default function CameraMode({
       )}
 
       {(error || processError) && (
-        <p className="text-sm text-red-600 dark:text-red-400">{error ?? processError}</p>
+        <p className="text-sm text-danger">{error ?? processError}</p>
       )}
     </Takeover>
   )

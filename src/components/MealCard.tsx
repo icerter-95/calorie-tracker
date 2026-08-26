@@ -35,10 +35,10 @@ export default function MealCard({ meal, hideMealType, from = '/' }: MealCardPro
           openDetail()
         }
       }}
-      className="flex items-start gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-stone-200 transition hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-700 dark:hover:bg-stone-800/80"
+      className="flex items-start gap-3 rounded-2xl bg-raised p-3 shadow-sm ring-1 ring-line transition hover:bg-hover"
     >
       {meal.photoUrl ? (
-        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-stone-100 dark:bg-stone-800">
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
           <MealPhoto
             photoUrl={meal.photoUrl}
             alt={meal.description || MEAL_TYPE_LABELS[meal.mealType]}
@@ -48,7 +48,7 @@ export default function MealCard({ meal, hideMealType, from = '/' }: MealCardPro
       ) : (
         <div
           aria-hidden
-          className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-400 dark:bg-stone-800 dark:text-stone-500"
+          className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-muted text-content-faint"
         >
           <span className="text-xs font-medium">No photo</span>
         </div>
@@ -58,23 +58,23 @@ export default function MealCard({ meal, hideMealType, from = '/' }: MealCardPro
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1">
             {!hideMealType && (
-              <p className="text-[11px] font-medium uppercase tracking-wide text-teal-700 dark:text-teal-400">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-accent-ink">
                 {MEAL_TYPE_LABELS[meal.mealType]}
               </p>
             )}
-            <p className="line-clamp-2 text-sm font-medium leading-snug text-stone-800 dark:text-stone-100">
+            <p className="line-clamp-2 text-sm font-medium leading-snug text-content">
               {meal.description || 'Meal'}
             </p>
           </div>
-          <span aria-hidden className="shrink-0 text-stone-400 dark:text-stone-500">
+          <span aria-hidden className="shrink-0 text-content-faint">
             ›
           </span>
         </div>
-        <p className="mt-0.5 text-sm font-semibold text-stone-900 dark:text-stone-50">
+        <p className="mt-0.5 text-sm font-semibold text-content">
           {meal.totalCalories} kcal
         </p>
         {hasMacros && (
-          <p className="text-xs text-stone-500 dark:text-stone-400">
+          <p className="text-xs text-content-subtle">
             P {roundMacro(meal.proteinG)}g · C {roundMacro(meal.carbsG)}g · F{' '}
             {roundMacro(meal.fatG)}g
           </p>

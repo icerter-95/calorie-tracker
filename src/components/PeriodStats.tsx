@@ -31,21 +31,21 @@ export default function PeriodStats({
   ]
 
   return (
-    <div className="rounded-2xl bg-white px-3 py-3 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+    <div className="rounded-2xl bg-raised px-3 py-3 shadow-sm ring-1 ring-line">
       <div className="grid grid-cols-3 gap-2 text-center">
         {rows.map((row) => (
           <div key={row.label} className="min-w-0">
-            <p className="truncate text-3xl font-semibold tabular-nums tracking-tight text-stone-900 dark:text-stone-50">
+            <p className="truncate text-3xl font-semibold tabular-nums tracking-tight text-content">
               {row.value}
             </p>
-            <p className="mt-0.5 text-xs leading-snug text-stone-500 dark:text-stone-400">
+            <p className="mt-0.5 text-xs leading-snug text-content-subtle">
               {row.label}
             </p>
           </div>
         ))}
       </div>
       {footnote && (
-        <p className="mt-2 text-center text-xs text-stone-400 dark:text-stone-500">{footnote}</p>
+        <p className="mt-2 text-center text-xs text-content-faint">{footnote}</p>
       )}
     </div>
   )

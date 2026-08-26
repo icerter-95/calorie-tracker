@@ -43,14 +43,12 @@ export default function Takeover({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex flex-col bg-stone-100 pt-[env(safe-area-inset-top,0px)] dark:bg-stone-950"
+      className="fixed inset-0 z-50 flex flex-col bg-surface pt-[env(safe-area-inset-top,0px)]"
     >
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-stone-200 px-4 py-2 dark:border-stone-800">
+      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-edge px-4 py-2">
         <div className="flex min-w-0 items-center gap-2">
           {leading}
-          <h2 className="truncate text-lg font-semibold text-stone-900 dark:text-stone-50">
-            {title}
-          </h2>
+          <h2 className="truncate text-lg font-semibold text-content">{title}</h2>
         </div>
         <Button variant="ghost" size="sm" onClick={onClose} disabled={closeDisabled}>
           Close

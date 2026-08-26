@@ -14,13 +14,10 @@ const BASE =
   'inline-flex items-center justify-center gap-1.5 font-medium transition-colors disabled:pointer-events-none disabled:opacity-60'
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-teal-700 text-white hover:bg-teal-800',
-  secondary:
-    'bg-white text-stone-700 ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-800 dark:text-stone-100 dark:ring-stone-700 dark:hover:bg-stone-700',
-  ghost:
-    'text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800',
-  destructive:
-    'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40',
+  primary: 'bg-accent text-on-accent hover:bg-accent-hover',
+  secondary: 'bg-field text-content ring-1 ring-line hover:bg-hover',
+  ghost: 'text-content-muted hover:bg-hover',
+  destructive: 'text-danger hover:bg-danger-soft',
 }
 
 const SIZES: Record<ButtonSize, string> = {

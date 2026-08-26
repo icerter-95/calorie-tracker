@@ -67,13 +67,13 @@ export default function WeightHistoryPage() {
   return (
     <div className="space-y-3">
       {(weightsError || actionError) && (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-strong">
           {actionError ?? weightsError}
         </p>
       )}
 
       {entries.length === 0 ? (
-        <p className="rounded-2xl bg-white px-4 py-8 text-center text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
+        <p className="rounded-2xl bg-raised px-4 py-8 text-center text-sm text-content-subtle ring-1 ring-line">
           No weight entries yet.
         </p>
       ) : (
@@ -83,19 +83,19 @@ export default function WeightHistoryPage() {
               <button
                 type="button"
                 onClick={() => openEditForm(entry)}
-                className="flex w-full items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 text-left ring-1 ring-stone-200 transition hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-700 dark:hover:bg-stone-800"
+                className="flex w-full items-center justify-between gap-3 rounded-xl bg-raised px-4 py-3 text-left ring-1 ring-line transition hover:bg-hover"
               >
                 <span>
-                  <span className="block font-medium tabular-nums text-stone-900 dark:text-stone-50">
+                  <span className="block font-medium tabular-nums text-content">
                     {entry.weightKg} kg
                   </span>
-                  <span className="block text-sm text-stone-500 dark:text-stone-400">
+                  <span className="block text-sm text-content-subtle">
                     {formatShortDate(entry.date)}
                     {entry.source === 'apple-health' ? ' · Apple Health' : ' · Manual'}
                     {entry.syncedAt ? ` · ${formatSyncLabel(entry.syncedAt)}` : ''}
                   </span>
                 </span>
-                <span aria-hidden className="shrink-0 text-stone-400 dark:text-stone-500">
+                <span aria-hidden className="shrink-0 text-content-faint">
                   ›
                 </span>
               </button>

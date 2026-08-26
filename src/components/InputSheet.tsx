@@ -53,15 +53,15 @@ function SheetRow({
   icon: ReactNode
 }) {
   const className =
-    'flex w-full items-center gap-3 rounded-2xl px-2 py-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800'
+    'flex w-full items-center gap-3 rounded-2xl px-2 py-3 text-left hover:bg-hover'
   const body = (
     <>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-400">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-ink">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-stone-900 dark:text-stone-50">{title}</span>
-        <span className="block text-xs text-stone-500 dark:text-stone-400">{subtitle}</span>
+        <span className="block text-sm font-semibold text-content">{title}</span>
+        <span className="block text-xs text-content-subtle">{subtitle}</span>
       </span>
     </>
   )

@@ -108,16 +108,16 @@ export default function AppleHealthSetup() {
   const connected = Boolean(info)
 
   return (
-    <li className="space-y-3 rounded-2xl bg-white px-4 py-3 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+    <li className="space-y-3 rounded-2xl bg-raised px-4 py-3 shadow-sm ring-1 ring-line">
       {/* Status + Connect / Disconnect */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-medium text-stone-900 dark:text-stone-50">Apple Health</p>
-          <p className="text-sm text-stone-500 dark:text-stone-400">
+          <p className="font-medium text-content">Apple Health</p>
+          <p className="text-sm text-content-subtle">
             Automatic Shortcut sync for weight and steps
           </p>
           {connected && (
-            <p className="mt-1 text-xs text-teal-700 dark:text-teal-400">
+            <p className="mt-1 text-xs text-accent-ink">
               {lastSync ? `Last sync · ${lastSync}` : 'Token ready · waiting for first sync'}
               {info?.tokenPrefix ? ` · ${info.tokenPrefix}…` : ''}
             </p>
@@ -141,14 +141,14 @@ export default function AppleHealthSetup() {
             type="button"
             disabled={busy}
             onClick={() => void handleGenerate()}
-            className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+            className="rounded-lg bg-muted px-2.5 py-1.5 text-xs font-medium text-content-muted hover:bg-hover"
           >
             Regenerate token
           </button>
           <button
             type="button"
             onClick={() => setShowGuide((v) => !v)}
-            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-950/40"
+            className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-accent-ink hover:bg-accent-soft"
           >
             {showGuide ? 'Hide setup' : 'Show setup guide'}
           </button>
@@ -156,18 +156,18 @@ export default function AppleHealthSetup() {
       )}
 
       {plaintextToken && (
-        <div className="space-y-2 rounded-xl bg-amber-50 px-3 py-2 dark:bg-amber-950/30">
+        <div className="space-y-2 rounded-xl bg-health-soft px-3 py-2">
           {/* Shown once after generate — copy into the Shortcut */}
-          <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+          <p className="text-xs font-medium text-health-ink">
             Copy this token now — it won’t be shown again
           </p>
-          <code className="block break-all text-xs text-amber-950 dark:text-amber-100">
+          <code className="block break-all text-xs text-health-ink">
             {plaintextToken}
           </code>
           <button
             type="button"
             onClick={() => void handleCopy('token', plaintextToken)}
-            className="text-xs font-medium text-amber-900 underline dark:text-amber-200"
+            className="text-xs font-medium text-health-ink underline"
           >
             {copied === 'token' ? 'Copied' : 'Copy token'}
           </button>
@@ -175,9 +175,9 @@ export default function AppleHealthSetup() {
       )}
 
       {showGuide && endpoint && anonKey && (
-        <div className="space-y-3 border-t border-stone-200 pt-3 text-sm text-stone-600 dark:border-stone-700 dark:text-stone-300">
+        <div className="space-y-3 border-t border-line pt-3 text-sm text-content-muted">
           {/* JSON shape + copyable URL / anon key for the Shortcut */}
-          <p className="font-medium text-stone-800 dark:text-stone-100">What the Shortcut sends</p>
+          <p className="font-medium text-content">What the Shortcut sends</p>
           <ul className="list-disc space-y-1 pl-4 text-xs leading-relaxed">
             <li>
               <strong>Steps:</strong> today’s cumulative step total from Apple Health (upserts the
@@ -188,20 +188,20 @@ export default function AppleHealthSetup() {
               <strong>Weight (optional):</strong> latest Body Mass + that sample’s own date
             </li>
           </ul>
-          <p className="text-xs text-stone-500 dark:text-stone-400">
+          <p className="text-xs text-content-subtle">
             Build a Shortcut named “Sync Today Steps”, test it once, then add three Time of Day
             Automations (e.g. 12:00 / 18:00 / 22:00) with Ask Before Running off. Tap-by-tap steps
             are in chat for iOS 26.
           </p>
-          <p className="text-xs font-medium text-stone-800 dark:text-stone-100">JSON body shape</p>
-          <code className="block whitespace-pre-wrap break-all rounded-lg bg-stone-100 px-2 py-1.5 text-[10px] text-stone-700 dark:bg-stone-800 dark:text-stone-200">{`{
+          <p className="text-xs font-medium text-content">JSON body shape</p>
+          <code className="block whitespace-pre-wrap break-all rounded-lg bg-muted px-2 py-1.5 text-[10px] text-content-muted">{`{
   "steps": 8421,
   "steps_date": "YYYY-MM-DD"
 }`}</code>
-          <p className="text-xs font-medium text-stone-800 dark:text-stone-100">
+          <p className="text-xs font-medium text-content">
             Success looks like this (from Get Contents of URL, not the Text JSON)
           </p>
-          <code className="block whitespace-pre-wrap break-all rounded-lg bg-stone-100 px-2 py-1.5 text-[10px] text-stone-700 dark:bg-stone-800 dark:text-stone-200">{`{
+          <code className="block whitespace-pre-wrap break-all rounded-lg bg-muted px-2 py-1.5 text-[10px] text-content-muted">{`{
   "ok": true,
   "steps": [{ "date": "YYYY-MM-DD", "steps": 8421 }]
 }`}</code>
@@ -218,7 +218,7 @@ export default function AppleHealthSetup() {
             copied={copied === 'anon'}
             onCopy={() => void handleCopy('anon', anonKey)}
           />
-          <p className="text-xs text-stone-500 dark:text-stone-400">
+          <p className="text-xs text-content-subtle">
             The anon key is safe in the Shortcut (same key the website uses). Keep your personal
             sync token private.
           </p>
@@ -226,7 +226,7 @@ export default function AppleHealthSetup() {
       )}
 
       {error && (
-        <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
+        <p className="text-xs text-danger">{error}</p>
       )}
     </li>
   )
@@ -247,16 +247,16 @@ function CopyRow({
   return (
     <div className="space-y-1">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-medium text-stone-700 dark:text-stone-200">{label}</p>
+        <p className="text-xs font-medium text-content-muted">{label}</p>
         <button
           type="button"
           onClick={onCopy}
-          className="text-xs font-medium text-teal-700 dark:text-teal-400"
+          className="text-xs font-medium text-accent-ink"
         >
           {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <code className="block break-all rounded-lg bg-stone-100 px-2 py-1.5 text-[10px] text-stone-700 dark:bg-stone-800 dark:text-stone-200">
+      <code className="block break-all rounded-lg bg-muted px-2 py-1.5 text-[10px] text-content-muted">
         {value}
       </code>
     </div>

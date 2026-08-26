@@ -125,7 +125,6 @@ export default function VoicePanel({
 
   const footer = (
     <ActionBar
-      tone="page"
       tools={
         <>
           <FavoriteToggle
@@ -205,7 +204,7 @@ export default function VoicePanel({
       )}
 
       {!speechAvailable && (
-        <p className="text-xs text-stone-500 dark:text-stone-400">
+        <p className="text-xs text-content-subtle">
           Voice isn’t available here — type the meal instead.
         </p>
       )}
@@ -228,7 +227,7 @@ export default function VoicePanel({
       )}
 
       {(error || speechError) && (
-        <p className="text-sm text-red-600 dark:text-red-400">{error ?? speechError}</p>
+        <p className="text-sm text-danger">{error ?? speechError}</p>
       )}
     </Takeover>
   )

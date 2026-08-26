@@ -18,8 +18,8 @@ const SIZE_CLASS = {
 } as const
 
 const TONE_CLASS = {
-  primary: 'bg-teal-700',
-  muted: 'bg-stone-400',
+  primary: 'bg-accent',
+  muted: 'bg-content-faint',
 } as const
 
 export default function UserAvatar({

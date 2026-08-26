@@ -130,19 +130,19 @@ export default function MealDetailPage() {
   }
 
   if (meal === undefined) {
-    return <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
+    return <p className="text-sm text-content-subtle">Loading…</p>
   }
 
   if (!meal) {
     return (
       <div className="space-y-3">
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-strong">
           {error ?? 'Meal not found.'}
         </p>
         <button
           type="button"
           onClick={() => navigate(fromPath)}
-          className="text-sm font-medium text-teal-700 dark:text-teal-400"
+          className="text-sm font-medium text-accent-ink"
         >
           Go back
         </button>
@@ -157,12 +157,12 @@ export default function MealDetailPage() {
   return (
     <div className="space-y-4">
       {(error || actionError) && (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-strong">
           {actionError ?? error}
         </p>
       )}
 
-      <article className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      <article className="overflow-hidden rounded-2xl bg-raised shadow-sm ring-1 ring-line">
         {meal.photoUrl && (
           <MealPhoto
             photoUrl={meal.photoUrl}
@@ -174,20 +174,20 @@ export default function MealDetailPage() {
         <div className="space-y-3 p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-medium uppercase tracking-wide text-teal-700 dark:text-teal-400">
+              <p className="text-xs font-medium uppercase tracking-wide text-accent-ink">
                 {MEAL_TYPE_LABELS[meal.mealType]}
               </p>
-              <p className="text-xs text-stone-500 dark:text-stone-400">
+              <p className="text-xs text-content-subtle">
                 {formatDisplayDate(meal.date)}
               </p>
-              <h2 className="mt-1 text-lg font-semibold text-stone-900 dark:text-stone-50">
+              <h2 className="mt-1 text-lg font-semibold text-content">
                 {meal.description || 'Meal'}
               </h2>
-              <p className="text-2xl font-semibold text-stone-900 dark:text-stone-50">
+              <p className="text-2xl font-semibold text-content">
                 {meal.totalCalories} kcal
               </p>
               {hasMacros && (
-                <p className="text-sm text-stone-500 dark:text-stone-400">
+                <p className="text-sm text-content-subtle">
                   P {roundMacro(meal.proteinG)}g · C {roundMacro(meal.carbsG)}g · F{' '}
                   {roundMacro(meal.fatG)}g
                 </p>
@@ -200,7 +200,7 @@ export default function MealDetailPage() {
                 disabled={favoriteBusy}
                 aria-pressed={Boolean(savedFavorite)}
                 aria-label={savedFavorite ? 'Remove from favorites' : 'Save as favorite'}
-                className="rounded-lg p-1.5 text-teal-700 hover:bg-teal-50 disabled:opacity-60 dark:text-teal-400 dark:hover:bg-teal-950/40"
+                className="rounded-lg p-1.5 text-accent-ink hover:bg-accent-soft disabled:opacity-60"
               >
                 <FavoriteHeart filled={Boolean(savedFavorite)} />
               </button>
@@ -215,7 +215,7 @@ export default function MealDetailPage() {
               {meal.ingredients.map((tag) => (
                 <span
                   key={tag}
-                  className="rounded-md bg-stone-100 px-1.5 py-0.5 text-[11px] font-medium text-stone-600 dark:bg-stone-800 dark:text-stone-300"
+                  className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-content-muted"
                 >
                   {tag}
                 </span>
@@ -224,11 +224,11 @@ export default function MealDetailPage() {
           )}
 
           {meal.items.length > 0 && (
-            <ul className="space-y-1 text-sm text-stone-600 dark:text-stone-300">
+            <ul className="space-y-1 text-sm text-content-muted">
               {meal.items.map((item, i) => (
                 <li key={i} className="flex justify-between gap-2">
                   <span>{item.name || 'Item'}</span>
-                  <span className="shrink-0 text-stone-500 dark:text-stone-400">
+                  <span className="shrink-0 text-content-subtle">
                     {item.calories} kcal
                   </span>
                 </li>
@@ -237,7 +237,7 @@ export default function MealDetailPage() {
           )}
 
           {meal.note && (
-            <p className="text-sm italic text-stone-500 dark:text-stone-400">{meal.note}</p>
+            <p className="text-sm italic text-content-subtle">{meal.note}</p>
           )}
         </div>
       </article>

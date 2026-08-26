@@ -74,12 +74,10 @@ export default function Sheet({
   const grabber = (
     <div className="flex shrink-0 flex-col">
       <div className="flex justify-center pt-2">
-        <span className="h-1 w-10 rounded-full bg-stone-300 dark:bg-stone-600" />
+        <span className="h-1 w-10 rounded-full bg-line-strong" />
       </div>
       {title && (
-        <h2 className="px-4 pb-1 pt-2 text-base font-semibold text-stone-900 dark:text-stone-50">
-          {title}
-        </h2>
+        <h2 className="px-4 pb-1 pt-2 text-base font-semibold text-content">{title}</h2>
       )}
     </div>
   )
@@ -100,7 +98,7 @@ export default function Sheet({
         aria-modal="true"
         aria-label={ariaLabel}
         {...(isTall ? {} : dragHandlers)}
-        className={`absolute inset-x-0 mx-auto flex w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-xl dark:bg-stone-900 ${
+        className={`absolute inset-x-0 mx-auto flex w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-raised shadow-xl ${
           dragY === 0 ? 'transition-transform duration-200' : ''
         }`}
         style={{

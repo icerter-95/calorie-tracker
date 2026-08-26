@@ -18,9 +18,9 @@ const SWIPE_THRESHOLD = 0.22
 const SNAP_MS = 220
 
 const DOT_CLASS: Record<Exclude<DayCalorieStatus, 'none'>, string> = {
-  'on-target': 'bg-emerald-500',
-  'in-range': 'bg-amber-400',
-  over: 'bg-red-500',
+  'on-target': 'bg-goal-on-target',
+  'in-range': 'bg-goal-in-range',
+  over: 'bg-goal-over',
 }
 
 interface WeekCalendarProps {
@@ -74,15 +74,15 @@ function WeekStrip({
             onClick={() => {
               if (!suppressClicks) onSelectDate(dateKey)
             }}
-            className="flex flex-col items-center gap-1 rounded-xl py-1.5 transition-colors hover:bg-stone-200/60 dark:hover:bg-stone-800/80"
+            className="flex flex-col items-center gap-1 rounded-xl py-1.5 transition-colors hover:bg-hover/60"
             aria-label={format(date, 'EEEE d MMMM')}
             aria-current={selected ? 'date' : undefined}
           >
             <span
               className={`flex h-7 w-7 items-center justify-center text-xs font-medium ${
                 selected
-                  ? 'rounded-full bg-teal-700 text-white'
-                  : 'text-stone-500 dark:text-stone-400'
+                  ? 'rounded-full bg-accent text-on-accent'
+                  : 'text-content-subtle'
               }`}
             >
               {DAY_LETTERS[index]}
@@ -90,8 +90,8 @@ function WeekStrip({
             <span
               className={`text-sm font-semibold tabular-nums ${
                 selected || isToday
-                  ? 'text-teal-700 dark:text-teal-400'
-                  : 'text-stone-800 dark:text-stone-100'
+                  ? 'text-accent-ink'
+                  : 'text-content'
               }`}
             >
               {format(date, 'd')}
@@ -271,7 +271,7 @@ export default function WeekCalendar({
     <div className="space-y-3">
       {/* Heading + Today / prev / next week */}
       <div className="flex items-center justify-between gap-2">
-        <h2 className="min-w-0 truncate text-2xl font-semibold tracking-tight text-stone-900 dark:text-stone-50">
+        <h2 className="min-w-0 truncate text-2xl font-semibold tracking-tight text-content">
           {heading}
         </h2>
         <div className="flex shrink-0 items-center gap-1">
@@ -279,7 +279,7 @@ export default function WeekCalendar({
             <button
               type="button"
               onClick={() => onSelectDate(today)}
-              className="mr-1 rounded-full bg-teal-50 px-2.5 py-1 text-xs font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100 dark:bg-teal-950/40 dark:text-teal-400 dark:ring-teal-900 dark:hover:bg-teal-950/70"
+              className="mr-1 rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-ink ring-1 ring-accent/25 hover:bg-accent-soft"
             >
               Today
             </button>
@@ -288,7 +288,7 @@ export default function WeekCalendar({
             type="button"
             onClick={() => goWeek(-1)}
             aria-label="Previous week"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-stone-600 hover:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-content-muted hover:bg-hover"
           >
             ‹
           </button>
@@ -296,7 +296,7 @@ export default function WeekCalendar({
             type="button"
             onClick={() => goWeek(1)}
             aria-label="Next week"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-stone-600 hover:bg-stone-200 dark:text-stone-300 dark:hover:bg-stone-800"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-content-muted hover:bg-hover"
           >
             ›
           </button>

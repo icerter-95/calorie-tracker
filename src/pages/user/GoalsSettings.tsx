@@ -75,12 +75,12 @@ export default function GoalsSettings() {
 
   return (
     <div className="space-y-2">
-      <div className="space-y-2 rounded-2xl bg-white px-3 py-2.5 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      <div className="space-y-2 rounded-2xl bg-raised px-3 py-2.5 shadow-sm ring-1 ring-line">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium text-stone-800 dark:text-stone-100">Calories</p>
+          <p className="text-sm font-medium text-content">Calories</p>
           <div className="flex items-center gap-2">
             {goalSaved && (
-              <span className="text-xs font-medium text-teal-700 dark:text-teal-400">Saved</span>
+              <span className="text-xs font-medium text-accent-ink">Saved</span>
             )}
             <Button variant="secondary" size="sm" onClick={startEdit}>
               Edit
@@ -93,12 +93,12 @@ export default function GoalsSettings() {
           <ReadOnlyStat label="Higher limit" value={settings.calorieGoalUpper.toLocaleString()} unit="kcal" />
         </div>
 
-        <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+        <p className="truncate text-xs text-content-subtle">
           Limits set diary dot colors
         </p>
 
-        <div className="border-t border-stone-200 pt-2 dark:border-stone-700">
-          <p className="mb-1.5 text-sm font-medium text-stone-800 dark:text-stone-100">Macros</p>
+        <div className="border-t border-line pt-2">
+          <p className="mb-1.5 text-sm font-medium text-content">Macros</p>
           <div className="grid grid-cols-3 gap-2 text-sm">
             <ReadOnlyStat label="Protein" value={String(settings.proteinGoal)} unit="g" />
             <ReadOnlyStat label="Carbs" value={String(settings.carbsGoal)} unit="g" />
@@ -154,11 +154,11 @@ export default function GoalsSettings() {
                 </Field>
               </div>
 
-              <p className="text-xs text-stone-500 dark:text-stone-400">
+              <p className="text-xs text-content-subtle">
                 Limits set diary dot colors
               </p>
 
-              <div className="grid grid-cols-3 gap-2 border-t border-stone-200 pt-3 dark:border-stone-700">
+              <div className="grid grid-cols-3 gap-2 border-t border-line pt-3">
                 <Field label="Protein" hint="g">
                   <input
                     type="number"
@@ -194,7 +194,7 @@ export default function GoalsSettings() {
                 </Field>
               </div>
 
-              {goalError && <p className="text-sm text-red-600 dark:text-red-400">{goalError}</p>}
+              {goalError && <p className="text-sm text-danger">{goalError}</p>}
             </div>
           </form>
         </Sheet>
@@ -206,9 +206,9 @@ export default function GoalsSettings() {
 function ReadOnlyStat({ label, value, unit }: { label: string; value: string; unit: string }) {
   return (
     <div>
-      <p className="text-xs text-stone-600 dark:text-stone-300">{label}</p>
-      <p className="font-medium text-stone-900 dark:text-stone-50">
-        {value} <span className="font-normal text-stone-500 dark:text-stone-400">{unit}</span>
+      <p className="text-xs text-content-muted">{label}</p>
+      <p className="font-medium text-content">
+        {value} <span className="font-normal text-content-subtle">{unit}</span>
       </p>
     </div>
   )
