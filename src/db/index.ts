@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase'
 import { deleteAllUserMealPhotos, deleteMealPhoto } from '../lib/mealPhotos'
 import { clearDiaryCache } from '../lib/diaryCache'
 import { getCustomRange } from '../lib/dates'
+import { errorMessage, withFavoriteSetupHint } from '../lib/errors'
 import type {
   FavoriteMeal,
   FavoriteMealInput,
@@ -258,6 +259,10 @@ export async function addWeight(entry: WeightInput) {
   if (error) throw error
 }
 
+function throwFavoriteError(error: unknown, fallback: string): never {
+  throw new Error(withFavoriteSetupHint(errorMessage(error, fallback)))
+}
+
 // --- Favorites (saved meals; logging copies onto a new meals row) ---
 export async function fetchFavorites(): Promise<FavoriteMeal[]> {
   const client = requireClient()
@@ -266,7 +271,7 @@ export async function fetchFavorites(): Promise<FavoriteMeal[]> {
     .select('*')
     .order('created_at', { ascending: false })
 
-  if (error) throw error
+  if (error) throwFavoriteError(error, 'Could not load favorites')
   return (data as FavoriteMealRow[]).map(mapFavoriteMealRow)
 }
 
@@ -280,7 +285,7 @@ export async function addFavorite(favorite: FavoriteMealInput): Promise<Favorite
       user_id: userId,
       name: favorite.name,
       photo_url: favorite.photoUrl ?? null,
-      ingredients: favorite.ingredients,
+      ingredients: favorite.ingredients ?? [],
       total_calories: favorite.totalCalories,
       protein_g: favorite.proteinG,
       carbs_g: favorite.carbsG,
@@ -290,7 +295,7 @@ export async function addFavorite(favorite: FavoriteMealInput): Promise<Favorite
     .select('*')
     .single()
 
-  if (error) throw error
+  if (error) throwFavoriteError(error, 'Could not save favorite')
   return mapFavoriteMealRow(data as FavoriteMealRow)
 }
 
@@ -302,10 +307,10 @@ export async function deleteFavorite(id: string) {
     .select('photo_url')
     .eq('id', id)
     .maybeSingle()
-  if (fetchError) throw fetchError
+  if (fetchError) throwFavoriteError(fetchError, 'Could not update favorite')
 
   const { error } = await client.from('favorite_meals').delete().eq('id', id)
-  if (error) throw error
+  if (error) throwFavoriteError(error, 'Could not update favorite')
 
   const photoUrl = (existing as { photo_url: string | null } | null)?.photo_url
   if (photoUrl) {

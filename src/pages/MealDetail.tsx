@@ -12,6 +12,7 @@ import { addFavorite, deleteFavorite, deleteMeal, fetchFavorites, updateMeal } f
 import { useMeal } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import { formatDisplayDate } from '../lib/dates'
+import { errorMessage, withFavoriteSetupHint } from '../lib/errors'
 import { roundMacro } from '../lib/macros'
 import { copyMealPhoto } from '../lib/mealPhotos'
 import type { FavoriteMeal, MealEntry, MealInput } from '../types'
@@ -49,10 +50,16 @@ export default function MealDetailPage() {
     let cancelled = false
     fetchFavorites()
       .then((rows) => {
-        if (!cancelled) setFavorites(rows)
+        if (!cancelled) {
+          setFavorites(rows)
+          setActionError(null)
+        }
       })
-      .catch(() => {
-        if (!cancelled) setFavorites([])
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setFavorites([])
+          setActionError(withFavoriteSetupHint(errorMessage(err, 'Could not load favorites')))
+        }
       })
     return () => {
       cancelled = true
@@ -70,11 +77,19 @@ export default function MealDetailPage() {
         setFavorites((prev) => prev.filter((fav) => fav.id !== existing.id))
         return
       }
-      const photoUrl = meal.photoUrl ? await copyMealPhoto(meal.photoUrl) : undefined
+      // Prefer a duplicated photo; still save the favorite if copy fails.
+      let photoUrl: string | undefined
+      if (meal.photoUrl) {
+        try {
+          photoUrl = await copyMealPhoto(meal.photoUrl)
+        } catch {
+          photoUrl = undefined
+        }
+      }
       const saved = await addFavorite({
         name: meal.description?.trim() || 'Meal',
         photoUrl,
-        ingredients: meal.ingredients,
+        ingredients: meal.ingredients ?? [],
         totalCalories: meal.totalCalories,
         proteinG: meal.proteinG,
         carbsG: meal.carbsG,
@@ -83,7 +98,7 @@ export default function MealDetailPage() {
       })
       setFavorites((prev) => [saved, ...prev])
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not update favorite')
+      setActionError(withFavoriteSetupHint(errorMessage(err, 'Could not update favorite')))
     } finally {
       setFavoriteBusy(false)
     }
