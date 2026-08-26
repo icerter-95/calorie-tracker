@@ -25,7 +25,7 @@ export default function AddMealButtons({ onCamera, onInput }: AddMealButtonsProp
             htmlFor={ADD_MEAL_CAMERA_INPUT_ID}
             onClick={onCamera}
             aria-label="Camera"
-            className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-teal-700 text-white shadow-lg shadow-teal-900/25 ring-4 ring-white dark:ring-stone-950"
+            className="flex h-16 w-16 cursor-pointer items-center justify-center rounded-full bg-accent text-on-accent shadow-lg shadow-teal-900/25 ring-4 ring-chrome"
           >
             <CameraIcon />
           </label>
@@ -34,7 +34,7 @@ export default function AddMealButtons({ onCamera, onInput }: AddMealButtonsProp
             type="button"
             onClick={onInput}
             aria-label="Input"
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-stone-700 shadow-md ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-200 dark:ring-stone-700"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-raised text-content-muted shadow-md ring-1 ring-line"
           >
             <InputIcon />
           </button>

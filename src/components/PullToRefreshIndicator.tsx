@@ -43,7 +43,7 @@ export default function PullToRefreshIndicator({
         aria-label={refreshing ? 'Refreshing' : ready ? 'Release to refresh' : 'Pull to refresh'}
       >
         <svg
-          className={`h-6 w-6 text-teal-700 dark:text-teal-400 ${refreshing ? 'ptr-spinner' : ''}`}
+          className={`h-6 w-6 text-accent-ink ${refreshing ? 'ptr-spinner' : ''}`}
           viewBox="0 0 24 24"
           fill="none"
           style={

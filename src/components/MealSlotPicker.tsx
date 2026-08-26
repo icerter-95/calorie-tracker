@@ -24,8 +24,8 @@ export default function MealSlotPicker({ value, onChange, disabled }: MealSlotPi
             onClick={() => onChange(slot)}
             className={`rounded-lg px-1 py-1.5 text-center text-xs font-medium transition-colors disabled:opacity-60 ${
               selected
-                ? 'bg-teal-700 text-white'
-                : 'bg-stone-100 text-stone-400 hover:text-stone-600 dark:bg-stone-800 dark:text-stone-500 dark:hover:text-stone-300'
+                ? 'bg-accent text-on-accent'
+                : 'bg-muted text-content-faint hover:text-content-muted'
             }`}
           >
             {MEAL_TYPE_LABELS[slot]}

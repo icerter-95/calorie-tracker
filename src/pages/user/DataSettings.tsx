@@ -83,52 +83,52 @@ export default function DataSettings() {
   return (
     <div className="space-y-3">
       {dataError && (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-strong">
           {dataError}
         </p>
       )}
-      <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      <div className="overflow-hidden rounded-2xl bg-raised ring-1 ring-line">
         {/* Backfill tags, load demo data, or wipe the account */}
         <button
           type="button"
           disabled={dataBusy || backfillBusy}
           onClick={() => void handleBackfillIngredients()}
-          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-stone-800 hover:bg-stone-50 disabled:opacity-60 dark:text-stone-100 dark:hover:bg-stone-800"
+          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-content hover:bg-hover disabled:opacity-60"
         >
           Backfill ingredient tags
-          <span className="text-stone-400">→</span>
+          <span className="text-content-faint">→</span>
         </button>
-        <div className="border-t border-stone-100 dark:border-stone-800" />
+        <div className="border-t border-divider" />
         <button
           type="button"
           disabled={dataBusy || backfillBusy}
           onClick={() => void loadSampleData()}
-          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-stone-800 hover:bg-stone-50 disabled:opacity-60 dark:text-stone-100 dark:hover:bg-stone-800"
+          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-content hover:bg-hover disabled:opacity-60"
         >
           Replace with sample data
-          <span className="text-stone-400">→</span>
+          <span className="text-content-faint">→</span>
         </button>
-        <div className="border-t border-stone-100 dark:border-stone-800" />
+        <div className="border-t border-divider" />
         <button
           type="button"
           disabled={dataBusy || backfillBusy}
           onClick={() => void clearCloudData()}
-          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60 dark:text-red-400 dark:hover:bg-red-950/40"
+          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-danger hover:bg-danger-soft disabled:opacity-60"
         >
           Clear all cloud data
-          <span className="text-red-300 dark:text-red-700">→</span>
+          <span className="text-danger/50">→</span>
         </button>
       </div>
       {backfillBusy && backfillProgress && (
-        <p className="text-xs text-stone-500 dark:text-stone-400">
+        <p className="text-xs text-content-subtle">
           Backfilling {backfillProgress.done}/{backfillProgress.total}
           {backfillProgress.currentLabel ? ` — ${backfillProgress.currentLabel}` : ''}
         </p>
       )}
       {backfillMessage && (
-        <p className="text-xs text-teal-700 dark:text-teal-400">{backfillMessage}</p>
+        <p className="text-xs text-accent-ink">{backfillMessage}</p>
       )}
-      <p className="text-xs text-stone-500 dark:text-stone-400">
+      <p className="text-xs text-content-subtle">
         Sample data wipes this account only. Prefer a demo account (switch from the user header),
         then run sample there. Run the SQL migration for `ingredients` before backfill if you have
         not yet.

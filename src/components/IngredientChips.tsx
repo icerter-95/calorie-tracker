@@ -45,7 +45,7 @@ export default function IngredientChips({
       {(onSuggest || !hideLabel) && (
         <div className="flex items-center justify-between gap-2">
           {!hideLabel ? (
-            <span className="text-sm font-medium text-stone-700 dark:text-stone-200">Tags</span>
+            <span className="text-sm font-medium text-content-muted">Tags</span>
           ) : (
             <span className="sr-only">Tags</span>
           )}
@@ -54,7 +54,7 @@ export default function IngredientChips({
               type="button"
               onClick={() => void onSuggest()}
               disabled={disabled || suggesting}
-              className={`text-sm font-medium text-teal-700 hover:text-teal-800 disabled:opacity-60 dark:text-teal-400 ${
+              className={`text-sm font-medium text-accent-ink hover:text-accent-hover disabled:opacity-60 ${
                 hideLabel ? 'ml-auto' : ''
               }`}
             >
@@ -69,14 +69,14 @@ export default function IngredientChips({
           {value.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 rounded-lg bg-stone-100 px-2 py-1 text-xs font-medium text-stone-700 dark:bg-stone-800 dark:text-stone-200"
+              className="inline-flex items-center gap-1 rounded-lg bg-muted px-2 py-1 text-xs font-medium text-content-muted"
             >
               {tag}
               <button
                 type="button"
                 onClick={() => removeTag(tag)}
                 disabled={disabled}
-                className="text-stone-400 hover:text-stone-700 disabled:opacity-50 dark:hover:text-stone-100"
+                className="text-content-faint hover:text-content disabled:opacity-50"
                 aria-label={`Remove ${tag}`}
               >
                 ×
@@ -99,13 +99,13 @@ export default function IngredientChips({
             }
           }}
           placeholder="Add tag"
-          className="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+          className="min-w-0 flex-1 rounded-lg border border-line-strong bg-field px-3 py-2 text-sm text-content"
         />
         <button
           type="button"
           onClick={() => addTag(draft)}
           disabled={disabled || !draft.trim()}
-          className="rounded-lg bg-stone-100 px-3 py-2 text-sm font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-50 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+          className="rounded-lg bg-muted px-3 py-2 text-sm font-medium text-content-muted hover:bg-hover disabled:opacity-50"
         >
           Add
         </button>

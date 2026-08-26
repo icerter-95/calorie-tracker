@@ -3,10 +3,11 @@
  * or add a manual log. Apple Health rows show a sync timestamp.
  */
 import { useCallback, useState } from 'react'
+import WeightSheet, { type WeightPayload } from '../components/WeightSheet'
 import { addWeight, deleteWeight, updateWeight } from '../db'
 import { useAllWeights } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
-import { formatShortDate, todayKey } from '../lib/dates'
+import { formatShortDate } from '../lib/dates'
 import type { WeightEntry } from '../types'
 
 function formatSyncLabel(ts?: number) {
@@ -29,48 +30,32 @@ export default function WeightHistoryPage() {
 
   useRegisterPullToRefresh(pullToRefresh)
   const [editing, setEditing] = useState<WeightEntry | null>(null)
-  const [date, setDate] = useState(todayKey())
-  const [weightKg, setWeightKg] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
 
-  // Open the inline form prefilled, or save/delete a row.
   function openEditForm(entry: WeightEntry) {
     setEditing(entry)
-    setDate(entry.date)
-    setWeightKg(String(entry.weightKg))
     setShowForm(true)
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const parsed = Number(weightKg)
-    if (!parsed || parsed <= 0) return
-
-    const payload = {
-      date,
-      weightKg: parsed,
-    }
-
+  async function handleSave(payload: WeightPayload) {
     setActionError(null)
-    try {
-      if (editing) {
-        await updateWeight(editing.id, payload)
-      } else {
-        await addWeight(payload)
-      }
-      setShowForm(false)
-      setEditing(null)
-      reloadWeights()
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not save weight')
+    if (editing) {
+      await updateWeight(editing.id, payload)
+    } else {
+      await addWeight(payload)
     }
+    setShowForm(false)
+    setEditing(null)
+    reloadWeights()
   }
 
+  // Confirmation lives in the sheet's action bar.
   async function handleDelete(id: string) {
-    if (!window.confirm('Delete this weight entry?')) return
     setActionError(null)
     try {
       await deleteWeight(id)
+      setShowForm(false)
+      setEditing(null)
       reloadWeights()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Could not delete weight')
@@ -82,104 +67,53 @@ export default function WeightHistoryPage() {
   return (
     <div className="space-y-3">
       {(weightsError || actionError) && (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-strong">
           {actionError ?? weightsError}
         </p>
       )}
 
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
-        >
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-stone-900 dark:text-stone-50">
-              {editing ? 'Edit entry' : 'Log weight'}
-            </h2>
-            <button
-              type="button"
-              onClick={() => {
-                setShowForm(false)
-                setEditing(null)
-              }}
-              className="text-sm text-stone-500 dark:text-stone-400"
-            >
-              Cancel
-            </button>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block text-sm">
-              <span className="mb-1 block text-stone-600 dark:text-stone-300">Date</span>
-              <input
-                type="date"
-                required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-              />
-            </label>
-            <label className="block text-sm">
-              <span className="mb-1 block text-stone-600 dark:text-stone-300">Weight (kg)</span>
-              <input
-                type="number"
-                required
-                min={0}
-                step={0.1}
-                value={weightKg}
-                onChange={(e) => setWeightKg(e.target.value)}
-                className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-              />
-            </label>
-          </div>
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-amber-700 py-2 text-sm font-medium text-white hover:bg-amber-800"
-          >
-            Save
-          </button>
-        </form>
-      )}
-
       {entries.length === 0 ? (
-        <p className="rounded-2xl bg-white px-4 py-8 text-center text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
+        <p className="rounded-2xl bg-raised px-4 py-8 text-center text-sm text-content-subtle ring-1 ring-line">
           No weight entries yet.
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="divide-y divide-line">
           {entries.map((entry) => (
-            <li
-              key={entry.id}
-              className="flex items-center justify-between rounded-xl bg-white px-4 py-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
-            >
-              <div>
-                <p className="font-medium tabular-nums text-stone-900 dark:text-stone-50">
-                  {entry.weightKg} kg
-                </p>
-                <p className="text-sm text-stone-500 dark:text-stone-400">
-                  {formatShortDate(entry.date)}
-                  {entry.source === 'apple-health' ? ' · Apple Health' : ' · Manual'}
-                  {entry.syncedAt ? ` · ${formatSyncLabel(entry.syncedAt)}` : ''}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => openEditForm(entry)}
-                  className="text-sm text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-50"
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleDelete(entry.id)}
-                  className="text-sm text-red-600 hover:text-red-700 dark:text-red-400"
-                >
-                  Delete
-                </button>
-              </div>
+            <li key={entry.id}>
+              <button
+                type="button"
+                onClick={() => openEditForm(entry)}
+                className="-mx-1 flex w-[calc(100%+0.5rem)] items-center justify-between gap-3 rounded-xl px-1 py-3 text-left transition hover:bg-hover/70"
+              >
+                <span>
+                  <span className="block text-lg font-semibold tabular-nums tracking-tight text-content">
+                    {entry.weightKg} kg
+                  </span>
+                  <span className="block text-sm text-content-faint">
+                    {formatShortDate(entry.date)}
+                    {entry.source === 'apple-health' ? ' · Apple Health' : ' · Manual'}
+                    {entry.syncedAt ? ` · ${formatSyncLabel(entry.syncedAt)}` : ''}
+                  </span>
+                </span>
+                <span aria-hidden className="shrink-0 text-content-faint">
+                  ›
+                </span>
+              </button>
             </li>
           ))}
         </ul>
+      )}
+
+      {showForm && (
+        <WeightSheet
+          initial={editing}
+          onSave={handleSave}
+          onCancel={() => {
+            setShowForm(false)
+            setEditing(null)
+          }}
+          onDelete={editing ? () => void handleDelete(editing.id) : undefined}
+        />
       )}
     </div>
   )

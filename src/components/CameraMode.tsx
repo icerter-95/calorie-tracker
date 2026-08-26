@@ -5,7 +5,6 @@
  * capture directly without landing here first.
  */
 import { useEffect, useRef, useState } from 'react'
-import { useKeyboardInset, useLockBodyScroll } from '../hooks/useOverlay'
 import { estimateMeal } from '../lib/estimateMeal'
 import { ADD_MEAL_CAMERA_INPUT_ID, ADD_MEAL_LIBRARY_INPUT_ID } from '../lib/addMealInputs'
 import { roundMacro } from '../lib/macros'
@@ -14,6 +13,10 @@ import type { MealInput, MealType } from '../types'
 import FavoriteToggle from './FavoriteToggle'
 import MealEstimateReview from './MealEstimateReview'
 import MealSlotPicker from './MealSlotPicker'
+import ActionBar from './ui/ActionBar'
+import Button, { buttonClass } from './ui/Button'
+import Field, { fieldInputClass } from './ui/Field'
+import Takeover from './ui/Takeover'
 
 interface CameraModeProps {
   date: string
@@ -36,8 +39,6 @@ export default function CameraMode({
   onCancel,
   onSave,
 }: CameraModeProps) {
-  useLockBodyScroll()
-  const keyboardInset = useKeyboardInset()
   const previewUrl = useRef<string | null>(null)
 
   const [preview, setPreview] = useState<string | null>(null)
@@ -163,145 +164,138 @@ export default function CameraMode({
     }
   }
 
+  const footer = (
+    <ActionBar
+      tools={
+        showReview ? (
+          <Button
+            variant="ghost"
+            onClick={() => void handleEstimate()}
+            disabled={!canEstimate}
+            busy={estimating}
+            busyLabel="Estimating…"
+          >
+            Re-estimate
+          </Button>
+        ) : undefined
+      }
+      primary={
+        showReview ? (
+          <Button
+            onClick={() => void handleSave()}
+            disabled={!canSave}
+            busy={saving}
+            busyLabel="Saving…"
+          >
+            Save
+          </Button>
+        ) : (
+          <Button
+            onClick={() => void handleEstimate()}
+            disabled={!canEstimate}
+            busy={estimating}
+            busyLabel="Estimating…"
+          >
+            Estimate
+          </Button>
+        )
+      }
+    />
+  )
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-stone-100 pt-[env(safe-area-inset-top,0px)] dark:bg-stone-950">
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-stone-200 px-4 py-2 dark:border-stone-800">
-        <h2 className="text-lg font-semibold text-stone-900 dark:text-stone-50">Camera</h2>
-        <button
-          type="button"
-          onClick={onCancel}
-          disabled={saving}
-          className="rounded-lg px-2 py-1 text-sm font-medium text-stone-600 hover:bg-stone-200 disabled:opacity-60 dark:text-stone-300 dark:hover:bg-stone-800"
-        >
-          Close
-        </button>
-      </header>
-
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-        <div className="mx-auto w-full max-w-lg space-y-3">
-          {preview ? (
-            <div className="space-y-2">
-              <div className="overflow-hidden rounded-2xl ring-1 ring-stone-200 dark:ring-stone-700">
-                <img src={preview} alt="" className="max-h-64 w-full object-cover" />
-              </div>
-              <div className="flex justify-end">
-                <FavoriteToggle
-                  pressed={asFavorite}
-                  onToggle={() => setAsFavorite((v) => !v)}
-                  disabled={busy}
-                />
-              </div>
-            </div>
-          ) : (
-            <label
-              htmlFor={ADD_MEAL_CAMERA_INPUT_ID}
-              className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-stone-300 bg-white px-4 py-8 text-sm text-stone-500 dark:border-stone-600 dark:bg-stone-900 dark:text-stone-400 ${
-                busy ? 'pointer-events-none opacity-60' : 'cursor-pointer'
-              }`}
-            >
-              {pickingPhoto ? 'Processing…' : 'Take a photo or pick from camera roll'}
-            </label>
-          )}
-
-          <div className="flex flex-wrap items-center gap-2">
-            <label
-              htmlFor={ADD_MEAL_CAMERA_INPUT_ID}
-              className={`rounded-xl bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800 ${
-                busy ? 'pointer-events-none opacity-60' : 'cursor-pointer'
-              }`}
-            >
-              {preview ? 'Retake' : 'Open camera'}
-            </label>
-            <label
-              htmlFor={ADD_MEAL_LIBRARY_INPUT_ID}
-              className={`rounded-xl bg-white px-3 py-2 text-sm font-medium text-stone-700 ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:text-stone-200 dark:ring-stone-700 dark:hover:bg-stone-800 ${
-                busy ? 'pointer-events-none opacity-60' : 'cursor-pointer'
-              }`}
-            >
-              Camera roll
-            </label>
-            {(pickingPhoto || estimating) && (
-              <span className="text-xs text-teal-700 dark:text-teal-400">
-                {pickingPhoto ? 'Processing…' : 'Estimating…'}
-              </span>
-            )}
+    <Takeover title="Camera" onClose={onCancel} closeDisabled={saving} footer={footer}>
+      {preview ? (
+        <div className="space-y-2">
+          <div className="overflow-hidden rounded-2xl ring-1 ring-line">
+            <img src={preview} alt="" className="max-h-64 w-full object-cover" />
           </div>
-
-          <MealSlotPicker value={mealType} onChange={onMealTypeChange} disabled={busy} />
-
-          <label className="block text-sm">
-            <span className="mb-1 block text-stone-600 dark:text-stone-300">
-              Comment <span className="font-normal text-stone-400">(optional)</span>
-            </span>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              disabled={busy}
-              rows={2}
-              placeholder="I ate half of it, only the salad, …"
-              className="w-full resize-none rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 disabled:opacity-60 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-            />
-          </label>
-
-          {showReview && (
-            <MealEstimateReview
-              description={description}
-              onDescriptionChange={setDescription}
-              calories={calories}
-              onCaloriesChange={setCalories}
-              protein={protein}
-              onProteinChange={setProtein}
-              carbs={carbs}
-              onCarbsChange={setCarbs}
-              fat={fat}
-              onFatChange={setFat}
-              ingredients={ingredients}
+          <div className="flex justify-end">
+            <FavoriteToggle
+              pressed={asFavorite}
+              onToggle={() => setAsFavorite((v) => !v)}
               disabled={busy}
             />
-          )}
-
-          {(error || processError) && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error ?? processError}</p>
-          )}
+          </div>
         </div>
+      ) : (
+        <label
+          htmlFor={ADD_MEAL_CAMERA_INPUT_ID}
+          className={`flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-line-strong bg-raised px-4 py-8 text-sm text-content-subtle ${
+            busy ? 'pointer-events-none opacity-60' : 'cursor-pointer'
+          }`}
+        >
+          {pickingPhoto ? 'Processing…' : 'Take a photo or pick from camera roll'}
+        </label>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <label
+          htmlFor={ADD_MEAL_CAMERA_INPUT_ID}
+          className={buttonClass(
+            'primary',
+            'md',
+            busy ? 'pointer-events-none opacity-60' : 'cursor-pointer',
+          )}
+        >
+          {preview ? 'Retake' : 'Open camera'}
+        </label>
+        <label
+          htmlFor={ADD_MEAL_LIBRARY_INPUT_ID}
+          className={buttonClass(
+            'secondary',
+            'md',
+            busy ? 'pointer-events-none opacity-60' : 'cursor-pointer',
+          )}
+        >
+          Camera roll
+        </label>
+        {(pickingPhoto || estimating) && (
+          <span className="text-xs text-accent-ink">
+            {pickingPhoto ? 'Processing…' : 'Estimating…'}
+          </span>
+        )}
       </div>
 
-      <div
-        className="shrink-0 border-t border-stone-200 bg-white px-4 pt-3 dark:border-stone-800 dark:bg-stone-950"
-        style={{ paddingBottom: `calc(0.75rem + env(safe-area-inset-bottom, 0px) + ${keyboardInset}px)` }}
+      <MealSlotPicker value={mealType} onChange={onMealTypeChange} disabled={busy} />
+
+      <Field
+        label={
+          <>
+            Comment <span className="font-normal text-content-faint">(optional)</span>
+          </>
+        }
       >
-        <div className="mx-auto flex w-full max-w-lg items-center gap-2">
-          {showReview ? (
-            <>
-              <button
-                type="button"
-                onClick={() => void handleEstimate()}
-                disabled={!canEstimate}
-                className="rounded-xl px-4 py-3 text-sm font-medium text-stone-600 hover:bg-stone-100 disabled:opacity-60 dark:text-stone-300 dark:hover:bg-stone-800"
-              >
-                Re-estimate
-              </button>
-              <button
-                type="button"
-                onClick={() => void handleSave()}
-                disabled={!canSave}
-                className="flex-1 rounded-xl bg-teal-700 py-3 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
-              >
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => void handleEstimate()}
-              disabled={!canEstimate}
-              className="flex-1 rounded-xl bg-teal-700 py-3 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
-            >
-              {estimating ? 'Estimating…' : 'Estimate'}
-            </button>
-          )}
-        </div>
-      </div>
-    </div>
+        <textarea
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          disabled={busy}
+          rows={2}
+          placeholder="I ate half of it, only the salad, …"
+          className={`${fieldInputClass} resize-none`}
+        />
+      </Field>
+
+      {showReview && (
+        <MealEstimateReview
+          description={description}
+          onDescriptionChange={setDescription}
+          calories={calories}
+          onCaloriesChange={setCalories}
+          protein={protein}
+          onProteinChange={setProtein}
+          carbs={carbs}
+          onCarbsChange={setCarbs}
+          fat={fat}
+          onFatChange={setFat}
+          ingredients={ingredients}
+          disabled={busy}
+        />
+      )}
+
+      {(error || processError) && (
+        <p className="text-sm text-danger">{error ?? processError}</p>
+      )}
+    </Takeover>
   )
 }

@@ -3,6 +3,7 @@
  * meal type, calorie extremes, and ingredient-tag search. Tab is hidden for now.
  */
 import { useCallback, useMemo, useState } from 'react'
+import Button from '../components/ui/Button'
 import { useAllMeals } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import {
@@ -84,8 +85,8 @@ export default function InsightsPage() {
             onClick={() => setRange(r)}
             className={`flex-1 rounded-xl py-2 text-sm font-medium capitalize ${
               range === r
-                ? 'bg-teal-700 text-white'
-                : 'bg-white text-stone-600 ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:text-stone-300 dark:ring-stone-700 dark:hover:bg-stone-800'
+                ? 'bg-accent text-on-accent'
+                : 'bg-raised text-content-muted ring-1 ring-line hover:bg-hover'
             }`}
           >
             This {r}
@@ -93,39 +94,36 @@ export default function InsightsPage() {
         ))}
       </section>
 
-      <p className="text-xs text-stone-500 dark:text-stone-400">
+      <p className="text-xs text-content-subtle">
         Based on {activeDays} day{activeDays === 1 ? '' : 's'} with at least one entry logged.
         Skipped meals only count on those days.
       </p>
 
       {error && (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
+        <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-strong">
           {error}
         </p>
       )}
 
       {meals === undefined ? (
-        <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
+        <p className="text-sm text-content-subtle">Loading…</p>
       ) : (
         <>
           {/* How often breakfast / lunch / dinner was missing on logged days */}
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
               Skipped main meals
             </h2>
             <div className="grid grid-cols-3 gap-2">
               {(['breakfast', 'lunch', 'dinner'] as const).map((slot) => (
-                <div
-                  key={slot}
-                  className="rounded-2xl bg-white p-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
-                >
-                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                <div key={slot} className="min-w-0 py-1">
+                  <p className="text-[10px] uppercase tracking-wider text-content-faint">
                     {MEAL_TYPE_LABELS[slot]}
                   </p>
-                  <p className="text-2xl font-semibold text-stone-900 dark:text-stone-50">
+                  <p className="text-2xl font-semibold tabular-nums tracking-tight text-content">
                     {skips[slot].skipped}
                   </p>
-                  <p className="text-[11px] text-stone-400 dark:text-stone-500">
+                  <p className="text-[11px] text-content-faint">
                     of {skips[slot].skipped + skips[slot].logged} active days
                   </p>
                 </div>
@@ -134,28 +132,28 @@ export default function InsightsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
               Avg calories by slot
             </h2>
-            <div className="space-y-2">
+            <div className="divide-y divide-line">
               {slotAverages.map(({ slot, average, dayCount, entryCount }) => (
                 <div
                   key={slot}
-                  className="flex items-center justify-between rounded-2xl bg-white px-4 py-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
+                  className="flex items-center justify-between py-3"
                 >
                   <div>
-                    <p className="text-sm font-medium text-stone-800 dark:text-stone-100">
+                    <p className="text-sm font-medium text-content">
                       {MEAL_TYPE_LABELS[slot]}
                     </p>
-                    <p className="text-xs text-stone-400 dark:text-stone-500">
+                    <p className="text-xs text-content-faint">
                       {dayCount} day{dayCount === 1 ? '' : 's'} · {entryCount} entr
                       {entryCount === 1 ? 'y' : 'ies'}
                     </p>
                   </div>
-                  <p className="text-lg font-semibold text-stone-900 dark:text-stone-50">
+                  <p className="text-lg font-semibold text-content">
                     {dayCount ? `${average}` : '—'}
                     {dayCount > 0 && (
-                      <span className="ml-1 text-xs font-normal text-stone-400">kcal</span>
+                      <span className="ml-1 text-xs font-normal text-content-faint">kcal</span>
                     )}
                   </p>
                 </div>
@@ -165,7 +163,7 @@ export default function InsightsPage() {
 
           {/* Highest / lowest calorie days in the range */}
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
               Calorie extremes
             </h2>
             <div className="grid grid-cols-2 gap-2">
@@ -176,10 +174,10 @@ export default function InsightsPage() {
 
           {/* Search meals by ingredient tag, plus a top-tags list */}
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
               Days with a food
             </h2>
-            <div className="rounded-2xl bg-white p-4 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+            <div className="border-y border-line py-4">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -189,25 +187,19 @@ export default function InsightsPage() {
                     if (e.key === 'Enter') setSearched(foodQuery)
                   }}
                   placeholder="e.g. chicken"
-                  className="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+                  className="min-w-0 flex-1 rounded-lg border border-line-strong bg-field px-3 py-2 text-sm text-content"
                 />
-                <button
-                  type="button"
-                  onClick={() => setSearched(foodQuery)}
-                  className="rounded-lg bg-teal-700 px-3 py-2 text-sm font-medium text-white hover:bg-teal-800"
-                >
-                  Search
-                </button>
+                <Button onClick={() => setSearched(foodQuery)}>Search</Button>
               </div>
-              <p className="mt-3 text-sm text-stone-700 dark:text-stone-200">
+              <p className="mt-3 text-sm text-content-muted">
                 {normalizedSearch ? (
                   <>
-                    <strong className="text-stone-900 dark:text-stone-50">
+                    <strong className="text-content">
                       {foodStats.days.length}
                     </strong>{' '}
                     day{foodStats.days.length === 1 ? '' : 's'} with{' '}
                     <span className="font-medium">{normalizedSearch}</span>
-                    <span className="text-stone-400">
+                    <span className="text-content-faint">
                       {' '}
                       ({foodStats.mealCount} entr
                       {foodStats.mealCount === 1 ? 'y' : 'ies'})
@@ -218,7 +210,7 @@ export default function InsightsPage() {
                 )}
               </p>
               {foodStats.days.length > 0 && (
-                <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs text-stone-500 dark:text-stone-400">
+                <ul className="mt-2 max-h-32 space-y-1 overflow-y-auto text-xs text-content-subtle">
                   {foodStats.days.map((d) => (
                     <li key={d}>{formatDisplayDate(d)}</li>
                   ))}
@@ -228,11 +220,11 @@ export default function InsightsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
               Top ingredients
             </h2>
             {tops.length === 0 ? (
-              <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
+              <p className="rounded-2xl bg-raised p-4 text-sm text-content-subtle ring-1 ring-line">
                 No ingredient tags yet. Add tags when logging, use Suggest tags, or backfill from
                 User settings.
               </p>
@@ -246,10 +238,10 @@ export default function InsightsPage() {
                       setFoodQuery(tag)
                       setSearched(tag)
                     }}
-                    className="rounded-xl bg-white px-3 py-2 text-sm ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:ring-stone-700 dark:hover:bg-stone-800"
+                    className="rounded-xl bg-raised px-3 py-2 text-sm ring-1 ring-line hover:bg-hover"
                   >
-                    <span className="font-medium text-stone-800 dark:text-stone-100">{tag}</span>
-                    <span className="ml-1.5 text-xs text-stone-400">{days}d</span>
+                    <span className="font-medium text-content">{tag}</span>
+                    <span className="ml-1.5 text-xs text-content-faint">{days}d</span>
                   </button>
                 ))}
               </div>
@@ -270,20 +262,20 @@ function ExtremeCard({
   day: { date: string; totalCalories: number } | null
 }) {
   return (
-    <div className="rounded-2xl bg-white p-3 ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
-      <p className="text-xs text-stone-500 dark:text-stone-400">{label}</p>
+    <div className="min-w-0 py-1">
+      <p className="text-[10px] uppercase tracking-wider text-content-faint">{label}</p>
       {day ? (
         <>
-          <p className="text-lg font-semibold text-stone-900 dark:text-stone-50">
+          <p className="text-2xl font-semibold tabular-nums tracking-tight text-content">
             {day.totalCalories}
-            <span className="ml-1 text-xs font-normal text-stone-400">kcal</span>
+            <span className="ml-1 text-xs font-normal text-content-faint">kcal</span>
           </p>
-          <p className="text-[11px] text-stone-400 dark:text-stone-500">
+          <p className="text-[11px] text-content-faint">
             {formatDisplayDate(day.date)}
           </p>
         </>
       ) : (
-        <p className="mt-1 text-sm text-stone-400">—</p>
+        <p className="mt-1 text-sm text-content-faint">—</p>
       )}
     </div>
   )

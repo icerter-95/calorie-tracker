@@ -68,44 +68,44 @@ export default function AccountSwitcher() {
         aria-expanded={open}
         aria-label="Switch account"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left shadow-sm ring-1 ring-stone-200 transition hover:bg-stone-50 disabled:opacity-60 dark:bg-stone-900 dark:ring-stone-700 dark:hover:bg-stone-800"
+        className="flex w-full items-center gap-3 rounded-2xl bg-raised px-4 py-3 text-left ring-1 ring-line transition hover:bg-hover disabled:opacity-60"
       >
         <UserAvatar name={displayName} avatarUrl={avatarUrl} size="md" />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-semibold text-stone-900 dark:text-stone-50">
+          <p className="truncate text-base font-semibold text-content">
             {displayName}
           </p>
-          <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+          <p className="truncate text-xs text-content-subtle">
             Tap to switch account
           </p>
         </div>
         <span
           aria-hidden
-          className={`inline-block h-2 w-2 shrink-0 border-b-2 border-r-2 border-stone-400 transition-transform dark:border-stone-500 ${open ? 'rotate-[225deg]' : 'rotate-45'}`}
+          className={`inline-block h-2 w-2 shrink-0 border-b-2 border-r-2 border-content-faint transition-transform ${open ? 'rotate-[225deg]' : 'rotate-45'}`}
         />
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-xl bg-white py-1 shadow-lg ring-1 ring-stone-200 dark:bg-stone-800 dark:ring-stone-600"
+          className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-xl bg-field py-1 shadow-lg ring-1 ring-line"
         >
           {/* Current account, other saved accounts, then "Add another" */}
           <div className="px-3 pb-1 pt-1.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-content-faint">
               Current
             </p>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5">
             <UserAvatar name={displayName} avatarUrl={avatarUrl} size="sm" className="!h-8 !w-8 !text-[10px]" />
-            <span className="min-w-0 truncate text-sm font-medium text-stone-800 dark:text-stone-100">
+            <span className="min-w-0 truncate text-sm font-medium text-content">
               {displayName}
             </span>
           </div>
 
           {otherAccounts.length > 0 && (
             <div className="px-3 pb-1 pt-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-stone-400 dark:text-stone-500">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-content-faint">
                 Switch account
               </p>
             </div>
@@ -120,7 +120,7 @@ export default function AccountSwitcher() {
                   setOpen(false)
                   void handleSwitchAccount(account.userId)
                 }}
-                className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-1.5 py-1.5 text-left hover:bg-stone-50 disabled:opacity-60 dark:hover:bg-stone-700"
+                className="flex min-w-0 flex-1 items-center gap-2 rounded-lg px-1.5 py-1.5 text-left hover:bg-hover disabled:opacity-60"
               >
                 <UserAvatar
                   name={account.displayName || account.email}
@@ -129,7 +129,7 @@ export default function AccountSwitcher() {
                   tone="muted"
                   className="!h-8 !w-8 !text-[10px]"
                 />
-                <span className="min-w-0 truncate text-sm font-medium text-stone-800 dark:text-stone-100">
+                <span className="min-w-0 truncate text-sm font-medium text-content">
                   {account.displayName || 'Account'}
                 </span>
               </button>
@@ -138,14 +138,14 @@ export default function AccountSwitcher() {
                 disabled={busy}
                 aria-label={`Remove ${account.displayName || account.email} from this device`}
                 onClick={() => removeSavedAccountFromDevice(account.userId)}
-                className="shrink-0 rounded-lg px-2 py-1 text-xs text-stone-400 hover:bg-stone-100 hover:text-stone-600 dark:hover:bg-stone-700"
+                className="shrink-0 rounded-lg px-2 py-1 text-xs text-content-faint hover:bg-hover hover:text-content-muted"
               >
                 ✕
               </button>
             </div>
           ))}
 
-          <div className="my-1 border-t border-stone-100 dark:border-stone-700" />
+          <div className="my-1 border-t border-divider" />
 
           <button
             type="button"
@@ -155,7 +155,7 @@ export default function AccountSwitcher() {
               setOpen(false)
               void handleAddAccount()
             }}
-            className="block w-full px-3 py-2 text-left text-sm font-medium text-teal-700 hover:bg-teal-50 disabled:opacity-60 dark:text-teal-400 dark:hover:bg-teal-950/30"
+            className="block w-full px-3 py-2 text-left text-sm font-medium text-accent-ink hover:bg-accent-soft disabled:opacity-60"
           >
             Add another account
           </button>
@@ -163,7 +163,7 @@ export default function AccountSwitcher() {
       )}
 
       {error && (
-        <p className="mt-2 text-sm text-red-700 dark:text-red-300">{error}</p>
+        <p className="mt-2 text-sm text-danger-strong">{error}</p>
       )}
     </div>
   )

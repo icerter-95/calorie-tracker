@@ -15,10 +15,10 @@ export default function AppearanceSettings() {
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-stone-500 dark:text-stone-400">
+      <p className="text-sm text-content-subtle">
         Choose how the app looks on this device.
       </p>
-      <div className="grid grid-cols-3 gap-2 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+      <div className="grid grid-cols-3 gap-2 rounded-2xl bg-raised p-2 ring-1 ring-line">
         {THEME_OPTIONS.map((option) => {
           const selected = settings.theme === option.value
           return (
@@ -28,14 +28,14 @@ export default function AppearanceSettings() {
               onClick={() => setTheme(option.value)}
               className={`rounded-xl px-2 py-3 text-center transition-colors ${
                 selected
-                  ? 'bg-teal-700 text-white'
-                  : 'text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800'
+                  ? 'bg-accent text-on-accent'
+                  : 'text-content-muted hover:bg-hover'
               }`}
             >
               <span className="block text-sm font-medium">{option.label}</span>
               <span
                 className={`mt-0.5 block text-[10px] leading-tight ${
-                  selected ? 'text-teal-100' : 'text-stone-400 dark:text-stone-500'
+                  selected ? 'text-on-accent-muted' : 'text-content-faint'
                 }`}
               >
                 {option.hint}

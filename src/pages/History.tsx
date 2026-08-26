@@ -1,15 +1,16 @@
 /**
- * Progress. Charts calories (and optional weight) over a date range, then
- * lets you tap a day to see and edit that day's meals.
+ * Progress. Calorie trend over a range. Tap a bar to inspect that day's meals.
+ * Weight can overlay the chart. Steps live on Health.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import CalorieChart from '../components/CalorieChart'
 import MealCard from '../components/MealCard'
 import MealForm from '../components/MealForm'
 import PeriodStats from '../components/PeriodStats'
-import { addMeal, deleteMeal, updateMeal } from '../db'
-import { useAllMeals, useAllSteps, useAllWeights } from '../hooks/useData'
+import { addMeal } from '../db'
+import { useAllMeals, useAllWeights } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
+import { useSettings } from '../hooks/useSettings'
 import {
   buildDailySummaries,
   defaultCustomRange,
@@ -27,30 +28,29 @@ import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
 type Range = 'week' | 'month' | 'custom'
 
 const RANGE_LABELS: Record<Range, string> = {
-  week: 'Last 7 days',
-  month: 'Last 30 days',
+  week: '7 days',
+  month: '30 days',
   custom: 'Custom',
 }
 
 export default function HistoryPage() {
   // Range picker, selected chart day, and add/edit meal state.
   const initialCustom = defaultCustomRange()
-  const [range, setRange] = useState<Range>('week')
+  const [range, setRange] = useState<Range>('month')
   const [customStart, setCustomStart] = useState(initialCustom.start)
   const [customEnd, setCustomEnd] = useState(initialCustom.end)
   const [showWeight, setShowWeight] = useState(true)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
-  const [editingMeal, setEditingMeal] = useState<MealEntry | null>(null)
   const [adding, setAdding] = useState(false)
   const [defaultMealType, setDefaultMealType] = useState<MealType>(defaultMealTypeForNow)
   const [actionError, setActionError] = useState<string | null>(null)
   const { meals, error: mealsError, reload: reloadMeals } = useAllMeals()
   const { weights, error: weightsError, reload: reloadWeights } = useAllWeights()
-  const { steps, error: stepsError, reload: reloadSteps } = useAllSteps()
+  const { settings } = useSettings()
 
   const pullToRefresh = useCallback(async () => {
-    await Promise.all([reloadMeals(), reloadWeights(), reloadSteps()])
-  }, [reloadMeals, reloadWeights, reloadSteps])
+    await Promise.all([reloadMeals(), reloadWeights()])
+  }, [reloadMeals, reloadWeights])
 
   useRegisterPullToRefresh(pullToRefresh)
 
@@ -64,17 +64,14 @@ export default function HistoryPage() {
   useEffect(() => {
     setSelectedDate(null)
     setAdding(false)
-    setEditingMeal(null)
   }, [range, customStart, customEnd])
 
   useEffect(() => {
     setAdding(false)
-    setEditingMeal(null)
   }, [selectedDate])
 
   function closeForm() {
     setAdding(false)
-    setEditingMeal(null)
   }
 
   const summaries = useMemo(
@@ -130,32 +127,18 @@ export default function HistoryPage() {
         )
       : 0
 
-  const stepsInRange = useMemo(() => {
-    const set = new Set(dateKeys)
-    return (steps ?? []).filter((s) => set.has(s.date))
-  }, [steps, dateKeys])
-
-  const finishedSteps = stepsInRange.filter((s) => s.date < today)
-  const stepsAvg =
-    finishedSteps.length > 0
-      ? Math.round(finishedSteps.reduce((sum, s) => sum + s.steps, 0) / finishedSteps.length)
-      : null
-
   const customFootnote =
     range === 'custom' && dateKeys.length > 0
       ? `${formatShortDate(dateKeys[0]!)} – ${formatShortDate(dateKeys[dateKeys.length - 1]!)}`
       : undefined
 
-  const chartHeight = dateKeys.length > 20 ? 320 : 280
+  const chartHeight = dateKeys.length > 20 ? 260 : 200
 
+  // Editing and deleting live on the meal detail page, reached by tapping a card.
   async function handleSave(data: MealInput) {
     setActionError(null)
     try {
-      if (editingMeal) {
-        await updateMeal(editingMeal.id, data)
-      } else {
-        await addMeal(data)
-      }
+      await addMeal(data)
       closeForm()
       reloadMeals()
     } catch (err) {
@@ -164,176 +147,140 @@ export default function HistoryPage() {
   }
 
   function startAdd(slot?: MealType) {
-    setEditingMeal(null)
     setDefaultMealType(slot ?? defaultMealTypeForNow())
     setAdding(true)
   }
 
-  function startEdit(meal: MealEntry) {
-    setAdding(false)
-    setEditingMeal(meal)
-    setDefaultMealType(meal.mealType)
-  }
-
-  async function handleDelete(id: string) {
-    setActionError(null)
-    try {
-      if (editingMeal?.id === id) closeForm()
-      await deleteMeal(id)
-      reloadMeals()
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'Could not delete meal')
-    }
-  }
-
   return (
     <div className="space-y-4">
-      {/* Range buttons + optional custom from/to dates */}
-      <section className="space-y-2">
-        <div className="flex gap-2">
-          {(['week', 'month', 'custom'] as Range[]).map((r) => (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              className={`flex-1 rounded-xl py-2 text-sm font-medium ${
-                range === r
-                  ? 'bg-teal-700 text-white'
-                  : 'bg-white text-stone-600 ring-1 ring-stone-200 hover:bg-stone-50 dark:bg-stone-900 dark:text-stone-300 dark:ring-stone-700 dark:hover:bg-stone-800'
-              }`}
-            >
-              {RANGE_LABELS[r]}
-            </button>
-          ))}
-        </div>
+      <div className="grid grid-cols-3 gap-0.5 rounded-xl bg-muted p-0.5">
+        {(['week', 'month', 'custom'] as Range[]).map((r) => (
+          <button
+            key={r}
+            onClick={() => setRange(r)}
+            className={`rounded-lg py-1.5 text-sm font-medium ${
+              range === r ? 'bg-selected text-content shadow-sm' : 'text-content-muted hover:text-content'
+            }`}
+          >
+            {RANGE_LABELS[r]}
+          </button>
+        ))}
+      </div>
 
-        {range === 'custom' && (
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block min-w-0 text-sm">
-              <span className="mb-1 block text-stone-600 dark:text-stone-300">From</span>
-              <input
-                type="date"
-                value={customStart}
-                max={customEnd}
-                onChange={(e) => setCustomStart(e.target.value)}
-                className="w-full min-w-0 max-w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-              />
-            </label>
-            <label className="block min-w-0 text-sm">
-              <span className="mb-1 block text-stone-600 dark:text-stone-300">To</span>
-              <input
-                type="date"
-                value={customEnd}
-                min={customStart}
-                onChange={(e) => setCustomEnd(e.target.value)}
-                className="w-full min-w-0 max-w-full rounded-lg border border-stone-300 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
-              />
-            </label>
-          </div>
-        )}
-      </section>
+      {range === 'custom' && (
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block min-w-0 text-sm">
+            <span className="mb-1 block text-content-muted">From</span>
+            <input
+              type="date"
+              value={customStart}
+              max={customEnd}
+              onChange={(e) => setCustomStart(e.target.value)}
+              className="w-full min-w-0 max-w-full rounded-lg border border-line-strong bg-field px-2 py-2 text-sm text-content"
+            />
+          </label>
+          <label className="block min-w-0 text-sm">
+            <span className="mb-1 block text-content-muted">To</span>
+            <input
+              type="date"
+              value={customEnd}
+              min={customStart}
+              onChange={(e) => setCustomEnd(e.target.value)}
+              className="w-full min-w-0 max-w-full rounded-lg border border-line-strong bg-field px-2 py-2 text-sm text-content"
+            />
+          </label>
+        </div>
+      )}
 
       <PeriodStats
-        daysLogged={activeDays}
         avgCalories={average}
-        avgSteps={stepsAvg}
+        daysLogged={activeDays}
+        calorieGoalLower={settings.calorieGoalLower}
         footnote={customFootnote}
       />
 
-      <label className="flex items-center gap-2 text-sm text-stone-600 dark:text-stone-300">
-        <input
-          type="checkbox"
-          checked={showWeight}
-          onChange={(e) => setShowWeight(e.target.checked)}
-          className="rounded border-stone-300 text-teal-700 focus:ring-teal-600"
+      <div>
+        <div className="mb-1 flex items-center justify-end">
+          <button
+            type="button"
+            onClick={() => setShowWeight((value) => !value)}
+            aria-pressed={showWeight}
+            className={`text-xs font-medium ${
+              showWeight ? 'text-health-ink' : 'text-content-faint hover:text-content-muted'
+            }`}
+          >
+            {showWeight ? 'Hide weight' : 'Show weight'}
+          </button>
+        </div>
+        <CalorieChart
+          data={summaries}
+          weights={weights ?? []}
+          showWeight={showWeight}
+          height={chartHeight}
+          selectedDate={selectedDate}
+          onDaySelect={setSelectedDate}
         />
-        Overlay weight (kg)
-      </label>
+        {!selectedDate && (
+          <p className="mt-1 text-center text-xs text-content-faint">Tap a day to inspect it</p>
+        )}
+      </div>
 
-      <CalorieChart
-        data={summaries}
-        weights={weights ?? []}
-        showWeight={showWeight}
-        height={chartHeight}
-        selectedDate={selectedDate}
-        onDaySelect={setSelectedDate}
-      />
-
-      <p className="text-center text-xs text-stone-500 dark:text-stone-400">
-        {selectedDate ? 'Selected day — tap another bar to switch' : 'Tap a bar to view meals for that day'}
-      </p>
-
-      {(mealsError || weightsError || stepsError || actionError) && (
-        <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
-          {actionError ?? mealsError ?? weightsError ?? stepsError}
+      {(mealsError || weightsError || actionError) && (
+        <p className="rounded-xl bg-danger-soft px-3 py-2 text-sm text-danger-strong">
+          {actionError ?? mealsError ?? weightsError}
         </p>
       )}
 
       {selectedDate && (
-        <section className="space-y-3">
-          {/* Meals for the day selected on the chart */}
-          <div className="flex items-baseline justify-between px-1">
-            <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-100">
+        <section className="space-y-3 border-t border-line pt-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
               {formatDisplayDate(selectedDate)}
             </h2>
-            <span className="text-sm font-medium text-teal-700 dark:text-teal-400">
+            <span className="text-sm font-semibold tabular-nums text-content">
               {selectedDayTotal} kcal
             </span>
           </div>
 
-          {adding ? (
-            <MealForm
-              defaultDate={selectedDate}
-              defaultMealType={defaultMealType}
-              onSave={handleSave}
-              onCancel={closeForm}
-            />
-          ) : (
-            <button
-              type="button"
-              onClick={() => startAdd()}
-              className="w-full rounded-2xl bg-white py-3 text-sm font-medium text-teal-700 shadow-sm ring-1 ring-stone-200 hover:bg-teal-50 dark:bg-stone-900 dark:text-teal-400 dark:ring-stone-700 dark:hover:bg-stone-800"
-            >
-              + Add meal
-            </button>
-          )}
-
           {meals === undefined ? (
-            <p className="text-sm text-stone-500 dark:text-stone-400">Loading…</p>
+            <p className="text-sm text-content-subtle">Loading…</p>
           ) : selectedDayMeals.length === 0 ? (
-            <p className="rounded-2xl bg-white p-4 text-sm text-stone-500 ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-400 dark:ring-stone-700">
-              No entries on this day. Tap “Add meal” to log one.
-            </p>
+            <p className="text-sm text-content-faint">No meals this day.</p>
           ) : (
             MEAL_TYPE_ORDER.map((slot) => {
               const slotMeals = selectedBySlot[slot]
               if (slotMeals.length === 0) return null
               return (
-                <div key={slot} className="space-y-2">
-                  <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
+                <div key={slot}>
+                  <h3 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
                     {MEAL_TYPE_LABELS[slot]}
                   </h3>
-                  {slotMeals.map((meal) => (
-                    <MealCard
-                      key={meal.id}
-                      meal={meal}
-                      hideMealType
-                      from="/progress"
-                      onEdit={() => startEdit(meal)}
-                    />
-                  ))}
+                  <div className="divide-y divide-line">
+                    {slotMeals.map((meal) => (
+                      <MealCard key={meal.id} meal={meal} hideMealType from="/progress" />
+                    ))}
+                  </div>
                 </div>
               )
             })
           )}
+
+          <button
+            type="button"
+            onClick={() => startAdd()}
+            className="text-sm font-medium text-accent-ink hover:text-accent-hover"
+          >
+            Add meal
+          </button>
         </section>
       )}
 
-      {editingMeal && (
+      {adding && selectedDate && (
         <MealForm
-          initial={editingMeal}
+          defaultDate={selectedDate}
+          defaultMealType={defaultMealType}
           onSave={handleSave}
           onCancel={closeForm}
-          onDelete={() => handleDelete(editingMeal.id)}
         />
       )}
     </div>

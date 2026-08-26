@@ -5,6 +5,7 @@
 import { useState } from 'react'
 import { AuthEmailNotConfirmedError, useAuth } from '../auth/AuthProvider'
 import UserAvatar from '../components/UserAvatar'
+import Button from '../components/ui/Button'
 
 type SignInMethod = 'email' | 'username'
 
@@ -40,18 +41,18 @@ export default function LoginPage() {
   if (!configured) {
     return (
       <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-4">
-        <div className="space-y-3 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
-          <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Setup required</h1>
-          <p className="text-sm text-stone-600 dark:text-stone-300">
-            Add your Supabase keys to <code className="rounded bg-stone-100 px-1 dark:bg-stone-800">.env.local</code>,
+        <div className="space-y-3 rounded-2xl bg-raised p-6 ring-1 ring-line">
+          <h1 className="text-xl font-semibold text-content">Setup required</h1>
+          <p className="text-sm text-content-muted">
+            Add your Supabase keys to <code className="rounded bg-muted px-1">.env.local</code>,
             then restart the dev server.
           </p>
-          <ol className="list-decimal space-y-1 pl-5 text-sm text-stone-600 dark:text-stone-300">
+          <ol className="list-decimal space-y-1 pl-5 text-sm text-content-muted">
             <li>Create a project at supabase.com</li>
-            <li>Run <code className="rounded bg-stone-100 px-1 dark:bg-stone-800">supabase/schema.sql</code> in the SQL Editor</li>
+            <li>Run <code className="rounded bg-muted px-1">supabase/schema.sql</code> in the SQL Editor</li>
             <li>
               Copy URL + publishable/anon key into{' '}
-              <code className="rounded bg-stone-100 px-1 dark:bg-stone-800">.env.local</code>
+              <code className="rounded bg-muted px-1">.env.local</code>
             </li>
           </ol>
         </div>
@@ -147,7 +148,7 @@ export default function LoginPage() {
             type="button"
             disabled={Boolean(switchingId)}
             onClick={() => void handleSwitch(backAccount.userId)}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-teal-700 px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-teal-800 disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-accent px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-accent-hover disabled:opacity-60"
           >
             <span aria-hidden>←</span>
             {switchingId === backAccount.userId
@@ -158,22 +159,22 @@ export default function LoginPage() {
       )}
 
       {savedAccounts.length > 0 && (
-        <section className="mb-4 space-y-2 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+        <section className="mb-4 space-y-2 rounded-2xl bg-raised p-4 ring-1 ring-line">
           {/* One-tap switch using tokens saved on this device */}
-          <h2 className="text-sm font-semibold text-stone-900 dark:text-stone-50">
+          <h2 className="text-sm font-semibold text-content">
             Continue as
           </h2>
-          <p className="text-xs text-stone-500 dark:text-stone-400">
+          <p className="text-xs text-content-subtle">
             Tap a saved account to switch without typing the password again.
           </p>
-          <ul className="divide-y divide-stone-100 dark:divide-stone-800">
+          <ul className="divide-y divide-divider">
             {savedAccounts.map((account) => (
               <li key={account.userId} className="flex items-center gap-2 py-2">
                 <button
                   type="button"
                   disabled={Boolean(switchingId)}
                   onClick={() => void handleSwitch(account.userId)}
-                  className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-1 py-1 text-left hover:bg-stone-50 disabled:opacity-60 dark:hover:bg-stone-800"
+                  className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-1 py-1 text-left hover:bg-hover disabled:opacity-60"
                 >
                   <UserAvatar
                     name={account.displayName || account.email}
@@ -181,12 +182,12 @@ export default function LoginPage() {
                     size="sm"
                   />
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium text-stone-900 dark:text-stone-50">
+                    <span className="block truncate text-sm font-medium text-content">
                       {switchingId === account.userId
                         ? 'Switching…'
                         : account.displayName || 'Account'}
                     </span>
-                    <span className="block truncate text-xs text-stone-500 dark:text-stone-400">
+                    <span className="block truncate text-xs text-content-subtle">
                       {account.email}
                     </span>
                   </span>
@@ -195,7 +196,7 @@ export default function LoginPage() {
                   type="button"
                   disabled={Boolean(switchingId)}
                   onClick={() => removeSavedAccountFromDevice(account.userId)}
-                  className="shrink-0 rounded-lg px-2 py-1 text-xs text-stone-400 hover:bg-stone-100 hover:text-stone-600 dark:hover:bg-stone-800"
+                  className="shrink-0 rounded-lg px-2 py-1 text-xs text-content-faint hover:bg-hover hover:text-content-muted"
                   aria-label={`Remove ${account.email} from this device`}
                 >
                   Remove
@@ -209,11 +210,11 @@ export default function LoginPage() {
       {/* Email or username form for a new / restored session */}
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-2xl bg-white p-6 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700"
+        className="space-y-4 rounded-2xl bg-raised p-6 ring-1 ring-line"
       >
         <div>
-          <h1 className="text-xl font-semibold text-stone-900 dark:text-stone-50">Calorie Tracker</h1>
-          <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+          <h1 className="text-xl font-semibold text-content">Calorie Tracker</h1>
+          <p className="mt-1 text-sm text-content-subtle">
             {savedAccounts.length > 0
               ? mode === 'signin'
                 ? 'Or sign in to add / restore an account.'
@@ -225,7 +226,7 @@ export default function LoginPage() {
         </div>
 
         {mode === 'signin' && (
-          <div className="grid grid-cols-2 gap-1 rounded-xl bg-stone-100 p-1 dark:bg-stone-800">
+          <div className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1">
             <button
               type="button"
               onClick={() => {
@@ -234,8 +235,8 @@ export default function LoginPage() {
               }}
               className={`rounded-lg py-1.5 text-sm font-medium transition-colors ${
                 signInMethod === 'username'
-                  ? 'bg-white text-stone-900 shadow-sm dark:bg-stone-700 dark:text-stone-50'
-                  : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
+                  ? 'bg-selected text-content shadow-sm'
+                  : 'text-content-subtle hover:text-content-muted'
               }`}
             >
               Username
@@ -248,8 +249,8 @@ export default function LoginPage() {
               }}
               className={`rounded-lg py-1.5 text-sm font-medium transition-colors ${
                 signInMethod === 'email'
-                  ? 'bg-white text-stone-900 shadow-sm dark:bg-stone-700 dark:text-stone-50'
-                  : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
+                  ? 'bg-selected text-content shadow-sm'
+                  : 'text-content-subtle hover:text-content-muted'
               }`}
             >
               Email
@@ -259,7 +260,7 @@ export default function LoginPage() {
 
         {(mode === 'signup' || usingUsername) && (
           <label className="block text-sm">
-            <span className="mb-1 block text-stone-600 dark:text-stone-300">Username</span>
+            <span className="mb-1 block text-content-muted">Username</span>
             <input
               type="text"
               required
@@ -270,10 +271,10 @@ export default function LoginPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="e.g. ignasi"
-              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+              className="w-full rounded-lg border border-line-strong bg-field px-3 py-2 text-sm text-content"
             />
             {mode === 'signup' && (
-              <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">
+              <span className="mt-1 block text-xs text-content-subtle">
                 Your name in the app and for signing in. 3–20 chars, letters/numbers/_.
               </span>
             )}
@@ -282,7 +283,7 @@ export default function LoginPage() {
 
         {(mode === 'signup' || !usingUsername) && (
           <label className="block text-sm">
-            <span className="mb-1 block text-stone-600 dark:text-stone-300">Email</span>
+            <span className="mb-1 block text-content-muted">Email</span>
             <input
               type="email"
               required
@@ -292,10 +293,10 @@ export default function LoginPage() {
               spellCheck={false}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+              className="w-full rounded-lg border border-line-strong bg-field px-3 py-2 text-sm text-content"
             />
             {mode === 'signup' && (
-              <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">
+              <span className="mt-1 block text-xs text-content-subtle">
                 We will send a confirmation link to this address. Each email must be unique.
               </span>
             )}
@@ -303,7 +304,7 @@ export default function LoginPage() {
         )}
 
         <label className="block text-sm">
-          <span className="mb-1 block text-stone-600 dark:text-stone-300">
+          <span className="mb-1 block text-content-muted">
             {usingUsername ? 'Passcode' : 'Password'}
           </span>
           <input
@@ -313,35 +314,37 @@ export default function LoginPage() {
             autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
+            className="w-full rounded-lg border border-line-strong bg-field px-3 py-2 text-sm text-content"
           />
           {usingUsername && (
-            <span className="mt-1 block text-xs text-stone-500 dark:text-stone-400">
+            <span className="mt-1 block text-xs text-content-subtle">
               Same as your account password. Change it in Profile → Account info.
             </span>
           )}
         </label>
 
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-        {info && <p className="text-sm text-teal-700 dark:text-teal-400">{info}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
+        {info && <p className="text-sm text-accent-ink">{info}</p>}
         {pendingConfirmEmail && (
           <button
             type="button"
             disabled={busy || resendBusy || Boolean(switchingId)}
             onClick={() => void handleResendConfirmation()}
-            className="w-full text-sm text-teal-800 hover:text-teal-950 disabled:opacity-60 dark:text-teal-400 dark:hover:text-teal-200"
+            className="w-full text-sm text-accent-ink hover:text-accent-hover disabled:opacity-60"
           >
             {resendBusy ? 'Sending…' : 'Resend confirmation email'}
           </button>
         )}
 
-        <button
+        <Button
           type="submit"
           disabled={busy || Boolean(switchingId)}
-          className="w-full rounded-xl bg-teal-700 py-2.5 text-sm font-medium text-white hover:bg-teal-800 disabled:opacity-60"
+          busy={busy}
+          busyLabel="Please wait…"
+          className="w-full"
         >
-          {busy ? 'Please wait…' : mode === 'signin' ? 'Sign in' : 'Create account'}
-        </button>
+          {mode === 'signin' ? 'Sign in' : 'Create account'}
+        </Button>
 
         <button
           type="button"
@@ -352,7 +355,7 @@ export default function LoginPage() {
             setInfo(null)
             setPendingConfirmEmail(null)
           }}
-          className="w-full text-sm text-stone-600 hover:text-stone-900 disabled:opacity-60 dark:text-stone-400 dark:hover:text-stone-200"
+          className="w-full text-sm text-content-muted hover:text-content disabled:opacity-60"
         >
           {mode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
         </button>

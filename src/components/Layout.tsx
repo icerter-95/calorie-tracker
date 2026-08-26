@@ -15,14 +15,13 @@ import PullToRefreshIndicator from './PullToRefreshIndicator'
 import UserAvatar from './UserAvatar'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `flex flex-1 flex-col items-center gap-0.5 pt-1.5 pb-1 text-[11px] font-medium leading-tight transition-colors ${
+  `flex flex-1 flex-col items-center gap-0.5 pt-1 pb-1 text-[10px] font-medium leading-tight transition-colors ${
     isActive
-      ? 'text-teal-700 dark:text-teal-400'
-      : 'text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200'
+      ? 'text-accent-ink'
+      : 'text-content-subtle hover:text-content-muted'
   }`
 
-// Titles used in the header / back button depending on the current route.
-const PAGE_LABELS: Record<string, string> = {
+const TAB_TITLES: Record<string, string> = {
   '/': 'Diary',
   '/progress': 'Progress',
   '/history': 'Progress',
@@ -74,10 +73,11 @@ export default function Layout() {
   const backLabel = isUserSubpage
     ? 'Profile'
     : isMealDetail
-      ? (fromPath && PAGE_LABELS[fromPath]) || 'Back'
+      ? (fromPath && TAB_TITLES[fromPath]) || 'Back'
       : isFixedStackPage
         ? STACK_PAGE_BACK[location.pathname] ?? 'Back'
-        : (fromPath && PAGE_LABELS[fromPath]) || 'Back'
+        : (fromPath && TAB_TITLES[fromPath]) || 'Back'
+  const tabTitle = TAB_TITLES[location.pathname] ?? 'Diary'
   const sectionTitle = isMealDetail
     ? 'Meal'
     : isFixedStackPage
@@ -161,44 +161,44 @@ export default function Layout() {
       observer.disconnect()
       document.documentElement.style.removeProperty('--app-header-height')
     }
-  }, [hidesTabBar, name, sectionTitle])
+  }, [hidesTabBar, name, sectionTitle, tabTitle])
 
   return (
     <div
       ref={shellRef}
-      className="mx-auto flex min-h-dvh w-full max-w-lg flex-col overflow-x-hidden bg-stone-100 dark:bg-stone-950"
+      className="mx-auto flex min-h-dvh w-full max-w-lg flex-col overflow-x-hidden bg-surface"
     >
-      {/* Sticky top bar: greeting + avatar, or back + section title */}
+      {/* Sticky top bar: page title + avatar, or back + section title */}
       <header
         ref={headerRef}
-        className="sticky top-0 z-20 border-b border-stone-200 bg-white/90 px-4 py-2 backdrop-blur dark:border-stone-800 dark:bg-stone-950/90"
+        className="sticky top-0 z-20 border-b border-edge bg-chrome/90 px-4 py-1.5 backdrop-blur"
       >
         {hidesTabBar ? (
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={goBack}
-              className="-ml-1 flex items-center gap-1 rounded-lg px-1.5 py-1 text-sm font-medium text-teal-700 hover:bg-teal-50 dark:text-teal-400 dark:hover:bg-teal-950/40"
+              className="-ml-1 flex items-center gap-1 rounded-lg px-1.5 py-1 text-sm font-medium text-accent-ink hover:bg-accent-soft"
             >
               <span aria-hidden className="text-lg leading-none">
                 ←
               </span>
               <span>{backLabel}</span>
             </button>
-            <h1 className="min-w-0 flex-1 truncate text-right text-lg font-semibold text-stone-900 dark:text-stone-50">
+            <h1 className="min-w-0 flex-1 truncate text-right text-base font-semibold text-content">
               {sectionTitle}
             </h1>
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3">
-            <h1 className="min-w-0 truncate text-lg font-semibold text-stone-900 dark:text-stone-50">
-              keep it up, {name}
+            <h1 className="min-w-0 truncate text-base font-semibold text-content">
+              {tabTitle}
             </h1>
             <button
               type="button"
               onClick={openUser}
               aria-label="Open profile"
-              className="shrink-0 rounded-full ring-2 ring-transparent transition hover:ring-teal-600/40 focus-visible:outline-none focus-visible:ring-teal-600"
+              className="shrink-0 rounded-full ring-2 ring-transparent transition hover:ring-accent/40 focus-visible:outline-none focus-visible:ring-accent"
             >
               <UserAvatar name={name} avatarUrl={avatarUrl} size="sm" />
             </button>
@@ -214,23 +214,31 @@ export default function Layout() {
         />
         <main
           ref={mainRef}
-          className={`will-change-transform px-4 py-4 ${hidesTabBar ? 'pb-8' : 'pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]'}`}
+          className={`will-change-transform px-4 py-3 ${hidesTabBar ? 'pb-8' : 'pb-[calc(4.75rem+env(safe-area-inset-bottom,0px))]'}`}
         >
           <Outlet context={outletContext} />
         </main>
       </div>
 
       {!hidesTabBar && (
-        <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-stone-200 bg-white pb-[env(safe-area-inset-bottom,0px)] dark:border-stone-800 dark:bg-stone-950">
+        <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-edge bg-chrome pb-[env(safe-area-inset-bottom,0px)]">
           {/* Diary / Progress / Health — Insights tab is temporarily hidden */}
           <div className="mx-auto flex max-w-lg items-center">
             <NavLink to="/" end className={linkClass}>
-              <DiaryIcon />
-              Diary
+              {({ isActive }) => (
+                <>
+                  <DiaryIcon active={isActive} />
+                  Diary
+                </>
+              )}
             </NavLink>
             <NavLink to="/progress" className={linkClass}>
-              <ProgressIcon />
-              Progress
+              {({ isActive }) => (
+                <>
+                  <ProgressIcon active={isActive} />
+                  Progress
+                </>
+              )}
             </NavLink>
             {/* Temporarily hidden — route and page kept for later */}
             {false && (
@@ -239,8 +247,12 @@ export default function Layout() {
               </NavLink>
             )}
             <NavLink to="/health" className={linkClass}>
-              <HealthIcon />
-              Health
+              {({ isActive }) => (
+                <>
+                  <HealthIcon active={isActive} />
+                  Health
+                </>
+              )}
             </NavLink>
           </div>
         </nav>

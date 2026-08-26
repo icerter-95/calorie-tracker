@@ -21,7 +21,7 @@ export default function FavoriteToggle({
       disabled={disabled}
       aria-pressed={pressed}
       aria-label={pressed ? 'Saved as favorite' : 'Save as favorite'}
-      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl p-2 text-teal-700 hover:bg-teal-50 disabled:opacity-60 dark:text-teal-400 dark:hover:bg-teal-950/40"
+      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl p-2 text-accent-ink hover:bg-accent-soft disabled:opacity-60"
     >
       <FavoriteHeart filled={pressed} size={size} />
     </button>

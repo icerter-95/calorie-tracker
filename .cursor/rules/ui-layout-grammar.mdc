@@ -1,0 +1,61 @@
+---
+description: Where actions and screens go in the calorie tracker UI
+globs: src/**/*.tsx
+alwaysApply: false
+---
+
+# Layout grammar
+
+Every screen is one of four templates, and every commit action lives in an
+ActionBar. Reuse the primitives in `src/components/ui/` instead of building new
+chrome.
+
+## The action bar rule
+
+`ActionBar` is the only place a screen commits. It is pinned under the scrolling
+body, never inside it, and it clears the keyboard and the home indicator on its
+own.
+
+Three slots, always in this order:
+
+- **destructive** (far left) — Delete / Remove. `variant="destructive" size="sm"`.
+  Confirm with `window.confirm` before calling the handler.
+- **tools** (middle) — secondary actions like Re-estimate or a favorite toggle.
+- **primary** (right) — exactly one. Never two primaries on a screen.
+
+There is no Cancel button. Dismissal is the container's job: drag the sheet
+handle, tap the dimmer, press Escape, or use the takeover's Close.
+
+Forms live inside the scrolling body, so the submit button is outside the
+`<form>`. Wire them with `useId()`:
+
+```tsx
+const formId = useId()
+// body:   <form id={formId} onSubmit={handleSubmit}>…</form>
+// footer: <Button type="submit" form={formId}>Save</Button>
+```
+
+## The four templates
+
+| Template | Primitive | Use for |
+| --- | --- | --- |
+| Composer sheet | `Sheet` (`size="tall"`) | Anything that creates or edits data |
+| Task takeover | `Takeover` | Flows that own the viewport: camera, voice, favorites |
+| Menu sheet | `Sheet` (`size="auto"`) | Short lists of routes; no action bar |
+| Browse page | plain page | Lists, charts, summaries |
+
+A browse row carries no action of its own. Tapping the row opens the record;
+Edit and Delete live in the sheet that opens from there. Do not put Edit buttons
+on cards or list rows.
+
+Errors surface where the action was taken — inside the sheet or takeover, not as
+a page-level banner.
+
+## Buttons
+
+Use `Button` from `src/components/ui/Button`. Variants: `primary`, `secondary`,
+`ghost`, `destructive`. For file pickers that must stay a `<label>` so iOS opens
+native capture, use `buttonClass(...)` with the same variant names.
+
+Use `Field` and `fieldInputClass` from `src/components/ui/Field` for every input
+so labels and controls stay identical across screens.

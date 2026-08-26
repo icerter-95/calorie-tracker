@@ -1,9 +1,10 @@
 /**
- * Bottom sheet for the secondary add path: Voice, Favorites, Camera roll.
+ * Menu sheet for the secondary add path: Voice, Favorites, Camera roll.
+ * Rows navigate straight into a flow, so there is no action bar here.
  */
-import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
-import { useLockBodyScroll } from '../hooks/useOverlay'
+import { type ReactNode } from 'react'
 import { ADD_MEAL_LIBRARY_INPUT_ID } from '../lib/addMealInputs'
+import Sheet from './ui/Sheet'
 
 interface InputSheetProps {
   onVoice: () => void
@@ -11,85 +12,30 @@ interface InputSheetProps {
   onCancel: () => void
 }
 
-export default function InputSheet({
-  onVoice,
-  onFavorites,
-  onCancel,
-}: InputSheetProps) {
-  useLockBodyScroll()
-  const [entered, setEntered] = useState(false)
-  const [dragY, setDragY] = useState(0)
-  const startY = useRef<number | null>(null)
-
-  useEffect(() => {
-    const id = requestAnimationFrame(() => setEntered(true))
-    return () => cancelAnimationFrame(id)
-  }, [])
-
-  function onTouchStart(e: TouchEvent) {
-    startY.current = e.touches[0].clientY
-  }
-
-  function onTouchMove(e: TouchEvent) {
-    if (startY.current == null) return
-    setDragY(Math.max(0, e.touches[0].clientY - startY.current))
-  }
-
-  function onTouchEnd() {
-    if (dragY > 80) onCancel()
-    else setDragY(0)
-    startY.current = null
-  }
-
+export default function InputSheet({ onVoice, onFavorites, onCancel }: InputSheetProps) {
   return (
-    <div className="fixed inset-0 z-50">
-      <button
-        type="button"
-        aria-label="Dismiss"
-        onClick={onCancel}
-        className={`absolute inset-0 bg-black/40 transition-opacity ${entered ? 'opacity-100' : 'opacity-0'}`}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Add meal"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-        className={`absolute inset-x-0 bottom-0 mx-auto w-full max-w-lg rounded-t-3xl bg-white shadow-xl dark:bg-stone-900 ${
-          dragY === 0 ? 'transition-transform duration-200' : ''
-        }`}
-        style={{
-          transform: entered ? `translateY(${dragY}px)` : 'translateY(100%)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        }}
-      >
-        <div className="flex justify-center pt-2">
-          <span className="h-1 w-10 rounded-full bg-stone-300 dark:bg-stone-600" />
-        </div>
-
-        <div className="space-y-1 px-4 pb-5 pt-3">
-          <SheetRow
-            title="Voice"
-            subtitle="Speak what you ate"
-            onClick={onVoice}
-            icon={<MicIcon />}
-          />
-          <SheetRow
-            title="Favorites"
-            subtitle="Log a saved meal"
-            onClick={onFavorites}
-            icon={<HeartIcon />}
-          />
-          <SheetRow
-            title="Camera roll"
-            subtitle="Choose an existing photo"
-            htmlFor={ADD_MEAL_LIBRARY_INPUT_ID}
-            icon={<PhotosIcon />}
-          />
-        </div>
+    <Sheet ariaLabel="Add meal" size="auto" onClose={onCancel}>
+      <div className="space-y-1 px-4 pb-5 pt-3">
+        <SheetRow
+          title="Voice"
+          subtitle="Speak what you ate"
+          onClick={onVoice}
+          icon={<MicIcon />}
+        />
+        <SheetRow
+          title="Favorites"
+          subtitle="Log a saved meal"
+          onClick={onFavorites}
+          icon={<HeartIcon />}
+        />
+        <SheetRow
+          title="Camera roll"
+          subtitle="Choose an existing photo"
+          htmlFor={ADD_MEAL_LIBRARY_INPUT_ID}
+          icon={<PhotosIcon />}
+        />
       </div>
-    </div>
+    </Sheet>
   )
 }
 
@@ -107,15 +53,15 @@ function SheetRow({
   icon: ReactNode
 }) {
   const className =
-    'flex w-full items-center gap-3 rounded-2xl px-2 py-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800'
+    'flex w-full items-center gap-3 rounded-2xl px-2 py-3 text-left hover:bg-hover'
   const body = (
     <>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-50 text-teal-700 dark:bg-teal-950/50 dark:text-teal-400">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent-ink">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-semibold text-stone-900 dark:text-stone-50">{title}</span>
-        <span className="block text-xs text-stone-500 dark:text-stone-400">{subtitle}</span>
+        <span className="block text-sm font-semibold text-content">{title}</span>
+        <span className="block text-xs text-content-subtle">{subtitle}</span>
       </span>
     </>
   )
