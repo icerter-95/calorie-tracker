@@ -41,7 +41,7 @@ export default function LoginPage() {
   if (!configured) {
     return (
       <div className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center px-4">
-        <div className="space-y-3 rounded-2xl bg-raised p-6 shadow-sm ring-1 ring-line">
+        <div className="space-y-3 rounded-2xl bg-raised p-6 ring-1 ring-line">
           <h1 className="text-xl font-semibold text-content">Setup required</h1>
           <p className="text-sm text-content-muted">
             Add your Supabase keys to <code className="rounded bg-muted px-1">.env.local</code>,
@@ -159,7 +159,7 @@ export default function LoginPage() {
       )}
 
       {savedAccounts.length > 0 && (
-        <section className="mb-4 space-y-2 rounded-2xl bg-raised p-4 shadow-sm ring-1 ring-line">
+        <section className="mb-4 space-y-2 rounded-2xl bg-raised p-4 ring-1 ring-line">
           {/* One-tap switch using tokens saved on this device */}
           <h2 className="text-sm font-semibold text-content">
             Continue as
@@ -210,7 +210,7 @@ export default function LoginPage() {
       {/* Email or username form for a new / restored session */}
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-2xl bg-raised p-6 shadow-sm ring-1 ring-line"
+        className="space-y-4 rounded-2xl bg-raised p-6 ring-1 ring-line"
       >
         <div>
           <h1 className="text-xl font-semibold text-content">Calorie Tracker</h1>

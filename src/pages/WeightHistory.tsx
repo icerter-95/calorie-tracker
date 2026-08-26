@@ -77,19 +77,19 @@ export default function WeightHistoryPage() {
           No weight entries yet.
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="divide-y divide-line">
           {entries.map((entry) => (
             <li key={entry.id}>
               <button
                 type="button"
                 onClick={() => openEditForm(entry)}
-                className="flex w-full items-center justify-between gap-3 rounded-xl bg-raised px-4 py-3 text-left ring-1 ring-line transition hover:bg-hover"
+                className="-mx-1 flex w-[calc(100%+0.5rem)] items-center justify-between gap-3 rounded-xl px-1 py-3 text-left transition hover:bg-hover/70"
               >
                 <span>
-                  <span className="block font-medium tabular-nums text-content">
+                  <span className="block text-lg font-semibold tabular-nums tracking-tight text-content">
                     {entry.weightKg} kg
                   </span>
-                  <span className="block text-sm text-content-subtle">
+                  <span className="block text-sm text-content-faint">
                     {formatShortDate(entry.date)}
                     {entry.source === 'apple-health' ? ' · Apple Health' : ' · Manual'}
                     {entry.syncedAt ? ` · ${formatSyncLabel(entry.syncedAt)}` : ''}

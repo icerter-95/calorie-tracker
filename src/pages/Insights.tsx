@@ -111,19 +111,16 @@ export default function InsightsPage() {
         <>
           {/* How often breakfast / lunch / dinner was missing on logged days */}
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-content-subtle">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
               Skipped main meals
             </h2>
             <div className="grid grid-cols-3 gap-2">
               {(['breakfast', 'lunch', 'dinner'] as const).map((slot) => (
-                <div
-                  key={slot}
-                  className="rounded-2xl bg-raised p-3 ring-1 ring-line"
-                >
-                  <p className="text-xs text-content-subtle">
+                <div key={slot} className="min-w-0 py-1">
+                  <p className="text-[10px] uppercase tracking-wider text-content-faint">
                     {MEAL_TYPE_LABELS[slot]}
                   </p>
-                  <p className="text-2xl font-semibold text-content">
+                  <p className="text-2xl font-semibold tabular-nums tracking-tight text-content">
                     {skips[slot].skipped}
                   </p>
                   <p className="text-[11px] text-content-faint">
@@ -135,14 +132,14 @@ export default function InsightsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-content-subtle">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
               Avg calories by slot
             </h2>
-            <div className="space-y-2">
+            <div className="divide-y divide-line">
               {slotAverages.map(({ slot, average, dayCount, entryCount }) => (
                 <div
                   key={slot}
-                  className="flex items-center justify-between rounded-2xl bg-raised px-4 py-3 ring-1 ring-line"
+                  className="flex items-center justify-between py-3"
                 >
                   <div>
                     <p className="text-sm font-medium text-content">
@@ -166,7 +163,7 @@ export default function InsightsPage() {
 
           {/* Highest / lowest calorie days in the range */}
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-content-subtle">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
               Calorie extremes
             </h2>
             <div className="grid grid-cols-2 gap-2">
@@ -177,10 +174,10 @@ export default function InsightsPage() {
 
           {/* Search meals by ingredient tag, plus a top-tags list */}
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-content-subtle">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
               Days with a food
             </h2>
-            <div className="rounded-2xl bg-raised p-4 ring-1 ring-line">
+            <div className="border-y border-line py-4">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -223,7 +220,7 @@ export default function InsightsPage() {
           </section>
 
           <section className="space-y-2">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-content-subtle">
+            <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
               Top ingredients
             </h2>
             {tops.length === 0 ? (
@@ -265,11 +262,11 @@ function ExtremeCard({
   day: { date: string; totalCalories: number } | null
 }) {
   return (
-    <div className="rounded-2xl bg-raised p-3 ring-1 ring-line">
-      <p className="text-xs text-content-subtle">{label}</p>
+    <div className="min-w-0 py-1">
+      <p className="text-[10px] uppercase tracking-wider text-content-faint">{label}</p>
       {day ? (
         <>
-          <p className="text-lg font-semibold text-content">
+          <p className="text-2xl font-semibold tabular-nums tracking-tight text-content">
             {day.totalCalories}
             <span className="ml-1 text-xs font-normal text-content-faint">kcal</span>
           </p>

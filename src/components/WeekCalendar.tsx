@@ -11,7 +11,7 @@ import {
   type TransitionEvent as ReactTransitionEvent,
 } from 'react'
 import { dayCalorieStatus, type DayCalorieStatus } from '../types/settings'
-import { formatDayHeading, getWeekRange, shiftWeek, todayKey } from '../lib/dates'
+import { getWeekRange, shiftWeek, todayKey } from '../lib/dates'
 
 const DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'] as const
 const SWIPE_THRESHOLD = 0.22
@@ -74,31 +74,27 @@ function WeekStrip({
             onClick={() => {
               if (!suppressClicks) onSelectDate(dateKey)
             }}
-            className="flex flex-col items-center gap-1 rounded-xl py-1.5 transition-colors hover:bg-hover/60"
+            className="flex flex-col items-center gap-0.5 rounded-lg py-0.5 transition-colors hover:bg-hover/60"
             aria-label={format(date, 'EEEE d MMMM')}
             aria-current={selected ? 'date' : undefined}
           >
-            <span
-              className={`flex h-7 w-7 items-center justify-center text-xs font-medium ${
-                selected
-                  ? 'rounded-full bg-accent text-on-accent'
-                  : 'text-content-subtle'
-              }`}
-            >
+            <span className="text-[10px] font-medium uppercase tracking-wide text-content-faint">
               {DAY_LETTERS[index]}
             </span>
             <span
-              className={`text-sm font-semibold tabular-nums ${
-                selected || isToday
-                  ? 'text-accent-ink'
-                  : 'text-content'
+              className={`flex h-7 w-7 items-center justify-center text-sm tabular-nums ${
+                selected
+                  ? 'rounded-full bg-accent font-semibold text-on-accent'
+                  : isToday
+                    ? 'font-semibold text-accent-ink'
+                    : 'text-content'
               }`}
             >
               {format(date, 'd')}
             </span>
-            <span className="flex h-1.5 w-1.5 items-center justify-center">
+            <span className="flex h-1 w-1 items-center justify-center">
               {status !== 'none' && (
-                <span className={`h-1.5 w-1.5 rounded-full ${DOT_CLASS[status]}`} />
+                <span className={`h-1 w-1 rounded-full ${DOT_CLASS[status]}`} />
               )}
             </span>
           </button>
@@ -132,7 +128,6 @@ export default function WeekCalendar({
   const [snapping, setSnapping] = useState(false)
   const [suppressClicks, setSuppressClicks] = useState(false)
 
-  const heading = formatDayHeading(selectedDate)
   const today = todayKey()
   const showTodayButton = selectedDate !== today
 
@@ -141,6 +136,13 @@ export default function WeekCalendar({
     getWeekRange(selectedDate),
     getWeekRange(shiftWeek(selectedDate, 1)),
   ]
+  const visibleWeek = weeks[1] ?? []
+  const weekStart = parseISO(visibleWeek[0] ?? selectedDate)
+  const weekEnd = parseISO(visibleWeek[visibleWeek.length - 1] ?? selectedDate)
+  const weekLabel =
+    format(weekStart, 'MMM') === format(weekEnd, 'MMM')
+      ? `${format(weekStart, 'd')}–${format(weekEnd, 'd MMM')}`
+      : `${format(weekStart, 'd MMM')}–${format(weekEnd, 'd MMM')}`
 
   function measureWidth() {
     widthRef.current = viewportRef.current?.clientWidth ?? 0
@@ -268,39 +270,34 @@ export default function WeekCalendar({
   }
 
   return (
-    <div className="space-y-3">
-      {/* Heading + Today / prev / next week */}
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="min-w-0 truncate text-2xl font-semibold tracking-tight text-content">
-          {heading}
-        </h2>
-        <div className="flex shrink-0 items-center gap-1">
-          {showTodayButton && (
-            <button
-              type="button"
-              onClick={() => onSelectDate(today)}
-              className="mr-1 rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-ink ring-1 ring-accent/25 hover:bg-accent-soft"
-            >
-              Today
-            </button>
-          )}
+    <div className="space-y-1.5">
+      <div className="flex items-center gap-2">
+        <p className="min-w-0 flex-1 truncate text-sm font-medium text-content">{weekLabel}</p>
+        {showTodayButton && (
           <button
             type="button"
-            onClick={() => goWeek(-1)}
-            aria-label="Previous week"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-content-muted hover:bg-hover"
+            onClick={() => onSelectDate(today)}
+            className="rounded-full px-2 py-0.5 text-xs font-medium text-accent-ink hover:bg-accent-soft"
           >
-            ‹
+            Today
           </button>
-          <button
-            type="button"
-            onClick={() => goWeek(1)}
-            aria-label="Next week"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-content-muted hover:bg-hover"
-          >
-            ›
-          </button>
-        </div>
+        )}
+        <button
+          type="button"
+          onClick={() => goWeek(-1)}
+          aria-label="Previous week"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-content-muted hover:bg-hover"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          onClick={() => goWeek(1)}
+          aria-label="Next week"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-content-muted hover:bg-hover"
+        >
+          ›
+        </button>
       </div>
 
       {/* Three weeks side by side; swipe translates this track */}

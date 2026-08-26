@@ -108,7 +108,7 @@ export default function AppleHealthSetup() {
   const connected = Boolean(info)
 
   return (
-    <li className="space-y-3 rounded-2xl bg-raised px-4 py-3 shadow-sm ring-1 ring-line">
+    <li className="space-y-3 rounded-2xl bg-raised px-4 py-3 ring-1 ring-line">
       {/* Status + Connect / Disconnect */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">

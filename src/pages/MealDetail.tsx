@@ -162,32 +162,33 @@ export default function MealDetailPage() {
         </p>
       )}
 
-      <article className="overflow-hidden rounded-2xl bg-raised shadow-sm ring-1 ring-line">
+      <article>
         {meal.photoUrl && (
           <MealPhoto
             photoUrl={meal.photoUrl}
             alt={meal.description || MEAL_TYPE_LABELS[meal.mealType]}
-            className="max-h-72 w-full object-cover"
+            className="-mx-4 max-h-72 w-[calc(100%+2rem)] object-cover"
           />
         )}
 
-        <div className="space-y-3 p-4">
+        <div className="space-y-3 pt-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs font-medium uppercase tracking-wide text-accent-ink">
+              <p className="text-[10px] font-medium uppercase tracking-widest text-content-faint">
                 {MEAL_TYPE_LABELS[meal.mealType]}
               </p>
-              <p className="text-xs text-content-subtle">
+              <p className="text-xs text-content-faint">
                 {formatDisplayDate(meal.date)}
               </p>
-              <h2 className="mt-1 text-lg font-semibold text-content">
+              <h2 className="mt-1 text-base font-medium text-content">
                 {meal.description || 'Meal'}
               </h2>
-              <p className="text-2xl font-semibold text-content">
-                {meal.totalCalories} kcal
+              <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-content">
+                {meal.totalCalories}
+                <span className="ml-1 text-sm font-normal text-content-faint">kcal</span>
               </p>
               {hasMacros && (
-                <p className="text-sm text-content-subtle">
+                <p className="mt-0.5 text-sm text-content-faint">
                   P {roundMacro(meal.proteinG)}g · C {roundMacro(meal.carbsG)}g · F{' '}
                   {roundMacro(meal.fatG)}g
                 </p>

@@ -87,7 +87,7 @@ export default function DataSettings() {
           {dataError}
         </p>
       )}
-      <div className="overflow-hidden rounded-2xl bg-raised shadow-sm ring-1 ring-line">
+      <div className="overflow-hidden rounded-2xl bg-raised ring-1 ring-line">
         {/* Backfill tags, load demo data, or wipe the account */}
         <button
           type="button"

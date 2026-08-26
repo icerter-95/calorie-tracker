@@ -11,27 +11,27 @@
 */
 @layer base {
   :root {
-    /* Surfaces, back to front */
-    --surface: 245 245 244; /* page */
-    --raised: 255 255 255; /* cards, sheets */
+    /* Surfaces, back to front. Quiet: page and cards share white so photos lead. */
+    --surface: 255 255 255; /* page */
+    --raised: 255 255 255; /* sheets; browse cards sit on the page */
     --field: 255 255 255; /* inputs */
-    --muted: 245 245 244; /* unselected chips */
-    --sunken: 250 250 249; /* inset panels */
-    --hover: 245 245 244; /* hover over raised / field */
+    --muted: 241 240 238; /* unselected chips, tracks */
+    --sunken: 241 240 238; /* inset panels */
+    --hover: 241 240 238; /* hover over raised / field */
     --chrome: 255 255 255; /* header and tab bar */
     --selected: 255 255 255; /* selected segment on a muted track */
 
     /* Lines, lightest to strongest */
-    --divider: 245 245 244;
-    --edge: 231 229 228;
-    --line: 231 229 228;
+    --divider: 236 236 234;
+    --edge: 236 236 234;
+    --line: 236 236 234;
     --line-strong: 214 211 209;
 
     /* Text, strongest to faintest */
-    --content: 28 25 23;
-    --content-muted: 87 83 78;
-    --content-subtle: 120 113 108;
-    --content-faint: 168 162 158;
+    --content: 17 17 16;
+    --content-muted: 107 106 102;
+    --content-subtle: 107 106 102;
+    --content-faint: 163 161 156;
 
     /* Accent — the app's action colour */
     --accent: 15 118 110;
@@ -62,24 +62,24 @@
   }
 
   [data-theme='dark'] {
-    --surface: 12 10 9;
-    --raised: 28 25 23;
-    --field: 41 37 36;
-    --muted: 41 37 36;
-    --sunken: 41 37 36;
-    --hover: 68 64 60;
-    --chrome: 12 10 9;
-    --selected: 68 64 60;
+    --surface: 10 10 9;
+    --raised: 10 10 9;
+    --field: 26 26 24;
+    --muted: 26 26 24;
+    --sunken: 26 26 24;
+    --hover: 35 35 33;
+    --chrome: 10 10 9;
+    --selected: 35 35 33;
 
-    --divider: 41 37 36;
-    --edge: 41 37 36;
-    --line: 68 64 60;
-    --line-strong: 87 83 78;
+    --divider: 35 35 33;
+    --edge: 35 35 33;
+    --line: 35 35 33;
+    --line-strong: 55 55 52;
 
-    --content: 250 250 249;
-    --content-muted: 214 211 209;
-    --content-subtle: 168 162 158;
-    --content-faint: 120 113 108;
+    --content: 245 245 243;
+    --content-muted: 161 160 155;
+    --content-subtle: 161 160 155;
+    --content-faint: 107 106 102;
 
     --accent: 15 118 110;
     --accent-hover: 17 94 89;
@@ -158,7 +158,7 @@ textarea {
   }
 
   .surface-card {
-    @apply rounded-2xl bg-raised shadow-sm ring-1 ring-line;
+    @apply rounded-2xl bg-raised ring-1 ring-line;
   }
 }
 

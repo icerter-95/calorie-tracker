@@ -66,14 +66,14 @@ export default function CalorieChart({
 
   if (chartData.every((d) => d.totalCalories === 0 && d.weightKg == null)) {
     return (
-      <div className="flex h-40 items-center justify-center rounded-2xl bg-raised text-sm text-content-subtle ring-1 ring-line">
+      <div className="flex h-40 items-center justify-center text-sm text-content-faint">
         No data for this period yet.
       </div>
     )
   }
 
   return (
-    <div className="rounded-2xl bg-raised p-3 ring-1 ring-line">
+    <div>
       <ResponsiveContainer width="100%" height={height}>
         <ComposedChart
           data={chartData}

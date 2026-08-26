@@ -68,7 +68,7 @@ export default function UserHub() {
       <AccountSwitcher />
 
       {/* Settings list */}
-      <section className="overflow-hidden rounded-2xl bg-raised shadow-sm ring-1 ring-line">
+      <section className="overflow-hidden rounded-2xl bg-raised ring-1 ring-line">
         {SECTIONS.map((section, index) => (
           <div key={section.to}>
             {index > 0 && (
@@ -101,7 +101,7 @@ export default function UserHub() {
           type="button"
           disabled={busy}
           onClick={() => void handleSignOut()}
-          className="w-full rounded-2xl bg-raised py-3 text-sm font-medium text-content shadow-sm ring-1 ring-line hover:bg-hover disabled:opacity-60"
+          className="w-full rounded-2xl bg-raised py-3 text-sm font-medium text-content ring-1 ring-line hover:bg-hover disabled:opacity-60"
         >
           Sign out of this account
         </button>
@@ -110,7 +110,7 @@ export default function UserHub() {
             type="button"
             disabled={busy}
             onClick={() => void handleSignOutAll()}
-            className="w-full rounded-2xl bg-raised py-3 text-sm font-medium text-danger shadow-sm ring-1 ring-line hover:bg-danger-soft disabled:opacity-60"
+            className="w-full rounded-2xl bg-raised py-3 text-sm font-medium text-danger ring-1 ring-line hover:bg-danger-soft disabled:opacity-60"
           >
             Sign out of all accounts on this device
           </button>

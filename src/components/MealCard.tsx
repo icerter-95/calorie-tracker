@@ -35,10 +35,10 @@ export default function MealCard({ meal, hideMealType, from = '/' }: MealCardPro
           openDetail()
         }
       }}
-      className="flex items-start gap-3 rounded-2xl bg-raised p-3 shadow-sm ring-1 ring-line transition hover:bg-hover"
+      className="-mx-1 flex items-center gap-3 rounded-xl px-1 py-3 transition hover:bg-hover/70"
     >
       {meal.photoUrl ? (
-        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-muted">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted">
           <MealPhoto
             photoUrl={meal.photoUrl}
             alt={meal.description || MEAL_TYPE_LABELS[meal.mealType]}
@@ -48,38 +48,32 @@ export default function MealCard({ meal, hideMealType, from = '/' }: MealCardPro
       ) : (
         <div
           aria-hidden
-          className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-muted text-content-faint"
+          className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-muted text-content-faint"
         >
-          <span className="text-xs font-medium">No photo</span>
+          <span className="text-[10px] font-medium">No photo</span>
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            {!hideMealType && (
-              <p className="text-[11px] font-medium uppercase tracking-wide text-accent-ink">
-                {MEAL_TYPE_LABELS[meal.mealType]}
-              </p>
-            )}
-            <p className="line-clamp-2 text-sm font-medium leading-snug text-content">
-              {meal.description || 'Meal'}
-            </p>
-          </div>
-          <span aria-hidden className="shrink-0 text-content-faint">
-            ›
-          </span>
-        </div>
-        <p className="mt-0.5 text-sm font-semibold text-content">
-          {meal.totalCalories} kcal
+      <div className="min-w-0 flex-1">
+        {!hideMealType && (
+          <p className="text-[10px] font-medium uppercase tracking-wider text-content-faint">
+            {MEAL_TYPE_LABELS[meal.mealType]}
+          </p>
+        )}
+        <p className="line-clamp-2 text-sm leading-snug text-content">
+          {meal.description || 'Meal'}
         </p>
         {hasMacros && (
-          <p className="text-xs text-content-subtle">
+          <p className="mt-0.5 text-xs text-content-faint">
             P {roundMacro(meal.proteinG)}g · C {roundMacro(meal.carbsG)}g · F{' '}
             {roundMacro(meal.fatG)}g
           </p>
         )}
       </div>
+
+      <p className="shrink-0 text-base font-semibold tabular-nums tracking-tight text-content">
+        {meal.totalCalories}
+      </p>
     </article>
   )
 }

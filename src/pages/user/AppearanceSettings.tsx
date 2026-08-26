@@ -18,7 +18,7 @@ export default function AppearanceSettings() {
       <p className="text-sm text-content-subtle">
         Choose how the app looks on this device.
       </p>
-      <div className="grid grid-cols-3 gap-2 rounded-2xl bg-raised p-2 shadow-sm ring-1 ring-line">
+      <div className="grid grid-cols-3 gap-2 rounded-2xl bg-raised p-2 ring-1 ring-line">
         {THEME_OPTIONS.map((option) => {
           const selected = settings.theme === option.value
           return (

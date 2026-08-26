@@ -68,7 +68,7 @@ export default function AccountSwitcher() {
         aria-expanded={open}
         aria-label="Switch account"
         onClick={() => setOpen((value) => !value)}
-        className="flex w-full items-center gap-3 rounded-2xl bg-raised px-4 py-3 text-left shadow-sm ring-1 ring-line transition hover:bg-hover disabled:opacity-60"
+        className="flex w-full items-center gap-3 rounded-2xl bg-raised px-4 py-3 text-left ring-1 ring-line transition hover:bg-hover disabled:opacity-60"
       >
         <UserAvatar name={displayName} avatarUrl={avatarUrl} size="md" />
         <div className="min-w-0 flex-1">

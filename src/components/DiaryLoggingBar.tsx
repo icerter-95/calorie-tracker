@@ -9,7 +9,7 @@ function FlameIcon({ lit }: { lit: boolean }) {
   const inner = lit ? 'url(#streak-flame-inner)' : 'currentColor'
 
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden className="shrink-0">
+    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden className="shrink-0">
       <defs>
         <linearGradient id="streak-flame-outer" x1="12" y1="3" x2="12" y2="21" gradientUnits="userSpaceOnUse">
           <stop stopColor="#fb923c" />
@@ -74,7 +74,7 @@ export default function DiaryLoggingBar({
   return (
     <div className="flex items-center justify-between gap-2 px-0.5">
       <p
-        className={`flex min-w-0 items-center gap-1.5 whitespace-nowrap text-base tabular-nums ${
+        className={`flex min-w-0 items-center gap-1.5 whitespace-nowrap text-sm tabular-nums ${
           streakActive
             ? 'font-semibold text-content'
             : 'text-content-faint'

@@ -180,13 +180,13 @@ export default function FavoritesPanel({
           No favorites yet. Open a meal and tap the heart to save one.
         </p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="divide-y divide-line">
           {favorites.map((fav) => (
             <li key={fav.id}>
               <button
                 type="button"
                 onClick={() => pickFavorite(fav)}
-                className="flex w-full items-center gap-3 rounded-2xl bg-raised p-3 text-left shadow-sm ring-1 ring-line hover:bg-hover"
+                className="-mx-1 flex w-[calc(100%+0.5rem)] items-center gap-3 rounded-xl px-1 py-3 text-left hover:bg-hover/70"
               >
                 {fav.photoUrl ? (
                   <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
@@ -198,12 +198,12 @@ export default function FavoritesPanel({
                   </div>
                 )}
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-content">
+                  <span className="block truncate text-sm text-content">
                     {fav.name}
                   </span>
-                  <span className="block text-sm font-semibold text-content">
-                    {fav.totalCalories} kcal
-                  </span>
+                </span>
+                <span className="shrink-0 text-base font-semibold tabular-nums tracking-tight text-content">
+                  {fav.totalCalories}
                 </span>
               </button>
             </li>

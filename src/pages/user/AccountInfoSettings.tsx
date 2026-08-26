@@ -174,7 +174,7 @@ export default function AccountInfoSettings() {
   return (
     <div className="space-y-4">
       {/* Header: avatar + display name + email */}
-      <section className="rounded-2xl bg-raised shadow-sm ring-1 ring-line">
+      <section className="rounded-2xl bg-raised ring-1 ring-line">
         <div className="flex items-center gap-3 px-4 py-3">
           <div className="relative shrink-0">
             <button
@@ -215,7 +215,7 @@ export default function AccountInfoSettings() {
       </section>
 
       {/* Rows open a composer sheet; nothing edits in place. */}
-      <section className="overflow-hidden rounded-2xl bg-raised shadow-sm ring-1 ring-line">
+      <section className="overflow-hidden rounded-2xl bg-raised ring-1 ring-line">
         <button
           type="button"
           disabled={usernameBusy}

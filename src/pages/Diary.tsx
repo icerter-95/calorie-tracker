@@ -182,9 +182,8 @@ export default function DiaryPage() {
   }
 
   return (
-    <div className="space-y-4 pb-28">
-      {/* Week strip + logging streak / meal checklist + calorie summary */}
-      <div className="space-y-2">
+    <div className="space-y-3 pb-28">
+      <div className="space-y-1.5">
         <WeekCalendar
           selectedDate={selectedDate}
           onSelectDate={selectDate}
@@ -235,20 +234,21 @@ export default function DiaryPage() {
                 ref={(node) => {
                   sectionRefs.current[slot] = node
                 }}
-                className="space-y-2"
               >
-                <div className="flex items-baseline justify-between px-1">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-content-subtle">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
                     {MEAL_TYPE_LABELS[slot]}
                   </h2>
-                  <span className="text-xs font-medium text-content-subtle">
+                  <span className="text-xs tabular-nums text-content-faint">
                     {slotKcal} kcal
                   </span>
                 </div>
 
-                {slotMeals.map((meal) => (
-                  <MealCard key={meal.id} meal={meal} hideMealType from="/" />
-                ))}
+                <div className="divide-y divide-line">
+                  {slotMeals.map((meal) => (
+                    <MealCard key={meal.id} meal={meal} hideMealType from="/" />
+                  ))}
+                </div>
               </section>
             )
           })}
