@@ -283,26 +283,15 @@ export default function DiaryPage() {
                   </span>
                 </div>
 
-                {slotMeals.map((meal) =>
-                  editingMeal?.id === meal.id ? (
-                    <MealForm
-                      key={meal.id}
-                      initial={meal}
-                      defaultDate={selectedDate}
-                      onSave={handleSave}
-                      onCancel={closeForm}
-                      onDelete={() => handleDelete(meal.id)}
-                    />
-                  ) : (
-                    <MealCard
-                      key={meal.id}
-                      meal={meal}
-                      hideMealType
-                      from="/"
-                      onEdit={() => startEdit(meal)}
-                    />
-                  ),
-                )}
+                {slotMeals.map((meal) => (
+                  <MealCard
+                    key={meal.id}
+                    meal={meal}
+                    hideMealType
+                    from="/"
+                    onEdit={() => startEdit(meal)}
+                  />
+                ))}
               </section>
             )
           })}
@@ -310,6 +299,16 @@ export default function DiaryPage() {
       )}
 
       <AddMealFlow ref={addMealRef} date={selectedDate} onSaved={reloadDayAndWeek} />
+
+      {editingMeal && (
+        <MealForm
+          initial={editingMeal}
+          defaultDate={selectedDate}
+          onSave={handleSave}
+          onCancel={closeForm}
+          onDelete={() => handleDelete(editingMeal.id)}
+        />
+      )}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 /**
- * Add / edit meal form. Create flow: Photo (AI estimate) or Manual. Edit flow
- * is a compact inline editor with optional retake. Saves description, plate
- * totals, ingredient tags, and an optional photo.
+ * Add / edit meal form. Create flow: Photo (AI estimate) or Manual. Edit
+ * opens as a bottom curtain over the page. Saves description, plate totals,
+ * ingredient tags, and an optional photo.
  */
 import { useEffect, useRef, useState } from 'react'
 import { compressImage } from '../lib/compressImage'
@@ -11,6 +11,7 @@ import { roundMacro } from '../lib/macros'
 import { resolvePhotoUrl, uploadMealPhoto } from '../lib/mealPhotos'
 import type { MealEntry, MealInput, MealType } from '../types'
 import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../types'
+import BottomSheet from './BottomSheet'
 import IngredientChips from './IngredientChips'
 
 interface MealFormProps {
@@ -322,19 +323,16 @@ export default function MealForm({
     </div>
   )
 
-  function detailsFields(opts?: { compact?: boolean }) {
-    const compact = Boolean(opts?.compact)
+  function detailsFields() {
     return (
       <>
         <label className="block text-sm">
-          {!compact && (
-            <span className="mb-1 block text-stone-600 dark:text-stone-300">Description</span>
-          )}
+          <span className="mb-1 block text-stone-600 dark:text-stone-300">Description</span>
           <input
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder={compact ? 'Description' : 'e.g. Chicken rice bowl'}
+            placeholder="e.g. Chicken rice bowl"
             aria-label="Description"
             className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
           />
@@ -342,24 +340,9 @@ export default function MealForm({
 
         <div className="grid grid-cols-4 gap-1.5">
           <NumberField label="kcal" value={plateCalories} onChange={setPlateCalories} />
-          <NumberField
-            label={compact ? 'P' : 'Protein'}
-            value={plateProtein}
-            onChange={setPlateProtein}
-            step
-          />
-          <NumberField
-            label={compact ? 'C' : 'Carbs'}
-            value={plateCarbs}
-            onChange={setPlateCarbs}
-            step
-          />
-          <NumberField
-            label={compact ? 'F' : 'Fat'}
-            value={plateFat}
-            onChange={setPlateFat}
-            step
-          />
+          <NumberField label="Protein" value={plateProtein} onChange={setPlateProtein} step />
+          <NumberField label="Carbs" value={plateCarbs} onChange={setPlateCarbs} step />
+          <NumberField label="Fat" value={plateFat} onChange={setPlateFat} step />
         </div>
 
         <IngredientChips
@@ -368,18 +351,15 @@ export default function MealForm({
           onSuggest={handleSuggestTags}
           suggesting={suggestingTags}
           disabled={busy}
-          hideLabel={compact}
         />
 
         <label className="block text-sm">
-          {!compact && (
-            <span className="mb-1 block text-stone-600 dark:text-stone-300">Note</span>
-          )}
+          <span className="mb-1 block text-stone-600 dark:text-stone-300">Note</span>
           <input
             type="text"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder={compact ? 'Note (optional)' : 'Optional'}
+            placeholder="Optional"
             aria-label="Note"
             className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50"
           />
@@ -498,59 +478,67 @@ export default function MealForm({
     )
   }
 
-  // ——— Edit form ———
+  // ——— Edit form (bottom curtain) ———
   return (
-    <form
-      onSubmit={handleSubmit}
-      aria-label="Edit meal entry"
-      className="overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-teal-700/25 dark:bg-stone-900 dark:ring-teal-400/30"
+    <BottomSheet
+      ariaLabel="Edit meal entry"
+      title="Edit meal"
+      onClose={onCancel}
+      closeDisabled={busy}
     >
-      {photoPreview && !retaking && (
-        <img src={photoPreview} alt="" className="max-h-40 w-full object-cover" />
-      )}
-
-      <div className="space-y-3 bg-stone-100/90 p-3 shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] dark:bg-stone-950/70 dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.35)]">
-        <div className="flex items-center justify-between gap-2">
-          {!retaking ? (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={startRetake}
-              className="text-xs font-medium text-teal-700 hover:text-teal-800 disabled:opacity-60 dark:text-teal-400"
-            >
-              {hasPhoto ? 'Retake' : 'Add photo'}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={cancelRetake}
-              className="text-xs text-stone-500 hover:text-stone-700 dark:text-stone-400"
-            >
-              Keep photo
-            </button>
+      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          {photoPreview && !retaking && (
+            <img src={photoPreview} alt="" className="max-h-52 w-full object-cover" />
           )}
-          {photoStatus}
+
+          <div className="space-y-3 p-4">
+            <div className="flex items-center justify-between gap-2">
+              {!retaking ? (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={startRetake}
+                  className="text-xs font-medium text-teal-700 hover:text-teal-800 disabled:opacity-60 dark:text-teal-400"
+                >
+                  {hasPhoto ? 'Retake' : 'Add photo'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={cancelRetake}
+                  className="text-xs text-stone-500 hover:text-stone-700 dark:text-stone-400"
+                >
+                  Keep photo
+                </button>
+              )}
+              {photoStatus}
+            </div>
+
+            {retaking && !pickingPhoto && !estimating && (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={openPhotoPicker}
+                  className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-60 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
+                >
+                  Choose photo
+                </button>
+              </div>
+            )}
+
+            {slotPicker}
+            {detailsFields()}
+
+            {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
+          </div>
         </div>
 
-        {retaking && !pickingPhoto && !estimating && (
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              onClick={openPhotoPicker}
-              className="rounded-lg bg-stone-100 px-2.5 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-200 disabled:opacity-60 dark:bg-stone-800 dark:text-stone-200 dark:hover:bg-stone-700"
-            >
-              Choose photo
-            </button>
-          </div>
-        )}
-
-        {slotPicker}
-        {detailsFields({ compact: true })}
-
-        {formError && <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>}
-
-        <div className="flex items-center justify-between gap-2 border-t border-stone-200/80 pt-2.5 dark:border-stone-800">
+        <div
+          className="flex shrink-0 items-center justify-between gap-2 border-t border-stone-200 bg-white px-4 pt-3 dark:border-stone-800 dark:bg-stone-900"
+          style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))' }}
+        >
           {onDelete ? (
             <button
               type="button"
@@ -584,9 +572,9 @@ export default function MealForm({
             </button>
           </div>
         </div>
-      </div>
-      {photoInput}
-    </form>
+        {photoInput}
+      </form>
+    </BottomSheet>
   )
 }
 

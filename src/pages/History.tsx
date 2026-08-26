@@ -312,31 +312,29 @@ export default function HistoryPage() {
                   <h3 className="px-1 text-xs font-semibold uppercase tracking-wide text-stone-500 dark:text-stone-400">
                     {MEAL_TYPE_LABELS[slot]}
                   </h3>
-                  {slotMeals.map((meal) =>
-                    editingMeal?.id === meal.id ? (
-                      <MealForm
-                        key={meal.id}
-                        initial={meal}
-                        defaultDate={selectedDate}
-                        onSave={handleSave}
-                        onCancel={closeForm}
-                        onDelete={() => handleDelete(meal.id)}
-                      />
-                    ) : (
-                      <MealCard
-                        key={meal.id}
-                        meal={meal}
-                        hideMealType
-                        from="/progress"
-                        onEdit={() => startEdit(meal)}
-                      />
-                    ),
-                  )}
+                  {slotMeals.map((meal) => (
+                    <MealCard
+                      key={meal.id}
+                      meal={meal}
+                      hideMealType
+                      from="/progress"
+                      onEdit={() => startEdit(meal)}
+                    />
+                  ))}
                 </div>
               )
             })
           )}
         </section>
+      )}
+
+      {editingMeal && (
+        <MealForm
+          initial={editingMeal}
+          onSave={handleSave}
+          onCancel={closeForm}
+          onDelete={() => handleDelete(editingMeal.id)}
+        />
       )}
     </div>
   )

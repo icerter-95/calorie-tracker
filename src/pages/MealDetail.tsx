@@ -1,5 +1,6 @@
 /**
- * Single meal view. Shows photo, calories, macros, tags; Edit opens MealForm.
+ * Single meal view. Shows photo, calories, macros, tags; Edit opens a
+ * bottom curtain over this page.
  * Heart saves a copy as a favorite (photo is duplicated so logs stay independent).
  * Back goes to Diary or Progress depending on how you arrived.
  */
@@ -148,27 +149,6 @@ export default function MealDetailPage() {
     )
   }
 
-  if (editing) {
-    return (
-      <div className="space-y-3">
-        {(error || actionError) && (
-          <p className="rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
-            {actionError ?? error}
-          </p>
-        )}
-        <MealForm
-          initial={meal}
-          onSave={handleSave}
-          onCancel={() => {
-            setEditing(false)
-            setActionError(null)
-          }}
-          onDelete={() => void handleDelete()}
-        />
-      </div>
-    )
-  }
-
   const hasMacros = meal.proteinG > 0 || meal.carbsG > 0 || meal.fatG > 0
   const savedFavorite = matchingFavorite(favorites, meal)
 
@@ -264,6 +244,18 @@ export default function MealDetailPage() {
           )}
         </div>
       </article>
+
+      {editing && (
+        <MealForm
+          initial={meal}
+          onSave={handleSave}
+          onCancel={() => {
+            setEditing(false)
+            setActionError(null)
+          }}
+          onDelete={() => void handleDelete()}
+        />
+      )}
     </div>
   )
 }

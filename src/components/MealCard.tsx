@@ -1,6 +1,6 @@
 /**
  * Compact meal row used in Diary and Progress. Tap opens Meal Detail; Edit
- * stays on the list and opens MealForm.
+ * stays on the list and opens the edit curtain.
  */
 import { useNavigate } from 'react-router-dom'
 import type { MealEntry } from '../types'
