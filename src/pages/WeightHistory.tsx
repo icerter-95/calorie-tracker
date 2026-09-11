@@ -3,6 +3,7 @@
  * or add a manual log. Apple Health rows show a sync timestamp.
  */
 import { useCallback, useState } from 'react'
+import AddWeightButton from '../components/AddWeightButton'
 import WeightSheet, { type WeightPayload } from '../components/WeightSheet'
 import { addWeight, deleteWeight, updateWeight } from '../db'
 import { useAllWeights } from '../hooks/useData'
@@ -31,6 +32,11 @@ export default function WeightHistoryPage() {
   useRegisterPullToRefresh(pullToRefresh)
   const [editing, setEditing] = useState<WeightEntry | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+
+  function openNewForm() {
+    setEditing(null)
+    setShowForm(true)
+  }
 
   function openEditForm(entry: WeightEntry) {
     setEditing(entry)
@@ -72,10 +78,18 @@ export default function WeightHistoryPage() {
         </p>
       )}
 
+      <div className="flex items-center justify-end">
+        <AddWeightButton onClick={openNewForm} />
+      </div>
+
       {entries.length === 0 ? (
-        <p className="rounded-2xl bg-raised px-4 py-8 text-center text-sm text-content-subtle ring-1 ring-line">
-          No weight entries yet.
-        </p>
+        <button
+          type="button"
+          onClick={openNewForm}
+          className="w-full rounded-2xl bg-raised px-4 py-8 text-center text-sm text-content-subtle ring-1 ring-line transition-colors hover:bg-hover/70"
+        >
+          No weight entries yet. Tap to log.
+        </button>
       ) : (
         <ul className="divide-y divide-line">
           {entries.map((entry) => (
@@ -107,6 +121,7 @@ export default function WeightHistoryPage() {
       {showForm && (
         <WeightSheet
           initial={editing}
+          suggestedWeightKg={weights && weights.length > 0 ? weights[weights.length - 1].weightKg : undefined}
           onSave={handleSave}
           onCancel={() => {
             setShowForm(false)

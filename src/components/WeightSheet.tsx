@@ -2,7 +2,7 @@
  * Log / edit a weight entry. Same composer grammar as MealForm: fields scroll,
  * Save sits in the ActionBar, Delete sits far left, and the sheet owns dismiss.
  */
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { WeightEntry } from '../types'
 import { todayKey } from '../lib/dates'
 import ActionBar from './ui/ActionBar'
@@ -18,17 +18,39 @@ export interface WeightPayload {
 interface WeightSheetProps {
   /** Pass an entry to edit it; omit to log a new one. */
   initial?: WeightEntry | null
+  /** Prefill for a new log, typically the latest reading. */
+  suggestedWeightKg?: number
   onSave: (payload: WeightPayload) => Promise<void>
   onCancel: () => void
   onDelete?: () => void | Promise<void>
 }
 
-export default function WeightSheet({ initial, onSave, onCancel, onDelete }: WeightSheetProps) {
+export default function WeightSheet({
+  initial,
+  suggestedWeightKg,
+  onSave,
+  onCancel,
+  onDelete,
+}: WeightSheetProps) {
   const formId = useId()
+  const weightInputRef = useRef<HTMLInputElement>(null)
   const [date, setDate] = useState(initial?.date ?? todayKey())
-  const [weightKg, setWeightKg] = useState(initial ? String(initial.weightKg) : '')
+  const [weightKg, setWeightKg] = useState(() => {
+    if (initial) return String(initial.weightKg)
+    if (suggestedWeightKg != null) return String(suggestedWeightKg)
+    return ''
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Wait for the enter animation before focusing. Immediate autoFocus plus the
+  // iOS keyboard is what shoves a PWA sheet off-screen.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      weightInputRef.current?.focus({ preventScroll: true })
+    }, 280)
+    return () => window.clearTimeout(id)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -78,6 +100,7 @@ export default function WeightSheet({ initial, onSave, onCancel, onDelete }: Wei
     <Sheet
       ariaLabel={initial ? 'Edit weight entry' : 'Log weight'}
       title={initial ? 'Edit entry' : 'Log weight'}
+      size="auto"
       onClose={onCancel}
       closeDisabled={saving}
       footer={footer}
@@ -85,7 +108,7 @@ export default function WeightSheet({ initial, onSave, onCancel, onDelete }: Wei
       <form
         id={formId}
         onSubmit={handleSubmit}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        className="min-h-0 overflow-y-auto overscroll-contain"
       >
         <div className="space-y-3 p-4">
           <div className="grid grid-cols-2 gap-3">
@@ -104,7 +127,8 @@ export default function WeightSheet({ initial, onSave, onCancel, onDelete }: Wei
                 required
                 min={0}
                 step={0.1}
-                autoFocus
+                ref={weightInputRef}
+                inputMode="decimal"
                 value={weightKg}
                 onChange={(e) => setWeightKg(e.target.value)}
                 className={fieldInputClass}

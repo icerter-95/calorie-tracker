@@ -3,15 +3,18 @@
  * `tall` fills most of the viewport and scrolls with a pinned footer; `auto`
  * hugs its content and is used for short menus.
  *
+ * The overlay is pinned to the visual viewport so an iPhone PWA keyboard
+ * resizes the visible frame instead of shoving a position:fixed sheet away.
+ *
  * Dismiss is chrome-only — drag the handle, tap the dimmer, or press Escape.
  * Screens should not add their own Cancel button.
  */
 import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { useKeyboardInset, useLockBodyScroll } from '../../hooks/useOverlay'
+import { useLockBodyScroll, useVisualViewportBox } from '../../hooks/useOverlay'
 import { ActionBarInsetProvider } from './ActionBar'
 
-const TALL_DVH = 85
+const TALL_PCT = 85
 const DRAG_DISMISS_PX = 80
 
 interface SheetProps {
@@ -35,7 +38,7 @@ export default function Sheet({
   children,
 }: SheetProps) {
   useLockBodyScroll()
-  const keyboardInset = useKeyboardInset()
+  const viewport = useVisualViewportBox()
   const [entered, setEntered] = useState(false)
   const [dragY, setDragY] = useState(0)
   const startY = useRef<number | null>(null)
@@ -83,7 +86,15 @@ export default function Sheet({
   )
 
   const sheet = (
-    <div className="fixed inset-0 z-50">
+    <div
+      className="fixed z-50 overflow-hidden"
+      style={{
+        top: viewport.top,
+        left: viewport.left,
+        width: viewport.width,
+        height: viewport.height,
+      }}
+    >
       <button
         type="button"
         aria-label="Dismiss"
@@ -97,26 +108,21 @@ export default function Sheet({
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
-        {...(isTall ? {} : dragHandlers)}
-        className={`absolute inset-x-0 mx-auto flex w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-raised shadow-xl ${
+        className={`absolute inset-x-0 bottom-0 mx-auto flex w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-raised shadow-xl ${
           dragY === 0 ? 'transition-transform duration-200' : ''
         }`}
         style={{
-          height: isTall ? `min(${TALL_DVH}dvh, calc(100dvh - ${keyboardInset}px))` : undefined,
-          bottom: keyboardInset,
+          height: isTall ? `${TALL_PCT}%` : undefined,
+          maxHeight: '100%',
           paddingBottom: !isTall && !footer ? 'env(safe-area-inset-bottom, 0px)' : undefined,
           transform: entered ? `translateY(${dragY}px)` : 'translateY(100%)',
         }}
       >
-        {isTall ? (
-          <div className="touch-none" {...dragHandlers}>
-            {grabber}
-          </div>
-        ) : (
-          grabber
-        )}
+        <div className="touch-none" {...dragHandlers}>
+          {grabber}
+        </div>
 
-        {/* The sheet rides above the keyboard, so the footer needs no inset. */}
+        {/* Overlay is already the visual viewport, so the footer needs no inset. */}
         <ActionBarInsetProvider inset={0}>
           <div className="flex min-h-0 flex-1 flex-col">{children}</div>
           {footer}
