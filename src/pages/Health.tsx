@@ -1,6 +1,7 @@
 /**
  * Health. Body vitals: latest weight and 7-day step average up top, then the
- * weight trend and a 30-day step histogram. Apple Health sync is batch, not live.
+ * weight trend and a 30-day step histogram. Tap the weight figure to log
+ * today's reading. Apple Health sync is batch, not live.
  */
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -17,15 +18,23 @@ import {
   YAxis,
 } from 'recharts'
 import WeightSheet, { type WeightPayload } from '../components/WeightSheet'
-import { addWeight, updateWeight } from '../db'
+import { addWeight, deleteWeight, updateWeight } from '../db'
 import { useAllSteps, useAllWeights } from '../hooks/useData'
 import { useRegisterPullToRefresh } from '../hooks/useRegisterPullToRefresh'
 import { useChartColors } from '../lib/chartColors'
-import { formatDisplayDate, formatShortDate, getLastDaysRange } from '../lib/dates'
+import { formatDisplayDate, formatShortDate, getLastDaysRange, todayKey } from '../lib/dates'
 import type { WeightEntry } from '../types'
 
 /** Default daily steps target used for histogram coloring. */
 const STEP_GOAL = 10_000
+
+/** Today's manual reading, if any — Health tap updates this instead of inserting another. */
+function pickTodayManual(weights: WeightEntry[] | undefined, date: string): WeightEntry | null {
+  if (!weights?.length) return null
+  const manuals = weights.filter((entry) => entry.date === date && entry.source === 'manual')
+  if (manuals.length === 0) return null
+  return manuals.reduce((newest, entry) => (entry.createdAt > newest.createdAt ? entry : newest))
+}
 
 export default function HealthPage() {
   const colors = useChartColors()
@@ -102,8 +111,8 @@ export default function HealthPage() {
     return [Math.floor(min - pad), Math.ceil(max + pad)] as [number, number]
   }, [weights])
 
-  function openNewForm() {
-    setEditing(null)
+  function openWeightForm() {
+    setEditing(pickTodayManual(weights, todayKey()))
     setShowForm(true)
   }
 
@@ -114,6 +123,14 @@ export default function HealthPage() {
     } else {
       await addWeight(payload)
     }
+    setShowForm(false)
+    setEditing(null)
+    reloadWeights()
+  }
+
+  async function handleDelete() {
+    if (!editing) return
+    await deleteWeight(editing.id)
     setShowForm(false)
     setEditing(null)
     reloadWeights()
@@ -130,19 +147,15 @@ export default function HealthPage() {
       )}
 
       <section className="grid grid-cols-2 gap-4 border-b border-line pb-5">
-        <div className="min-w-0">
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
-              Weight
-            </p>
-            <button
-              type="button"
-              onClick={openNewForm}
-              className="text-xs font-medium text-health-ink hover:text-health-hover"
-            >
-              Log
-            </button>
-          </div>
+        <button
+          type="button"
+          onClick={openWeightForm}
+          aria-label={latest ? `Log weight, current ${latest.weightKg} kilograms` : 'Log weight'}
+          className="-m-1 min-w-0 rounded-xl p-1 text-left transition-colors hover:bg-hover/70 active:bg-hover"
+        >
+          <p className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
+            Weight
+          </p>
           <p className="mt-1 text-[2.125rem] font-semibold tabular-nums tracking-tight text-content">
             {latest ? latest.weightKg : '—'}
             {latest && <span className="ml-1 text-sm font-normal text-content-faint">kg</span>}
@@ -156,9 +169,9 @@ export default function HealthPage() {
                       ? ' · no change'
                       : ` · ${weightDelta > 0 ? '+' : '−'}${Math.abs(weightDelta).toFixed(1)} kg`
                 }`
-              : 'No weight yet'}
+              : 'Tap to log'}
           </p>
-        </div>
+        </button>
 
         <div className="min-w-0">
           <p className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
@@ -280,11 +293,13 @@ export default function HealthPage() {
       {showForm && (
         <WeightSheet
           initial={editing}
+          suggestedWeightKg={latest?.weightKg}
           onSave={handleSave}
           onCancel={() => {
             setShowForm(false)
             setEditing(null)
           }}
+          onDelete={editing ? () => void handleDelete() : undefined}
         />
       )}
     </div>

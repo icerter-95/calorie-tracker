@@ -32,6 +32,11 @@ export default function WeightHistoryPage() {
   const [editing, setEditing] = useState<WeightEntry | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
+  function openNewForm() {
+    setEditing(null)
+    setShowForm(true)
+  }
+
   function openEditForm(entry: WeightEntry) {
     setEditing(entry)
     setShowForm(true)
@@ -72,10 +77,26 @@ export default function WeightHistoryPage() {
         </p>
       )}
 
+      {entries.length > 0 && (
+        <div className="flex items-baseline justify-end">
+          <button
+            type="button"
+            onClick={openNewForm}
+            className="text-xs font-medium text-health-ink hover:text-health-hover"
+          >
+            Log
+          </button>
+        </div>
+      )}
+
       {entries.length === 0 ? (
-        <p className="rounded-2xl bg-raised px-4 py-8 text-center text-sm text-content-subtle ring-1 ring-line">
-          No weight entries yet.
-        </p>
+        <button
+          type="button"
+          onClick={openNewForm}
+          className="w-full rounded-2xl bg-raised px-4 py-8 text-center text-sm text-content-subtle ring-1 ring-line transition-colors hover:bg-hover/70"
+        >
+          No weight entries yet. Tap to log.
+        </button>
       ) : (
         <ul className="divide-y divide-line">
           {entries.map((entry) => (
@@ -107,6 +128,7 @@ export default function WeightHistoryPage() {
       {showForm && (
         <WeightSheet
           initial={editing}
+          suggestedWeightKg={weights && weights.length > 0 ? weights[weights.length - 1].weightKg : undefined}
           onSave={handleSave}
           onCancel={() => {
             setShowForm(false)

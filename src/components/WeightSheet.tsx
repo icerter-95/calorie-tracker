@@ -18,15 +18,27 @@ export interface WeightPayload {
 interface WeightSheetProps {
   /** Pass an entry to edit it; omit to log a new one. */
   initial?: WeightEntry | null
+  /** Prefill for a new log, typically the latest reading. */
+  suggestedWeightKg?: number
   onSave: (payload: WeightPayload) => Promise<void>
   onCancel: () => void
   onDelete?: () => void | Promise<void>
 }
 
-export default function WeightSheet({ initial, onSave, onCancel, onDelete }: WeightSheetProps) {
+export default function WeightSheet({
+  initial,
+  suggestedWeightKg,
+  onSave,
+  onCancel,
+  onDelete,
+}: WeightSheetProps) {
   const formId = useId()
   const [date, setDate] = useState(initial?.date ?? todayKey())
-  const [weightKg, setWeightKg] = useState(initial ? String(initial.weightKg) : '')
+  const [weightKg, setWeightKg] = useState(() => {
+    if (initial) return String(initial.weightKg)
+    if (suggestedWeightKg != null) return String(suggestedWeightKg)
+    return ''
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -78,6 +90,7 @@ export default function WeightSheet({ initial, onSave, onCancel, onDelete }: Wei
     <Sheet
       ariaLabel={initial ? 'Edit weight entry' : 'Log weight'}
       title={initial ? 'Edit entry' : 'Log weight'}
+      size="auto"
       onClose={onCancel}
       closeDisabled={saving}
       footer={footer}
@@ -85,7 +98,7 @@ export default function WeightSheet({ initial, onSave, onCancel, onDelete }: Wei
       <form
         id={formId}
         onSubmit={handleSubmit}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
+        className="min-h-0 overflow-y-auto overscroll-contain"
       >
         <div className="space-y-3 p-4">
           <div className="grid grid-cols-2 gap-3">
