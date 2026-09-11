@@ -3,6 +3,7 @@
  * or add a manual log. Apple Health rows show a sync timestamp.
  */
 import { useCallback, useState } from 'react'
+import AddWeightButton from '../components/AddWeightButton'
 import WeightSheet, { type WeightPayload } from '../components/WeightSheet'
 import { addWeight, deleteWeight, updateWeight } from '../db'
 import { useAllWeights } from '../hooks/useData'
@@ -77,17 +78,9 @@ export default function WeightHistoryPage() {
         </p>
       )}
 
-      {entries.length > 0 && (
-        <div className="flex items-baseline justify-end">
-          <button
-            type="button"
-            onClick={openNewForm}
-            className="text-xs font-medium text-health-ink hover:text-health-hover"
-          >
-            Log
-          </button>
-        </div>
-      )}
+      <div className="flex items-center justify-end">
+        <AddWeightButton onClick={openNewForm} />
+      </div>
 
       {entries.length === 0 ? (
         <button

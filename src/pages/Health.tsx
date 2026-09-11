@@ -1,7 +1,7 @@
 /**
  * Health. Body vitals: latest weight and 7-day step average up top, then the
- * weight trend and a 30-day step histogram. Tap the weight figure to log
- * today's reading. Apple Health sync is batch, not live.
+ * weight trend and a 30-day step histogram. The + next to Weight logs a
+ * reading. Apple Health sync is batch, not live.
  */
 import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -17,6 +17,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+import AddWeightButton from '../components/AddWeightButton'
 import WeightSheet, { type WeightPayload } from '../components/WeightSheet'
 import { addWeight, deleteWeight, updateWeight } from '../db'
 import { useAllSteps, useAllWeights } from '../hooks/useData'
@@ -147,15 +148,13 @@ export default function HealthPage() {
       )}
 
       <section className="grid grid-cols-2 gap-4 border-b border-line pb-5">
-        <button
-          type="button"
-          onClick={openWeightForm}
-          aria-label={latest ? `Log weight, current ${latest.weightKg} kilograms` : 'Log weight'}
-          className="-m-1 min-w-0 rounded-xl p-1 text-left transition-colors hover:bg-hover/70 active:bg-hover"
-        >
-          <p className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
-            Weight
-          </p>
+        <div className="min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] font-medium uppercase tracking-widest text-content-muted">
+              Weight
+            </p>
+            <AddWeightButton onClick={openWeightForm} />
+          </div>
           <p className="mt-1 text-[2.125rem] font-semibold tabular-nums tracking-tight text-content">
             {latest ? latest.weightKg : '—'}
             {latest && <span className="ml-1 text-sm font-normal text-content-faint">kg</span>}
@@ -169,9 +168,9 @@ export default function HealthPage() {
                       ? ' · no change'
                       : ` · ${weightDelta > 0 ? '+' : '−'}${Math.abs(weightDelta).toFixed(1)} kg`
                 }`
-              : 'Tap to log'}
+              : 'No weight yet'}
           </p>
-        </button>
+        </div>
 
         <div className="min-w-0">
           <p className="text-[10px] font-medium uppercase tracking-widest text-content-muted">

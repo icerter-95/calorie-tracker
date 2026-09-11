@@ -7,8 +7,12 @@
  * ActionBarInsetProvider so callers never pass insets by hand.
  */
 import { createContext, useContext, type ReactNode } from 'react'
+import { useKeyboardInset } from '../../hooks/useOverlay'
 
 const ActionBarInsetContext = createContext(0)
+
+/** Home-indicator padding disappears once the keyboard covers that edge. */
+const KEYBOARD_COVER_PX = 24
 
 /** Sheets pass 0 (they move themselves); takeovers pass the keyboard overlap. */
 export function ActionBarInsetProvider({
@@ -33,13 +37,15 @@ interface ActionBarProps {
 }
 
 export default function ActionBar({ destructive, tools, primary }: ActionBarProps) {
-  const keyboardInset = useContext(ActionBarInsetContext)
+  const extraInset = useContext(ActionBarInsetContext)
+  const keyboardCover = useKeyboardInset()
+  const safeArea = keyboardCover > KEYBOARD_COVER_PX ? '0px' : 'env(safe-area-inset-bottom, 0px)'
 
   return (
     <div
       className="shrink-0 border-t border-edge bg-raised px-4 pt-3"
       style={{
-        paddingBottom: `calc(0.75rem + env(safe-area-inset-bottom, 0px) + ${keyboardInset}px)`,
+        paddingBottom: `calc(0.75rem + ${safeArea} + ${extraInset}px)`,
       }}
     >
       <div className="mx-auto flex w-full max-w-lg items-center gap-2">

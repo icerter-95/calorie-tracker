@@ -2,7 +2,7 @@
  * Log / edit a weight entry. Same composer grammar as MealForm: fields scroll,
  * Save sits in the ActionBar, Delete sits far left, and the sheet owns dismiss.
  */
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { WeightEntry } from '../types'
 import { todayKey } from '../lib/dates'
 import ActionBar from './ui/ActionBar'
@@ -33,6 +33,7 @@ export default function WeightSheet({
   onDelete,
 }: WeightSheetProps) {
   const formId = useId()
+  const weightInputRef = useRef<HTMLInputElement>(null)
   const [date, setDate] = useState(initial?.date ?? todayKey())
   const [weightKg, setWeightKg] = useState(() => {
     if (initial) return String(initial.weightKg)
@@ -41,6 +42,15 @@ export default function WeightSheet({
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Wait for the enter animation before focusing. Immediate autoFocus plus the
+  // iOS keyboard is what shoves a PWA sheet off-screen.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      weightInputRef.current?.focus({ preventScroll: true })
+    }, 280)
+    return () => window.clearTimeout(id)
+  }, [])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -117,7 +127,8 @@ export default function WeightSheet({
                 required
                 min={0}
                 step={0.1}
-                autoFocus
+                ref={weightInputRef}
+                inputMode="decimal"
                 value={weightKg}
                 onChange={(e) => setWeightKg(e.target.value)}
                 className={fieldInputClass}
